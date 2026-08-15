@@ -1,0 +1,109 @@
+/* Roadmap page — page-local styling on kit tokens only. */
+
+.rm-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem 3rem;   /* room for the fixed nav */
+}
+
+.rm-page header { margin-bottom: 2.5rem; }
+.rm-page h1 {
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.6rem;
+}
+.rm-page .lead {
+    color: var(--text-muted);
+    max-width: 80ch;
+    font-size: 1.02rem;
+}
+.rm-page .lead sac-chip { vertical-align: middle; margin-left: 2px; }
+
+.rm-page h2 {
+    font-size: 1.3rem;
+    margin: 3rem 0 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+.rm-page h3 {
+    font-size: 1rem;
+    margin: 1.75rem 0 0.5rem;
+}
+.rm-page p { color: var(--text-muted); max-width: 80ch; }
+.rm-page p b, .rm-page li b { color: var(--text); }
+
+/* Competitor cards */
+.rm-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+}
+.rm-card .rm-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+}
+.rm-card .rm-card-head sac-icon { --icon-size: 20px; }
+.rm-card h3 { margin: 0; font-size: 1.05rem; color: var(--text); }
+.rm-card p { font-size: 0.87rem; margin: 0 0 0.5rem; }
+.rm-card .steal { color: color-mix(in srgb, var(--fg) 72%, var(--bg)); }
+
+/* Strengths list */
+.rm-strengths {
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 85ch;
+    padding-left: 1.25rem;
+}
+.rm-strengths li { margin-bottom: 0.4rem; }
+
+/* Tables */
+table.rm {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0 1.5rem;
+    font-size: 0.85rem;
+}
+table.rm th {
+    text-align: left;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    font-weight: 700;
+    padding: 0.4rem 0.9rem 0.4rem 0;
+    border-bottom: 1px solid var(--border-strong);
+}
+table.rm td {
+    padding: 0.55rem 0.9rem 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    vertical-align: top;
+}
+table.rm td:first-child { color: var(--text); white-space: nowrap; }
+table.rm code {
+    background: var(--field);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    padding: 1px 5px;
+    font-size: 0.85em;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+
+/* Feature matrix */
+.rm-scroll { overflow-x: auto; }
+table.rm-matrix td, table.rm-matrix th { text-align: center; white-space: nowrap; }
+table.rm-matrix td:first-child, table.rm-matrix th:first-child { text-align: left; }
+
+.rm-closing {
+    margin-top: 1.5rem;
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+    border-radius: var(--radius-l);
+    padding: 0.8rem 1.1rem;
+}

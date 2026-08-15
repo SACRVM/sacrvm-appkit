@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "id": "sacrvm-appkit",
+  "commands": [
+    {
+      "name": "Serve",
+      "type": "Shell",
+      "icon": "\uD83D\uDE80",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "serve",
+        ".",
+        "-l",
+        "3000"
+      ],
+      "window": "reuse:serve",
+      "longRunning": true
+    },
+    {
+      "name": "Styleguide",
+      "type": "Url",
+      "icon": "\uD83C\uDFA8",
+      "url": "http://localhost:3000/styleguide/"
+    },
+    {
+      "name": "Demo",
+      "type": "Url",
+      "icon": "\uD83E\uDDEA",
+      "url": "http://localhost:3000/demo/"
+    },
+    {
+      "name": "Roadmap",
+      "type": "Url",
+      "icon": "\uD83D\uDDFA\uFE0F",
+      "url": "http://localhost:3000/roadmap/"
+    }
+  ]
+}

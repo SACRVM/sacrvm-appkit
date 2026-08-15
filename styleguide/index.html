@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SACRVM APPKIT | Style Guide</title>
+    <link rel="stylesheet" href="../kit/css/ui.css">
+    <link rel="stylesheet" href="styleguide.css">
+</head>
+<body>
+    <!-- The style guide is built WITH the kit: app-shell + router + nav.
+         What you see here is exactly what an app gets. -->
+
+    <!-- lib -->
+    <script defer src="../kit/js/lib/globals.js"></script>
+    <script defer src="../kit/js/lib/icons.js"></script>
+    <script defer src="../kit/js/lib/router.js"></script>
+    <script defer src="../kit/js/lib/dialog.js"></script>
+    <script defer src="../kit/js/lib/pan-zoom.js"></script>
+    <script defer src="../kit/js/lib/apps.js"></script>
+    <script defer src="../kit/js/lib/hotkeys.js"></script>
+    <script defer src="../kit/js/lib/color.js"></script>
+
+    <!-- components (all of them — this page documents all of them; order is
+         free except sac-color-picker before sac-color-field and
+         sac-calendar before sac-date-field) -->
+    <script defer src="../kit/js/components/sac-icon.js"></script>
+    <script defer src="../kit/js/components/sac-nav.js"></script>
+    <script defer src="../kit/js/components/sac-footer.js"></script>
+    <script defer src="../kit/js/components/sac-window.js"></script>
+    <script defer src="../kit/js/components/sac-dialog.js"></script>
+    <script defer src="../kit/js/components/sac-split.js"></script>
+    <script defer src="../kit/js/components/sac-section.js"></script>
+    <script defer src="../kit/js/components/sac-toggle.js"></script>
+    <script defer src="../kit/js/components/sac-slider.js"></script>
+    <script defer src="../kit/js/components/sac-stepper.js"></script>
+    <script defer src="../kit/js/components/sac-segmented-control.js"></script>
+    <script defer src="../kit/js/components/sac-color-picker.js"></script>
+    <script defer src="../kit/js/components/sac-color-field.js"></script>
+    <script defer src="../kit/js/components/sac-swatch-grid.js"></script>
+    <script defer src="../kit/js/components/sac-calendar.js"></script>
+    <script defer src="../kit/js/components/sac-date-field.js"></script>
+    <script defer src="../kit/js/components/sac-collapsible.js"></script>
+    <script defer src="../kit/js/components/sac-drop-zone.js"></script>
+    <script defer src="../kit/js/components/sac-status-banner.js"></script>
+    <script defer src="../kit/js/components/sac-loader.js"></script>
+    <script defer src="../kit/js/components/sac-log.js"></script>
+    <script defer src="../kit/js/components/sac-hud.js"></script>
+    <script defer src="../kit/js/components/sac-chip.js"></script>
+    <script defer src="../kit/js/components/sac-chip-input.js"></script>
+    <script defer src="../kit/js/components/sac-avatar.js"></script>
+    <script defer src="../kit/js/components/sac-copy-button.js"></script>
+    <script defer src="../kit/js/components/sac-scene-graph.js"></script>
+    <script defer src="../kit/js/components/sac-tabs.js"></script>
+    <script defer src="../kit/js/components/sac-menu.js"></script>
+    <script defer src="../kit/js/components/sac-command-palette.js"></script>
+    <script defer src="../kit/js/components/sac-tooltip.js"></script>
+    <script defer src="../kit/js/components/sac-toast.js"></script>
+    <script defer src="../kit/js/components/sac-progress.js"></script>
+    <script defer src="../kit/js/components/sac-spinner.js"></script>
+    <script defer src="../kit/js/components/sac-theme-toggle.js"></script>
+    <script defer src="../kit/js/components/sac-launcher.js"></script>
+
+    <!-- style-guide views (each registers its own route) -->
+    <script defer src="views/home.js"></script>
+    <script defer src="views/tokens.js"></script>
+    <script defer src="views/components-view.js"></script>
+    <script defer src="views/layout.js"></script>
+    <script defer src="views/patterns.js"></script>
+    <script defer src="views/helpers.js"></script>
+
+    <!-- shell -->
+    <sac-nav brand="SACRVM APPKIT" app-name="STYLE GUIDE" brand-icon="cube">
+        <!-- Persistent theme switcher in the context slot — it survives
+             per-view toolbar repaints (that's what the slot is for). -->
+        <div slot="context" id="theme-switcher" class="sg-theme-switcher">
+            <sac-theme-toggle></sac-theme-toggle>
+            <span class="sg-accent-dots" title="Accent seed (per-app override demo)">
+                <button type="button" data-accent="#3b82f6" style="background:#3b82f6" class="active"></button>
+                <button type="button" data-accent="#10b981" style="background:#10b981"></button>
+                <button type="button" data-accent="#f59e0b" style="background:#f59e0b"></button>
+                <button type="button" data-accent="#ec4899" style="background:#ec4899"></button>
+            </span>
+        </div>
+    </sac-nav>
+    <div id="app-root"></div>
+
+    <!-- Live on every page of the guide — press Ctrl-K. -->
+    <sac-command-palette></sac-command-palette>
+
+    <script defer>
+        window.addEventListener("DOMContentLoaded", () => {
+            if (sac.router) sac.router.mount("#app-root");
+
+            // Theme playground: <sac-theme-toggle> owns the light/dark flag;
+            // this handler only swaps the --accent seed. Everything derived
+            // follows — that IS the demo.
+            const switcher = document.getElementById("theme-switcher");
+            switcher.addEventListener("click", (e) => {
+                const accBtn = e.target.closest("[data-accent]");
+                if (accBtn) {
+                    document.documentElement.style.setProperty("--accent", accBtn.dataset.accent);
+                    switcher.querySelectorAll("[data-accent]").forEach(b =>
+                        b.classList.toggle("active", b === accBtn));
+                }
+            });
+        });
+    </script>
+</body>
+</html>

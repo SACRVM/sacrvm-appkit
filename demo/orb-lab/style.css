@@ -1,0 +1,14 @@
+@import '../../kit/css/ui.css';
+
+/* Per-app accent override — THE retheme mechanism. Everything derived from
+   --accent (buttons, glows, active states, HUD, orb, slider thumbs) follows. */
+:root {
+    --accent: #10b981;
+}
+
+/* Tool-specific bits only below this line. */
+.viewport.grabbing { cursor: grabbing; }
+
+/* The <sac-split> divider draws the edge between sidebar and viewport now —
+   drop the sidebar's own hairline so the two don't stack. */
+.sidebar { border-right: none; }
