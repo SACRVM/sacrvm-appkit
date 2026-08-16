@@ -310,6 +310,22 @@
     </div>
 </sac-nav>`)}
 
+                <h2 id="sac-sidebar">&lt;sac-sidebar&gt;</h2>
+                <p>The rail on the left of this page. It has no content of its own: it renders
+                   whatever the active app projected through <code>sac.sidebar</code> (or, inside an
+                   app, <code>context.sidebar</code>), registers itself as the renderer on connect,
+                   and hides itself while there are no items — so a shell can keep one in its
+                   markup and a page without navigation simply has no rail. Item shape and the
+                   projection API are on the <a href="#/styleguide/helpers">Helpers</a> page.</p>
+                ${code(`<div class="main-layout">
+    <sac-sidebar></sac-sidebar>
+    <div class="app-stage" id="app-stage">…</div>
+</div>`)}
+                ${table("API", [
+                    ["sac.sidebar.set(items)", "<code>[{label, icon?, href?, onClick?, active?, disabled?}]</code>, or <code>{section}</code> alone for a heading."],
+                    ["sac.sidebar.clear()", "Empties the rail, which hides it. <code>sac.apps</code> does this between view swaps."],
+                ])}
+
                 <h2 id="sac-launcher">&lt;sac-launcher&gt;</h2>
                 <p>One tile per app in the <code>sac.apps</code> registry. Light DOM, so the
                    global <code>.grid</code>/<code>.tile</code> patterns apply — the one
@@ -2157,17 +2173,46 @@ pz.reset();                               // e.g. when a new image loads`)}
     { icon: "pin",   title: "Pinned",    onClick: () => this.pin(),    active: pinned },
 ]);`)}
 
+                <h2>sac.sidebar — rail projection</h2>
+                <p>The left-rail counterpart to <code>sac.toolbar</code>: a view app hands over its
+                   <em>navigation</em> and the shell draws it, so every app in the shell wears the
+                   same chrome instead of shipping its own sidebar. <code>&lt;sac-sidebar&gt;</code>
+                   registers itself as the renderer on connect and hides itself while there are no
+                   items; <code>sac.apps</code> clears them between view swaps, so an outgoing app
+                   never has to tidy up after itself.</p>
+                ${code(`sac.sidebar.set([
+    { section: "Reference" },                                  // a heading
+    { label: "Tokens",  icon: "star",  href: "#/styleguide/tokens", active: true },
+    { label: "Rebuild", icon: "sync",  onClick: () => rebuild() },
+    { label: "Export",  icon: "download", disabled: true },
+]);
+sac.sidebar.clear();`)}
+                <table class="sg">
+                    <tr><th style="width:260px">Item key</th><th>Description</th></tr>
+                    <tr><td><code>label</code></td><td>The entry's text. Required for an entry.</td></tr>
+                    <tr><td><code>section</code></td><td>Alone in an object: a group heading instead of an entry.</td></tr>
+                    <tr><td><code>icon</code></td><td><code>sac-icon</code> name, optional.</td></tr>
+                    <tr><td><code>href</code> / <code>onClick</code></td><td>A link or a button — give one, not both. Inside an app, build the href with <code>context.href(route)</code>: the host owns the address space.</td></tr>
+                    <tr><td><code>active</code>, <code>disabled</code></td><td>Current entry (accent tint, no border stripe) and unavailable entry.</td></tr>
+                </table>
+                <p class="sg-note">Apps use <code>context.sidebar</code>, which is scoped to them,
+                   rather than this global. The rail is for <b>navigation</b>: sliders and colour
+                   fields belong in the app's own area, not in the shell's chrome.</p>
+
                 <h2>sac.dialog — confirm helper</h2>
                 <p>Promise wrapper over <code>&lt;sac-dialog&gt;</code> — see the
                    <a href="#/styleguide/components">Components</a> page for the live demo and the armed-button rules.</p>
 
                 <h2>sac.apps — apps as web components</h2>
-                <p>The app runtime: a registry of app manifests, floating-window lifecycle,
-                   <code>?app=</code> deep links and the opt-in <code>mount(context)</code>
-                   capability handshake. An app is ONE custom element in ONE classic script —
-                   register a manifest, call <code>init()</code>, done.
+                <p>The <b>host</b> side of the app contract: a registry of manifests, the stage for
+                   view apps, floating windows for window apps, hash and <code>?app=</code> deep
+                   links, and the <code>mount(context)</code> handshake. An app is ONE custom element
+                   in ONE classic script — register a manifest, call <code>init()</code>, done.
                    <code>&lt;sac-launcher&gt;</code> (see
                    <a href="#/styleguide/components">Components</a>) renders the registry as a tile grid.</p>
+                <p class="sg-note">Writing an app rather than hosting one? <a href="#/build">Build an
+                   App</a> walks the whole path — the three hooks, the manifest, publishing to Pages
+                   and installing by URL — and <code>sac.app</code> below is the toolkit it uses.</p>
                 ${code(`sac.apps.register({
     id:          "color-bucket",         // unique; ?app= deep links + persistence key
     name:        "Color Bucket",         // display name
@@ -2190,8 +2235,26 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>close(id)</code></td><td>Closes the window — element and window stay in the DOM.</td></tr>
                     <tr><td><code>remove(id)</code></td><td>Unregister; calls the app's <code>unmount()</code> if present and removes its window. Emits <code>sac:apps-changed</code>.</td></tr>
                     <tr><td><code>isOpen(id)</code></td><td><code>true</code> if the app's window exists and is open.</td></tr>
-                    <tr><td><code>init()</code></td><td>Delegated click binding for <code>[data-app="&lt;id&gt;"]</code> tiles + the <code>?app=&lt;id&gt;</code> deep link (URL cleaned via replaceState). Legacy: <code>[data-overlay]</code> and <code>?tool=</code> honored the same way.</td></tr>
+                    <tr><td><code>active()</code></td><td>The id of the view app currently on the stage, or <code>null</code> at home.</td></tr>
+                    <tr><td><code>init(options?)</code></td><td>Delegated click binding for <code>[data-app="&lt;id&gt;"]</code> tiles + the <code>?app=&lt;id&gt;</code> deep link (URL cleaned via replaceState), and — with <code>{ viewHost, home }</code> — the hash router for view apps. Legacy: <code>[data-overlay]</code> and <code>?tool=</code> honored the same way.</td></tr>
+                    <tr><td><code>inspect(url)</code></td><td><code>Promise&lt;manifest&gt;</code>. Fetches and validates a manifest from a repository URL, an origin or a direct <code>app.json</code>; <code>github.com/owner/repo</code> resolves to <code>owner.github.io/repo/app.json</code>. <b>Reads only</b> — nothing is registered and no app code runs, so a host can show name, version and origin before deciding. Adds <code>src</code>, <code>origin</code> and <code>manifestUrl</code>.</td></tr>
+                    <tr><td><code>add(manifest|url)</code></td><td><code>Promise&lt;manifest&gt;</code>. Registers an inspected manifest (or inspects a URL first). Registering still does not run the app: its script is injected on first open, exactly like an app the shell declared itself.</td></tr>
                 </table>
+                <h3>Hosting view apps</h3>
+                <p>A shell that wants full-stage apps hands <code>init()</code> two elements: the
+                   stage view apps are appended into, and the home screen to hide while one is up.
+                   From there <code>#/&lt;id&gt;</code> shows an app and <code>#/&lt;id&gt;/&lt;route&gt;</code>
+                   reaches into it; the back button, pasted links and rail clicks all go through the
+                   same path.</p>
+                ${code(`sac.apps.init({ viewHost: "#app-stage", home: "#app-home" });
+
+// #/notes          → mounts <app-notes> on the stage, hides the home screen
+// #/notes/2026-08  → same, and hands "2026-08" to the app as context.route
+// #/               → back home, the app element stays alive for next time`)}
+                <p>A view app is created once and kept: switching away hides it, switching back
+                   shows it exactly as it was. <code>mount()</code> runs when it first reaches the
+                   stage — not while it is still hidden — and <code>unmount()</code> only when
+                   <code>remove()</code> takes the app out for good.</p>
                 <table class="sg">
                     <tr><th style="width:260px">Manifest field</th><th>Description</th></tr>
                     <tr><td><code>id</code></td><td>Unique; <code>?app=</code> deep links + persistence key.</td></tr>
@@ -2200,8 +2263,10 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>description</code></td><td>Tile subline (optional).</td></tr>
                     <tr><td><code>badge</code></td><td>Optional: short string, rendered by <code>&lt;sac-launcher&gt;</code> as the tile's corner pill (the global <code>.tile-badge</code> pattern).</td></tr>
                     <tr><td><code>tile</code></td><td>Optional tile footprint in the launcher grid: <code>"medium"</code> (default, omit-able), <code>"wide"</code> (2 columns) or <code>"large"</code> (2 columns × 2 rows). Unknown values fall back to medium silently; all footprints collapse to medium on narrow viewports.</td></tr>
-                    <tr><td><code>kind</code></td><td><code>"window"</code> (overlay app, default) or <code>"page"</code> (plain link).</td></tr>
-                    <tr><td><code>tag</code>, <code>src</code></td><td>window only: the app's single custom element + its classic script, injected once on first open. The script guards its definition with <code>customElements.get</code> and registers no other tags; the element fills its window (<code>height: 100%</code> is set for you).</td></tr>
+                    <tr><td><code>kind</code></td><td><code>"window"</code> (floating overlay, default), <code>"view"</code> (takes the stage at <code>#/&lt;id&gt;</code>) or <code>"page"</code> (plain link to <code>href</code>).</td></tr>
+                    <tr><td><code>entry</code></td><td>Installed apps: the script path <em>relative to the manifest</em>. <code>inspect()</code> resolves it into <code>src</code>. A shell registering its own apps gives <code>src</code> directly.</td></tr>
+                    <tr><td><code>nav</code></td><td>view only: <code>false</code> keeps the app out of the nav panel (it stays reachable by hash).</td></tr>
+                    <tr><td><code>tag</code>, <code>src</code></td><td>window + view: the app's single custom element + its classic script, injected once on first open. The script guards its definition with <code>customElements.get</code> and registers no other tags; the element fills its window (<code>height: 100%</code> is set for you).</td></tr>
                     <tr><td><code>width</code>, <code>height</code></td><td>window only: <code>sac-window</code> size (defaults 500px / 600px).</td></tr>
                     <tr><td><code>accent</code></td><td>window only, optional: set as <code>--accent</code> on the window — the per-app retheme.</td></tr>
                     <tr><td><code>controls</code>, <code>resizable</code></td><td>window only, optional: <code>controls</code> = space-separated subset of <code>min max close</code> (window chrome); <code>resizable: false</code> sets <code>no-resize</code>. Absent = all three dots, resizable.</td></tr>
@@ -2209,14 +2274,21 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                 </table>
                 <h3>mount(context) — the capability handshake</h3>
                 <p>The host calls <code>el.mount(context)</code> IF the method exists — exactly once
-                   per element lifetime, after the element is first appended into its window
-                   (re-opening does not re-mount). <code>el.unmount()</code> (if present) is called
-                   only by <code>sac.apps.remove()</code>. Both hooks are opt-in.</p>
+                   per element lifetime, when the app first reaches the screen (a window opening,
+                   a view reaching the stage; re-opening or switching back does not re-mount).
+                   <code>el.unmount()</code> (if present) is called only by
+                   <code>sac.apps.remove()</code>. Both hooks are opt-in — and
+                   <code>sac.app.Element</code> below turns them into <code>onMount</code> /
+                   <code>onUnmount</code> that also work with no host at all.</p>
                 <table class="sg">
                     <tr><th style="width:260px">Context slot</th><th>Description</th></tr>
                     <tr><td><code>appId</code></td><td>The manifest id.</td></tr>
                     <tr><td><code>params</code></td><td><code>URLSearchParams</code> — deep-link params snapshot at open (empty if none).</td></tr>
-                    <tr><td><code>deepLink.set(obj)</code></td><td>Writes <code>?app=&lt;id&gt;&amp;&lt;obj entries&gt;</code> via <code>history.replaceState</code>; <code>set(null)</code> cleans back to the bare path (hash preserved).</td></tr>
+                    <tr><td><code>route</code> <b>(view)</b></td><td>The sub-route the app was opened at — everything after <code>#/&lt;id&gt;/</code>, <code>""</code> at the app's root.</td></tr>
+                    <tr><td><code>onRoute(cb)</code> <b>(view)</b></td><td><code>cb(route)</code> on every change: rail clicks, the back button and pasted links all arrive here. Returns an unsubscribe.</td></tr>
+                    <tr><td><code>href(route)</code> <b>(view)</b></td><td>Builds <code>#/&lt;id&gt;/&lt;route&gt;</code>. Apps must never assemble that string themselves — the host owns the address space, and standalone there is no id.</td></tr>
+                    <tr><td><code>sidebar.set(items)</code><br><code>sidebar.clear()</code> <b>(view)</b></td><td>Projects navigation into the shell's rail (item shape under <code>sac.sidebar</code> above). Scoped and remembered per app: the items render only while this app is on stage, and come back with it.</td></tr>
+                    <tr><td><code>deepLink.set(…)</code></td><td>view: <code>set(route)</code> writes <code>#/&lt;id&gt;/&lt;route&gt;</code> (replaceState — switching sections is not a new history entry). window/page: <code>set(obj)</code> writes <code>?app=&lt;id&gt;&amp;&lt;obj entries&gt;</code>; <code>set(null)</code> cleans back to the bare path (hash preserved).</td></tr>
                     <tr><td><code>theme.get()</code></td><td>The flag: <code>"dark"</code> | <code>"light"</code> | <code>"auto"</code>.</td></tr>
                     <tr><td><code>theme.set(mode)</code></td><td>Same values; routes through <code>&lt;sac-theme-toggle&gt;</code> when present (one source of truth: <code>data-theme</code> on <code>&lt;html&gt;</code> + the <code>sac-theme</code> localStorage key).</td></tr>
                     <tr><td><code>theme.onChange(cb)</code></td><td><code>cb(resolved)</code> with <code>"dark"</code>/<code>"light"</code> on every effective change, incl. OS flips in auto. Returns an unsubscribe function.</td></tr>
@@ -2232,6 +2304,57 @@ unmount() { this._offTheme?.(); }                // called by sac.apps.remove()`
                    this API, survives as a thin alias — <code>register</code>/<code>open</code>/<code>init</code>
                    forward to <code>sac.apps</code> unchanged, legacy specs (<code>title</code>,
                    missing <code>kind</code>) keep working. Removal is a future major.</p>
+
+                <h2>sac.app — the app side</h2>
+                <p>Where <code>sac.apps</code> is the host, <code>sac.app</code> is what an app is
+                   written with. It removes the four pieces of boilerplate every app would otherwise
+                   repeat: finding its own folder, loading its stylesheet once, guarding its
+                   <code>define()</code>, and running when there is no host to mount it.</p>
+                ${code(`(function () {
+    const BASE = sac.app.base();          // this script's folder, at parse time
+
+    class AppMyApp extends sac.app.Element {
+        build() {                          // once, on first connect
+            sac.app.styles(BASE + "app.css", "app-my-app-css");
+            this.innerHTML = \`<h2>My App</h2>\`;
+        }
+        onMount(context) {                 // once, when really on screen
+            this._off = context.theme.onChange((t) => this.dataset.theme = t);
+        }
+        onUnmount() {                      // the host removed the app
+            if (this._off) { this._off(); this._off = null; }
+        }
+    }
+
+    sac.app.define("app-my-app", AppMyApp);
+})();`)}
+                <table class="sg">
+                    <tr><th style="width:260px">Member</th><th>Description</th></tr>
+                    <tr><td><code>sac.app.base()</code></td><td>The folder this script was loaded from, with a trailing slash — wherever a host injected it from. Call it at <b>parse time</b>, at the top of your IIFE: <code>document.currentScript</code> is only your file there.</td></tr>
+                    <tr><td><code>sac.app.styles(href, id)</code></td><td>Injects a <code>&lt;link&gt;</code> into <code>&lt;head&gt;</code> once per document, keyed by <code>id</code> — however often the app is created, and however many apps share a page.</td></tr>
+                    <tr><td><code>sac.app.define(tag, class)</code></td><td>Guarded <code>customElements.define</code>: defining twice (two hosts, one document) is a no-op instead of a throw.</td></tr>
+                    <tr><td><code>sac.app.Element</code></td><td>Base class over <code>HTMLElement</code>. Adds the <code>sac-app</code> class (which scopes the kit's derived tokens, so a per-app <code>--accent</code> re-derives correctly), calls <code>build()</code> once on first connect, and turns the host's <code>mount()</code>/<code>unmount()</code> into <code>onMount(context)</code>/<code>onUnmount()</code>.</td></tr>
+                    <tr><td><code>sac.app.context(el)</code></td><td>The standalone context, built from the page. <code>Element</code> calls it for you — you would only call it by hand in an app that stays a plain <code>HTMLElement</code>.</td></tr>
+                </table>
+                <p class="sg-note">Extending <code>Element</code> is sugar, not law. An app may
+                   implement <code>mount()</code> / <code>unmount()</code> by hand and stay a plain
+                   <code>HTMLElement</code>. What is not optional: one registered tag, a guarded
+                   define, and no second tag.</p>
+                <h3>The standalone fallback</h3>
+                <p>An app that is never mounted by a host — opened straight from its own
+                   <code>index.html</code>, or dropped into somebody's page as plain markup — still
+                   gets an <code>onMount</code>. If no <code>mount()</code> arrives right after
+                   connect, <code>sac.app.Element</code> builds a context from the page itself: the
+                   kit's real theme (<code>sac.apps.theme</code> when it is loaded, the same rules
+                   read-only when it is not), the page's query parameters, the hash as
+                   <code>route</code>, an <code>href</code> that addresses that hash directly, and a
+                   <code>sidebar</code> that drives the page's <code>&lt;sac-sidebar&gt;</code> if it
+                   has one and does nothing if it does not. Your app cannot tell the difference and
+                   never needs an "am I hosted?" branch.</p>
+                <p class="sg-note">The fallback is scheduled with a <b>timeout</b>, deliberately —
+                   not <code>requestAnimationFrame</code>, which never fires in a background tab.
+                   An app opened in a tab you have not looked at yet must still be running when you
+                   get there.</p>
 
                 <h2>loadHelp — markdown help loader (ES module)</h2>
                 <p>Fetch a markdown file, render via the vendored <code>marked</code>, sanitize via the

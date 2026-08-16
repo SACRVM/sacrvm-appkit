@@ -1,0 +1,219 @@
+/* "Build an App" — page-local styling for <app-build>, built entirely on the
+   kit's tokens. Scoped to the app's own element: never :root, which belongs to
+   whatever shell is hosting this. */
+
+app-build { display: block; }
+
+.bd-page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 4rem;
+    /* The shell turns selection off for chrome; a page written to be copied
+       has to turn it back on for itself. */
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.bd-page h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.bd-page > header > .lead {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-width: 72ch;
+    margin: 0 0 2.5rem;
+}
+
+.bd-page h2 {
+    font-size: 1.35rem;
+    margin: 3rem 0 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    scroll-margin-top: 1.5rem;      /* the rail scrolls to these */
+}
+.bd-page h2:first-of-type { border-top: none; margin-top: 1.5rem; }
+.bd-page h3 { font-size: 1.05rem; margin: 2rem 0 0.5rem; color: var(--text); }
+
+.bd-page p { color: var(--text-muted); max-width: 78ch; line-height: 1.65; }
+.bd-page p b, .bd-page li b { color: var(--text); font-weight: 600; }
+.bd-page a { color: var(--accent-text); }
+
+/* Inline code and copyable blocks — the same voice as the style guide, so
+   the two pages read as one documentation surface. */
+.bd-page code {
+    background: var(--field);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    padding: 1px 5px;
+    font-size: 0.85em;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    color: var(--text);
+}
+
+.bd-code { position: relative; margin: 0.9rem 0; }
+.bd-code pre {
+    background: var(--field);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    padding: 0.9rem 3rem 0.9rem 1rem;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    color: color-mix(in srgb, var(--fg) 85%, var(--bg));
+    margin: 0;
+}
+.bd-code pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+}
+/* Parked in the block's padding, so it never covers code. */
+.bd-code sac-copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+table.bd {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0 1.5rem;
+    font-size: 0.85rem;
+}
+table.bd th {
+    text-align: left;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    font-weight: 700;
+    padding: 0.4rem 0.9rem 0.4rem 0;
+    border-bottom: 1px solid var(--border-strong);
+}
+table.bd td {
+    padding: 0.55rem 0.9rem 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    vertical-align: top;
+    line-height: 1.55;
+}
+table.bd tr:last-child td { border-bottom: none; }
+table.bd td:first-child { white-space: nowrap; color: var(--text); }
+table.bd td:first-child code { white-space: nowrap; }
+
+/* "required" marker — weight and colour, no badge. */
+.bd-page .req {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--accent-text);
+    font-weight: 700;
+    margin-left: 0.4rem;
+}
+
+.bd-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+}
+.bd-cta .btn {
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.bd-note {
+    padding: 0.85rem 1rem;
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    font-size: 0.9rem;
+}
+
+.bd-steps, .bd-check {
+    color: var(--text-muted);
+    max-width: 78ch;
+    line-height: 1.8;
+    padding-left: 1.3rem;
+}
+.bd-check { list-style: none; padding-left: 0; }
+.bd-check li {
+    padding: 0.45rem 0 0.45rem 1.9rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+}
+.bd-check li:last-child { border-bottom: none; }
+/* A checklist should look checkable — a box, not a bullet. */
+.bd-check li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.75rem;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-s);
+    background: var(--field);
+}
+
+.bd-shapes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0 1.5rem;
+}
+.bd-shape { padding: 1.25rem; }
+.bd-shape-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+}
+.bd-shape-head sac-icon { --icon-size: 20px; color: var(--accent); }
+.bd-shape-head h3 {
+    margin: 0;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 0.95rem;
+}
+.bd-shape p { font-size: 0.9rem; margin: 0 0 0.5rem; }
+.bd-shape .bd-eg { color: var(--text-dim); font-size: 0.82rem; margin: 0; }
+
+/* The live install box: the one place on the page where something happens. */
+.bd-live {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin: 1.5rem 0;
+    padding: 1.25rem 1.5rem;
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-l);
+}
+.bd-live-text { flex: 1 1 320px; }
+.bd-live h3 { margin: 0 0 0.35rem; }
+.bd-live p { margin: 0; font-size: 0.9rem; }
+.bd-live .btn {
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+}
+
+@media (max-width: 720px) {
+    .bd-page { padding: 2rem 1.25rem 3rem; }
+    .bd-page h1 { font-size: 1.8rem; }
+}

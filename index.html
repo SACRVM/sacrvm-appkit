@@ -176,6 +176,15 @@
                                     <p class="tile-meta">App · opens in a window</p>
                                 </div>
                             </a>
+                            <a class="tile" href="#/build">
+                                <sac-icon name="plus"></sac-icon>
+                                <div>
+                                    <h2>Build an App</h2>
+                                    <p>The app contract end to end: the three hooks, the manifest, publishing —
+                                       and a template repository to start from.</p>
+                                    <p class="tile-meta">App · write your own</p>
+                                </div>
+                            </a>
                             <a class="tile" href="#/roadmap">
                                 <sac-icon name="document"></sac-icon>
                                 <div>
@@ -292,6 +301,15 @@
                 // Its accent is its own identity — the app's stylesheet sets
                 // it, so it stays green standalone too. manifest.accent is for
                 // when the SHELL wants to tint an app it hosts.
+            });
+            sac.apps.register({
+                id:          "build",
+                name:        "Build an App",
+                icon:        "plus",
+                description: "The app contract end to end, plus the template repository to start from.",
+                kind:        "view",
+                tag:         "app-build",
+                src:         "build/app.js",
             });
             sac.apps.register({
                 id:          "roadmap",
