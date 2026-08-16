@@ -1,7 +1,6 @@
 /* Orb Lab — the demo tool's own stylesheet, injected by app.js as one <link>.
-   The @import keeps the retired standalone document (index.html) rendering;
-   inside the shell it resolves to the already-cached ui.css. */
-@import '../../kit/css/ui.css';
+   No ui.css import: the host provides the kit, and importing it here would
+   load the whole sheet a second time. */
 
 app-orb-lab {
     /* Per-app accent override — THE retheme mechanism. Scoped to the app

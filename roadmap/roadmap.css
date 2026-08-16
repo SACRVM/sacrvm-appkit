@@ -3,14 +3,9 @@
 .rm-page {
     max-width: 1100px;
     margin: 0 auto;
-    /* Same top rhythm as .hub-container: 50px of nav clearance plus 4rem. */
-    padding: calc(50px + 4rem) 2rem 3rem;
-}
-/* On the shell's stage the nav is already cleared — don't stack (same rule
-   the kit applies to .hub-container). */
-.main-layout .rm-page,
-#app-root .rm-page {
-    padding-top: 4rem;
+    /* No nav clearance here: this runs on the shell's stage, which sits
+       inside .main-layout and has cleared the fixed ribbon already. */
+    padding: 4rem 2rem 3rem;
 }
 
 .rm-page header { margin-bottom: 2.5rem; }
