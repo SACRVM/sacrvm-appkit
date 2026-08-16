@@ -161,6 +161,22 @@ await this.store.remove("notes/2026-08");`)}
        line. That is also why you never call <code>localStorage</code> directly:
        you would be opting out of every host that offers something better.</p>
 
+    <h3>Not every app needs it</h3>
+    <p><code>context.fs</code> is for what belongs to your app <em>on this host</em>:
+       settings, drafts, a local collection, the state that should still be there
+       tomorrow. Plenty of apps store nothing at all — a calculator has no state
+       worth keeping — and plenty of others cannot possibly live there: if your
+       app needs a database to work, it has <b>its own backend</b>, and it talks
+       to it the way any web app does.</p>
+    ${code(`// Perfectly normal. The kit has no opinion about your API.
+const rows = await fetch("/api/things", { headers: auth() }).then((r) => r.json());`)}
+    <p>The rule is narrower than it sounds: <b>if you are storing locally, store
+       through <code>context.fs</code></b> instead of <code>localStorage</code>.
+       It is not "everything must go through the kit". A backend, a REST API, a
+       websocket, a sync engine — all yours, none of the kit's business. The two
+       mix freely: server data from your API, per-device preferences in
+       <code>context.fs</code>.</p>
+
     <h3>Knowing who is there</h3>
     <p><code>context.identity</code> is a name and a face, read-only, and
        <b>anonymous by default</b> — <code>get()</code> returns <code>null</code>
@@ -175,13 +191,30 @@ await this.store.remove("notes/2026-08");`)}
 }`)}
     <p class="bd-note"><b>On a desktop it is not authentication.</b> No server,
        no password, nothing verified — somebody typed a name into their own
-       browser. Greet people with it, colour their avatar with it, key your own
-       data by <code>id</code>. Never gate access on it and never treat it as
-       proof of anyone: whether it means anything is the <em>host's</em> business,
-       and a host with a real account system supplies the answer from there
+       browser. Greet people with it, colour their avatar with it. Whether it
+       means anything is the <em>host's</em> business, and a host with a real
+       account system supplies the answer from there
        (<code>sac.identity.use</code>). Your app reads the same two methods
        either way and never learns which host it is on — which is exactly why it
        must not assume the stronger one.</p>
+
+    <h3>Identity and your own backend</h3>
+    <p>The common shape for an app with a database: a real host resolves who the
+       person is (a Google sign-in, say), your app reads that from
+       <code>context.identity</code> to know whose screen this is, and then
+       fetches that person's rows from your own API. Identity is the
+       <b>question answered</b> — it is not where the data lives.</p>
+    <div class="bd-danger">
+        <h4>The one rule you cannot bend</h4>
+        <p><b>Your server must establish identity itself.</b> Send the credential
+           your host issued — an ID token, a session cookie, whatever it is — and
+           verify it on the server. Never send <code>context.identity.get().id</code>
+           as the thing that decides which rows come back: it arrives from the
+           client, so anybody can put anybody's id in it and read their data.</p>
+        <p>Client-side identity decides <em>what to render</em>. Server-side
+           verification decides <em>what to hand out</em>. They are not the same
+           question, and the kit can only answer the first one.</p>
+    </div>
     <p class="bd-note">Everything on <code>sac</code> beyond <code>sac.app</code>
        belongs to the <b>host</b> and is optional. <code>sac.toast</code> is the usual
        example: guard it with <code>typeof sac.toast === "function"</code> rather than

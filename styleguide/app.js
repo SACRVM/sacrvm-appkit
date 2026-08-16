@@ -2382,6 +2382,13 @@ await context.fs.remove("notes/2026-08");`)}
                    stripped, and <code>..</code> is not a way out of the app's own root. Values are
                    JSON — not Blobs: binary needs a backend that can hold it, and that is exactly the
                    point at which a host supplies its own.</p>
+                <p class="sg-note"><b>Not every app needs it.</b> <code>context.fs</code> is for what
+                   belongs to an app <em>on this host</em> — settings, drafts, a local collection. An
+                   app that needs a database has its own backend and talks to it with
+                   <code>fetch</code>, which is entirely outside the kit's business. The rule is only
+                   this: <b>if you are storing locally, store through <code>context.fs</code></b>
+                   rather than <code>localStorage</code>. Server data from your API and per-device
+                   preferences in <code>context.fs</code> mix freely in the same app.</p>
                 <h3>Swapping the backend</h3>
                 <p>The namespacing, JSON and notification layers are the kit's. The bytes are four
                    methods, and a host that wants IndexedDB, the File System Access API or a server
@@ -2454,6 +2461,18 @@ sac.identity.clear();`)}
                    <code>context.identity</code> runs unchanged on a desktop with neither a server
                    nor an account, and on a product with both. Which is the point — the app never
                    learns which one it is on.</p>
+                <h3>Identity next to your own backend</h3>
+                <p>The usual shape for an app with a database: the host resolves the person (a Google
+                   sign-in, say), the app reads <code>context.identity</code> to know whose screen
+                   this is, and fetches that person's rows from its own API. Identity is the question
+                   answered — it is not where the data lives, and it does not replace an API.</p>
+                <p><b>The server must establish identity itself.</b> Send the credential the host
+                   issued — an ID token, a session cookie — and verify it server-side. Never let
+                   <code>identity.get().id</code> be the thing that decides which rows come back: it
+                   arrives from the client, so anybody can put anybody's id in it. Client-side
+                   identity decides <em>what to render</em>; server-side verification decides
+                   <em>what to hand out</em>. The kit can only answer the first question, and it never
+                   pretends otherwise.</p>
                 <p>Apps read, the host writes. An app that wants a name of its own asks in its own UI
                    and keeps it in its own <code>context.fs</code>; it does not get to rename you
                    everywhere. <code>id</code> is stable, meaningless and not a fingerprint: it

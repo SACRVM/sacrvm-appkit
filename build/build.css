@@ -141,6 +141,26 @@ table.bd td:first-child code { white-space: nowrap; }
     font-size: 0.9rem;
 }
 
+/* The one box on the page that is a warning, not a note. Tint and icon-free
+   heading colour carry it — no edge stripe. */
+.bd-danger {
+    padding: 1rem 1.15rem;
+    margin: 1rem 0;
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+    border-radius: var(--radius-m);
+}
+.bd-danger h4 {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    color: var(--danger-text);
+}
+.bd-danger p {
+    margin: 0 0 0.6rem;
+    font-size: 0.9rem;
+}
+.bd-danger p:last-child { margin-bottom: 0; }
+
 .bd-steps, .bd-check {
     color: var(--text-muted);
     max-width: 78ch;
