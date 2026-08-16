@@ -2429,7 +2429,31 @@ sac.identity.clear();`)}
                     <tr><td><code>set({name, avatar})</code> <b>(host)</b></td><td>Keeps the existing <code>id</code> — renaming yourself does not make you somebody else. An empty name is <code>clear()</code>.</td></tr>
                     <tr><td><code>clear()</code> <b>(host)</b></td><td>Back to nobody, id included. This is "forget me".</td></tr>
                     <tr><td><code>forApp()</code> <b>(host)</b></td><td>The read-only view handed to apps as <code>context.identity</code> — <code>get</code> and <code>onChange</code>, nothing that writes.</td></tr>
+                    <tr><td><code>use(provider)</code> <b>(host)</b></td><td>Hand the source to a host that has a real one — see below. <code>null</code> restores the local profile.</td></tr>
+                    <tr><td><code>changed()</code> <b>(host)</b></td><td>With a provider installed: announce that the answer changed (a sign-in resolved, a session expired).</td></tr>
                 </table>
+                <h3>When the host has a real identity</h3>
+                <p>The kit's local profile is right for a desktop, where there is nothing to be
+                   authenticated against. A host that <em>does</em> have accounts — an app with a
+                   backend and a session — hands the source over and keeps everything apps depend on:
+                   the shape, <code>forApp()</code>, the fan-out.</p>
+                ${code(`sac.identity.use({
+    get()        { const u = session.user;                  // may be null
+                   return u && { id: u.id, name: u.name, avatar: u.avatarUrl }; },
+    onChange(cb) { return session.subscribe(cb); },         // optional
+    clear()      { session.signOut(); },                    // optional
+    // no set() → the identity is read-only, which is what an account should be
+});`)}
+                <p><code>get()</code> is <b>synchronous by design</b>: apps call it while rendering.
+                   A host whose answer needs a round trip returns <code>null</code> until it knows and
+                   then announces — through the <code>onChange</code> it provided, or by calling
+                   <code>sac.identity.changed()</code>. Apps paint "nobody" first and update, exactly
+                   as they already do for the theme.</p>
+                <p class="sg-note">This is the same division as <code>sac.fs.backend</code>: an app
+                   that stores through <code>context.fs</code> and greets through
+                   <code>context.identity</code> runs unchanged on a desktop with neither a server
+                   nor an account, and on a product with both. Which is the point — the app never
+                   learns which one it is on.</p>
                 <p>Apps read, the host writes. An app that wants a name of its own asks in its own UI
                    and keeps it in its own <code>context.fs</code>; it does not get to rename you
                    everywhere. <code>id</code> is stable, meaningless and not a fingerprint: it

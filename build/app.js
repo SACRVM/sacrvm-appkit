@@ -173,11 +173,15 @@ await this.store.remove("notes/2026-08");`)}
     paint(context.identity && context.identity.get());
     this._offMe = context.identity && context.identity.onChange(paint);
 }`)}
-    <p class="bd-note"><b>It is not authentication.</b> No server, no password,
-       nothing verified — somebody typed a name into their own browser. Greet
-       people with it, colour their avatar with it, key your own data by
-       <code>id</code> if you like. Never gate access on it, never treat it as
-       proof of anyone, and never send it anywhere the user did not ask you to.</p>
+    <p class="bd-note"><b>On a desktop it is not authentication.</b> No server,
+       no password, nothing verified — somebody typed a name into their own
+       browser. Greet people with it, colour their avatar with it, key your own
+       data by <code>id</code>. Never gate access on it and never treat it as
+       proof of anyone: whether it means anything is the <em>host's</em> business,
+       and a host with a real account system supplies the answer from there
+       (<code>sac.identity.use</code>). Your app reads the same two methods
+       either way and never learns which host it is on — which is exactly why it
+       must not assume the stronger one.</p>
     <p class="bd-note">Everything on <code>sac</code> beyond <code>sac.app</code>
        belongs to the <b>host</b> and is optional. <code>sac.toast</code> is the usual
        example: guard it with <code>typeof sac.toast === "function"</code> rather than
