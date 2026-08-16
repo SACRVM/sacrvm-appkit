@@ -106,6 +106,17 @@
     <sac-command-palette></sac-command-palette>
 
     <script defer src="script.js"></script>
+    <script defer>
+        window.addEventListener("DOMContentLoaded", () => {
+            // Nav panel entries. Absolute paths (sac-nav marks the active one
+            // by comparing location.pathname), derived so the site also works
+            // under a path prefix — a GitHub Pages project site does.
+            const base = location.pathname.replace(/\/demo\/.*$/, "");
+            sac.router.register(base + "/",              null, { label: "Appkit",      icon: "cube" });
+            sac.router.register(base + "/demo/orb-lab/", null, { label: "Orb Lab",     icon: "globe" });
+            sac.router.register(base + "/styleguide/",   null, { label: "Style Guide", icon: "palette" });
+        });
+    </script>
     <script type="module">
         import { loadHelp } from "../../kit/js/lib/help-loader.js";
         window.addEventListener("DOMContentLoaded", () => {

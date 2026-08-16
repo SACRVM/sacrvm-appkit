@@ -20,11 +20,17 @@
     <script defer src="kit/js/lib/globals.js"></script>
     <script defer src="kit/js/lib/icons.js"></script>
     <script defer src="kit/js/lib/router.js"></script>
+    <script defer src="kit/js/lib/apps.js"></script>
     <script defer src="kit/js/components/sac-icon.js"></script>
     <script defer src="kit/js/components/sac-nav.js"></script>
     <script defer src="kit/js/components/sac-theme-toggle.js"></script>
     <script defer src="kit/js/components/sac-copy-button.js"></script>
     <script defer src="kit/js/components/sac-footer.js"></script>
+    <!-- The window app below runs in this page: sac-window hosts it, and its
+         own markup uses chips and a slider. -->
+    <script defer src="kit/js/components/sac-window.js"></script>
+    <script defer src="kit/js/components/sac-chip.js"></script>
+    <script defer src="kit/js/components/sac-slider.js"></script>
 
     <style>
         /* Page-local layout only — every value comes from a kit token, the
@@ -143,12 +149,25 @@
                     <p class="tile-meta">Start here</p>
                 </div>
             </a>
-            <a class="tile" href="demo/">
-                <sac-icon name="cube"></sac-icon>
+            <a class="tile" href="demo/orb-lab/">
+                <sac-icon name="globe"></sac-icon>
                 <div>
-                    <h2>Demo App</h2>
-                    <p>A launcher hub and a real workspace tool: sidebar, canvas, overlays, deep links.</p>
-                    <p class="tile-meta">Orb Lab</p>
+                    <h2>Orb Lab</h2>
+                    <p>The workspace layout as a running tool: sidebar controls, pan/zoom viewport,
+                       log, HUD and a floating help window.</p>
+                    <p class="tile-meta">Demo app · own page</p>
+                </div>
+            </a>
+            <!-- A window app, right here: the click injects its script and
+                 mounts it into a floating sac-window. ?app=about does the same
+                 without JS on the tile. -->
+            <a class="tile tile-window" href="?app=about" data-app="about">
+                <sac-icon name="info"></sac-icon>
+                <div>
+                    <h2>About This Kit</h2>
+                    <p>An app that is one custom element in one script, lazily loaded and mounted
+                       into a floating window through the app contract.</p>
+                    <p class="tile-meta">Demo app · opens in a window</p>
                 </div>
             </a>
             <a class="tile" id="download-tile" href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.0.0/sacrvm-appkit-1.0.0.zip">
@@ -165,6 +184,14 @@
                     <h2>Roadmap</h2>
                     <p>What is done, what comes next, and what this kit deliberately will not do.</p>
                     <p class="tile-meta">Incl. non-goals</p>
+                </div>
+            </a>
+            <a class="tile" href="https://github.com/SACRVM/sacrvm-appkit">
+                <sac-icon name="github"></sac-icon>
+                <div>
+                    <h2>Source</h2>
+                    <p>The whole kit, the style guide, this page — one repository, MIT licensed.</p>
+                    <p class="tile-meta">GitHub</p>
                 </div>
             </a>
         </main>
@@ -234,10 +261,30 @@
             // The release URL lives in the tile's href — read it back rather
             // than repeating it here, so a version bump touches one line.
             const zip = document.getElementById("download-tile").href;
-            sac.router.register(base + "/styleguide/", null, { label: "Style Guide", icon: "star" });
-            sac.router.register(base + "/demo/",       null, { label: "Demo",        icon: "cube" });
-            sac.router.register(zip,                   null, { label: "Download",    icon: "download" });
-            sac.router.register(base + "/roadmap/",    null, { label: "Roadmap",     icon: "document" });
+            sac.router.register(base + "/styleguide/",  null, { label: "Style Guide", icon: "star" });
+            sac.router.register(base + "/demo/orb-lab/", null, { label: "Orb Lab",    icon: "globe" });
+            sac.router.register(base + "/?app=about",   null, { label: "About",       icon: "info" });
+            sac.router.register(zip,                    null, { label: "Download",    icon: "download" });
+            sac.router.register(base + "/roadmap/",     null, { label: "Roadmap",     icon: "document" });
+            sac.router.register("https://github.com/SACRVM/sacrvm-appkit",
+                                                        null, { label: "Source",      icon: "github" });
+
+            // This page is the launcher: the window app runs here, no second
+            // dashboard in between. init() binds the [data-app] tile and the
+            // ?app=about deep link.
+            sac.apps.register({
+                id:          "about",
+                name:        "About This Kit",
+                icon:        "info",
+                description: "An overlay app: a lazily loaded custom element mounted into a " +
+                             "floating sac-window through the app contract.",
+                kind:        "window",
+                tag:         "tool-about",
+                src:         "demo/about/about.js",
+                width:       "460px",
+                height:      "560px",
+            });
+            sac.apps.init();
         });
     </script>
 </body>

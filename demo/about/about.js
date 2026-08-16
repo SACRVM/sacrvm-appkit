@@ -18,8 +18,8 @@ class ToolAbout extends HTMLElement {
                     This window itself is the demo: the app ships as a custom element,
                     its script was injected the moment you first clicked the tile, and it
                     was mounted into a floating <code>&lt;sac-window&gt;</code> through the
-                    app contract. Try the deep link: <code>?app=about</code> on the hub URL
-                    (<code>?tool=about</code> still works).
+                    app contract. Try the deep link: <code>?app=about</code> on the URL of
+                    whichever page hosts it (<code>?tool=about</code> still works).
                 </p>
                 <div style="display:flex;gap:4px;flex-wrap:wrap;">
                     <sac-chip label="zero-deps" color="green"></sac-chip>
