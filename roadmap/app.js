@@ -412,7 +412,7 @@
                 ...this._sections.map((s) => ({
                     label:  s.label,
                     icon:   "chevron-right",
-                    href:   "#/roadmap/" + s.id,
+                    href:   this._ctx.href(s.id),   // the host owns the prefix
                     active: s.id === active,
                 })),
             ]);

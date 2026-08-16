@@ -102,6 +102,13 @@
                 set(items) { if (window.sac.sidebar) sac.sidebar.set(items); },
                 clear() { if (window.sac.sidebar) sac.sidebar.clear(); },
             },
+            // Same contract as on a desktop, different address space: there a
+            // route sits under "#/<id>/", here it is the whole hash. Apps
+            // build links with this and work in both places unchanged.
+            href: (route) => {
+                const clean = route == null ? "" : String(route).replace(/^\/+|\/+$/g, "");
+                return clean ? "#/" + clean : "#/";
+            },
             deepLink: {
                 set(route) {
                     const clean = route == null ? "" : String(route).replace(/^\/+|\/+$/g, "");

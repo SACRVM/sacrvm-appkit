@@ -47,7 +47,7 @@
             this._page.innerHTML = `
                 <h1>${section.label}</h1>
                 <p class="lead">This section is addressable —
-                   <code>#/my-fullscreen-app/${section.id}</code>.</p>
+                   <code>${this._ctx.href(section.id)}</code>.</p>
             `;
 
             // The rail is a NAVIGATION rail. Sliders and colour fields stay
@@ -57,7 +57,9 @@
                 ...SECTIONS.map((s) => ({
                     label:  s.label,
                     icon:   s.icon,
-                    href:   `#/my-fullscreen-app/${s.id}`,
+                    // context.href, never a hand-built "#/id/route": the host
+                    // owns the address space, and standalone there is no id.
+                    href:   this._ctx.href(s.id),
                     active: s.id === section.id,
                 })),
             ]);

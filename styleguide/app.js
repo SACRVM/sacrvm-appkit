@@ -2517,7 +2517,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                 ...SECTIONS.map((s) => ({
                     label:  s.label,
                     icon:   s.icon,
-                    href:   "#/styleguide/" + s.id,
+                    href:   this._ctx.href(s.id),   // the host owns the prefix
                     active: s === this._section,
                 })),
             ];
@@ -2527,7 +2527,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                 items.push({ section: this._section.label });
                 this._anchors.forEach((a) => items.push({
                     label:  a.label,
-                    href:   `#/styleguide/${this._section.id}/${a.id}`,
+                    href:   this._ctx.href(`${this._section.id}/${a.id}`),
                     active: a.id === this._anchor,
                 }));
             }

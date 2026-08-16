@@ -307,12 +307,20 @@
             clear() { this.set([]); },
         };
 
+        // The host owns the address space, so an app must never build one:
+        // here a route lives under "#/<id>/", standalone it is just "#/".
+        // Rail links and anchors go through this.
+        ctx.href = (route) => {
+            const clean = route == null ? "" : String(route).replace(/^\/+|\/+$/g, "");
+            return `#/${id}${clean ? "/" + clean : ""}`;
+        };
+
         ctx.deepLink = {
             set(route) {
                 const clean = route == null ? "" : String(route).replace(/^\/+|\/+$/g, "");
                 const r = views.get(id);
                 if (r) r.route = clean;
-                replaceHash(`#/${id}${clean ? "/" + clean : ""}`);
+                replaceHash(ctx.href(clean));
             }
         };
         return ctx;
