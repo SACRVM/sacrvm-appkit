@@ -740,7 +740,10 @@ kbd {
     padding: 2.5rem 1rem;
     gap: 0.4rem;
 }
-.empty-state sac-icon {
+/* Direct child only: an empty state usually carries a button that offers the
+   way out, and a descendant selector would paint that button's icon dim too
+   — grey ink on a filled accent surface. */
+.empty-state > sac-icon {
     --icon-size: 36px;
     color: var(--text-dim);
     margin-bottom: 0.5rem;
@@ -887,7 +890,10 @@ kbd {
     transform: translateZ(0);
     backface-visibility: hidden;
 }
-.tile sac-icon {
+/* Direct child only, same reason as .empty-state: the tile's own mark is
+   48px and accent-coloured, an icon inside something nested in the tile is
+   not. (Every tile in the kit and the launcher appends it directly.) */
+.tile > sac-icon {
     --icon-size: 48px;
     margin-bottom: auto;
     color: var(--accent);
@@ -913,7 +919,7 @@ kbd {
     box-shadow: var(--shadow-2), 0 0 20px color-mix(in srgb, var(--accent) 20%, transparent);
     background: var(--tile-hover);
 }
-.tile:hover sac-icon {
+.tile:hover > sac-icon {
     transform: scale(1.1) rotate(5deg);
 }
 
