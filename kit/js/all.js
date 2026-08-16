@@ -40,6 +40,7 @@
         "lib/apps.js",
         "lib/hotkeys.js",
         "lib/color.js",
+        "lib/app.js",     // the app-side toolkit (apps.js is the host side)
 
         // components — any order, except where a comment says otherwise
         "components/sac-icon.js",

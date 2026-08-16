@@ -647,6 +647,81 @@
     /** The view currently on stage, or null at home. */
     function active() { return activeId; }
 
+    /* --------------------------------------------------------- install --- */
+
+    /**
+     * One repo, one app, one shape — so a desktop can find everything from
+     * the repo URL alone:
+     *
+     *   https://github.com/owner/repo   →  https://owner.github.io/repo/app.json
+     *
+     * A direct manifest URL, or a folder URL, is taken as given. GitHub Pages
+     * answers with CORS "*", so the manifest can be READ before anything is
+     * executed — which is the whole point: inspect() is data, add() is the
+     * commitment.
+     *
+     * Not usable as sources, both verified: raw.githubusercontent serves
+     * text/plain with nosniff (a browser refuses to run it as a script) and
+     * release assets serve octet-stream. Pages is the delivery surface.
+     */
+    function manifestUrl(input) {
+        const raw = String(input || "").trim();
+        if (!raw) throw new Error("[sac.apps] no URL");
+        const gh = /^(?:https?:\/\/)?(?:www\.)?github\.com\/([^/]+)\/([^/#?]+)/i.exec(raw);
+        if (gh) {
+            const repo = gh[2].replace(/\.git$/, "");
+            return `https://${gh[1].toLowerCase()}.github.io/${repo}/app.json`;
+        }
+        const url = new URL(raw, window.location.href);
+        if (!/\.json$/i.test(url.pathname)) {
+            url.pathname = url.pathname.replace(/\/?$/, "/") + "app.json";
+        }
+        return url.href;
+    }
+
+    const REQUIRED = ["id", "name", "kind", "tag", "entry"];
+
+    /**
+     * Fetch and validate a manifest. Reads only — nothing is registered, no
+     * app code runs. Show the result to the user, then call add().
+     * @returns Promise<manifest> with `src` (entry resolved) and `origin`.
+     */
+    async function inspect(input) {
+        const url = manifestUrl(input);
+        let data;
+        try {
+            const res = await fetch(url, { credentials: "omit" });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            data = await res.json();
+        } catch (err) {
+            throw new Error(`[sac.apps] no app manifest at ${url} (${err.message})`);
+        }
+        const missing = REQUIRED.filter((k) => !data[k]);
+        if (missing.length) {
+            throw new Error(`[sac.apps] ${url} is not an app manifest — missing ${missing.join(", ")}`);
+        }
+        if (!/-/.test(data.tag)) {
+            throw new Error(`[sac.apps] "${data.tag}" is not a valid custom element name`);
+        }
+        return Object.assign({}, data, {
+            src:    new URL(data.entry, url).href,
+            origin: new URL(url).origin,
+            manifestUrl: url,
+        });
+    }
+
+    /**
+     * Install: register an inspected manifest (or inspect a URL first).
+     * Registering does not run the app — its script is injected on first open,
+     * exactly like an app the shell declared itself.
+     * @returns Promise<manifest>
+     */
+    async function add(input) {
+        const manifest = typeof input === "string" ? await inspect(input) : input;
+        register(manifest);
+        return manifest;
+    }
+
     /* ------------------------------------------------------------ init --- */
 
     function init(options) {
@@ -695,7 +770,11 @@
         routeFromHash();
     }
 
-    sac.apps = { register, list, get, open, close, remove, isOpen, active, init };
+    sac.apps = {
+        register, list, get, open, close, remove, isOpen, active, init,
+        inspect, add,
+        theme,   // the one theme source; sac.app borrows it when standalone
+    };
 
     /**
      * @deprecated sac.launcher is the pre-apps name of this API and forwards
