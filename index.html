@@ -114,7 +114,7 @@
 <body class="app-page">
     <!-- ONE hub. The nav ribbon, the rail and the stage belong to the shell;
          everything else in this suite is an app that runs on that stage. -->
-    <sac-nav brand="SACRVM APPKIT" brand-icon="cube" brand-href="#/" app-name="v1.0.0">
+    <sac-nav brand="SACRVM APPKIT" brand-icon="cube" brand-href="#/" app-name="v1.1.0">
         <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
         <div slot="toolbar" class="toolbar">
             <a class="btn" href="https://github.com/SACRVM/sacrvm-appkit">
@@ -193,7 +193,7 @@
                                     <p class="tile-meta">App · incl. non-goals</p>
                                 </div>
                             </a>
-                            <a class="tile" id="download-tile" href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.0.0/sacrvm-appkit-1.0.0.zip">
+                            <a class="tile" id="download-tile" href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.1.0/sacrvm-appkit-1.1.0.zip">
                                 <sac-icon name="download"></sac-icon>
                                 <div>
                                     <h2>Download</h2>
@@ -250,7 +250,8 @@
                             <div class="card">
                                 <table class="facts">
                                     <tr><td>Custom elements</td><td>41, in 37 files</td></tr>
-                                    <tr><td>Helper modules</td><td>10 — router, icons, apps, colour, pan/zoom, hotkeys, dialog, scope, help loader, globals</td></tr>
+                                    <tr><td>Helper modules</td><td>13 — router, icons, apps, app, fs, identity, colour, pan/zoom, hotkeys, dialog, scope, help loader, globals</td></tr>
+                                    <tr><td>App contract</td><td><code>mount(context)</code> with theme, route, sidebar, deep links, storage (<code>fs</code>) and <code>identity</code> — every slot filled</td></tr>
                                     <tr><td>Dependencies</td><td>None. Vendored: marked + DOMPurify, only for the markdown help loader</td></tr>
                                     <tr><td>Build step</td><td>None, by design — <code>npx serve .</code> and reload</td></tr>
                                     <tr><td>Theming</td><td>Nine seed colours plus a light-or-dark flag; everything else derived with <code>color-mix()</code></td></tr>
@@ -263,7 +264,7 @@
                         </div>
                     </div>
 
-                    <sac-footer brand="SACRVM APPKIT" version="1.0.0"
+                    <sac-footer brand="SACRVM APPKIT" version="1.1.0"
                                 link-href="https://github.com/SACRVM/sacrvm-appkit" link-label="GITHUB"></sac-footer>
                 </div>
                 <!-- View apps are appended here by sac.apps. -->

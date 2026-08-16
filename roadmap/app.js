@@ -298,13 +298,17 @@
         <tr><th>Item</th><th>What</th><th>Status</th></tr>
         <tr data-item="shared-storage">
             <td>Shared file storage</td>
-            <td>The launcher shell owns a common store (OPFS + IndexedDB) and hands apps capability access at mount.</td>
-            <td><sac-chip label="open" color="gray"></sac-chip></td>
+            <td><code>context.fs</code> ships: a store scoped per app (read/write/remove/list/clear/usage/watch),
+                async so the bytes layer can move. The default is this browser's storage; a host swaps
+                <code>sac.fs.backend</code> — four methods — for OPFS, IndexedDB or a server without any app changing.</td>
+            <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
         <tr data-item="shell-identity">
             <td>Identity in the shell</td>
-            <td>Only the launcher logs in (e.g. Google) and feeds apps; apps stay auth-free and portable.</td>
-            <td><sac-chip label="open" color="gray"></sac-chip></td>
+            <td><code>context.identity</code> ships: the host answers who is here, apps only read it and stay
+                auth-free and portable. A desktop's answer is a local profile (explicitly not authentication);
+                a host with a real account system installs its own through <code>sac.identity.use()</code>.</td>
+            <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
         <tr data-item="release-embeds">
             <td>Release embeds</td>
@@ -322,8 +326,8 @@
     <table class="rm">
         <tr><th>Item</th><th>What</th><th>Status</th></tr>
         <tr data-item="release-zip">
-            <td>v1.0.0 tag + release ZIP</td>
-            <td>Semver tags; the release action attaches a ZIP of <code>kit/</code> with VERSION stamp and generated notes. v1.0.0 is released on GitHub.</td>
+            <td>Semver tag + release ZIP</td>
+            <td>Semver tags; the release action attaches a ZIP of <code>kit/</code> with a VERSION stamp. v1.0.0 and v1.1.0 are released on GitHub.</td>
             <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
         <tr data-item="npm-channel">
