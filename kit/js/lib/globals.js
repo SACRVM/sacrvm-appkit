@@ -61,6 +61,36 @@
                 this._nav?.renderToolbar();
             },
             clear() { this.set([]); }
+        },
+
+        /**
+         * Sidebar projection — the left-rail counterpart to sac.toolbar. A
+         * view app projects its own navigation into the shell's rail instead
+         * of drawing one, so every app in the shell wears the same chrome:
+         *
+         *   context.sidebar.set([
+         *       { section: "Reference" },
+         *       { label: "Tokens", icon: "star", href: "#/styleguide/tokens", active: true },
+         *       { label: "Rebuild", icon: "sync", onClick: () => rebuild() },
+         *   ]);
+         *
+         * Item shape: { label, icon?, href?, onClick?, active?, disabled? } —
+         * or { section } alone for a group heading. href renders a link
+         * (hash sub-routes), onClick a button; give one, not both.
+         *
+         * <sac-sidebar> registers itself as the renderer on connect, and
+         * hides itself while there are no items. sac.apps swaps the items
+         * when the active view changes — apps use context.sidebar, which is
+         * scoped to them, rather than this global directly.
+         */
+        sidebar: {
+            _items: [],
+            _host:  null,
+            set(items) {
+                this._items = Array.isArray(items) ? items : [];
+                this._host?.renderSidebar();
+            },
+            clear() { this.set([]); }
         }
     };
 })();

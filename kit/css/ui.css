@@ -819,9 +819,10 @@ kbd {
        #app-root carry; the 4rem on top is the hero's own breathing room. */
     padding: calc(50px + 4rem) 2rem 2rem;
 }
-/* Inside the SPA shell the nav is already cleared by #app-root — take the
-   50px back so the two never stack. */
-#app-root .hub-container { padding-top: 4rem; }
+/* Inside a container that already cleared the nav (#app-root, or the shell
+   stage inside .main-layout) — take the 50px back so the two never stack. */
+#app-root .hub-container,
+.main-layout .hub-container { padding-top: 4rem; }
 .hub-container header {
     margin-bottom: 3rem;
 }
@@ -1022,6 +1023,20 @@ canvas {
     padding-top: 50px; /* room for the fixed <sac-nav> */
     min-height: 100vh;
 }
+
+/* Shell stage (sac.apps kind:"view") — the area beside <sac-sidebar> that
+   holds the home section and the mounted view apps. It owns the scrolling,
+   so the rail and the ribbon stay put. */
+.app-stage {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    position: relative;
+}
+/* A view fills the stage. [hidden] needs saying out loud: a custom element
+   with a display of its own beats the UA's hidden rule. */
+.sac-app-view { display: block; }
+.sac-app-view[hidden] { display: none; }
 
 .center-shell {
     min-height: 100vh;

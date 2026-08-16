@@ -15,8 +15,10 @@ guide, demo app and roadmap, all built with the kit.
 npx serve .        # http://localhost:3000
 ```
 
-- `/styleguide/` — every token, component and pattern, live (start here)
-- `/demo/` — a small real app proving the kit end-to-end
+The root page is a **shell**: one hub, and everything else — style guide,
+roadmap, demo tool — is an app that runs on its stage (`sac.apps`,
+`kind: "view"`). Apps project their own navigation into the shell's rail and
+address their state through the hash (`#/styleguide/components`).
 
 ## Structure
 
@@ -27,8 +29,9 @@ kit/                    the library — copy or link this folder into your app
   js/lib/               sac namespace: router, icons, scope, dialog,
                         pan-zoom, help-loader, apps, hotkeys, color
   js/vendor/            marked + DOMPurify (for the help loader)
-  js/components/        36 files registering 40 sac-* Custom Elements
-  templates/            copy-out skeletons: launcher, tool page, SPA shell
+  js/components/        37 files registering 41 sac-* Custom Elements
+  templates/            copy-out skeletons: app shell, launcher, tool page,
+                        SPA shell
 styleguide/             the kit documenting itself (built WITH the kit)
 demo/                   launcher hub → Orb Lab workspace tool → overlays
 MIGRATION.md            legacy app → kit (only relevant when porting one)

@@ -22,18 +22,41 @@
  *                                             // "wide" (2 columns) | "large" (2 columns
  *                                             // × 2 rows); unknown values fall back to
  *                                             // medium silently
- *       kind:        "window",                // "window" (overlay app) | "page" (plain link)
- *       // kind:"window" only:
+ *       kind:        "window",                // "window" | "view" | "page"
+ *       // kind:"window" and kind:"view":
  *       tag:         "app-color-bucket",      // the app's custom element
  *       src:         "apps/color-bucket.js",  // classic script, injected on first open
+ *       accent:      "#10b981",               // optional — set as --accent on the app
+ *       // kind:"window" only:
  *       width:       "520px", height: "640px",// sac-window size (defaults 500px/600px)
- *       accent:      "#10b981",               // optional — set as --accent on the sac-window
  *       controls:    "close",                 // optional — sac-window controls subset ("min max close")
  *       resizable:   false,                   // optional — false sets no-resize on the window
  *       // kind:"page" only:
  *       href:        "orb-lab/",              // tile becomes a normal link
  *   });
  *   sac.apps.init();   // binds [data-app] tiles + ?app= deep links
+ *
+ * The three kinds — where an app runs:
+ *
+ *   "window"  floats above the shell in a <sac-window>. Small tools, things
+ *             you want beside your work.
+ *   "view"    takes over the shell's stage: ONE hub, everything else an app.
+ *             Addressed by hash — "#/<id>", with the app's own sub-route
+ *             after it ("#/styleguide/components"), so back/forward and
+ *             bookmarks work. The element is created once and kept (hidden)
+ *             when you switch away, so state survives; mount() runs once.
+ *             A view projects its navigation into the shell's rail through
+ *             context.sidebar instead of drawing one — same idea as
+ *             sac.toolbar for the ribbon.
+ *   "page"    its own document. Only for apps that must also stand alone.
+ *
+ * Shell contract for views (see kit/templates/shell.html):
+ *
+ *   sac.apps.init({ viewHost: "#app-stage", home: "#app-home" });
+ *
+ *   viewHost — element the view elements are appended to (default "#app-root",
+ *              the kit's SPA convention)
+ *   home     — element shown while no view is active, i.e. at "#/" (optional)
  *
  * API:
  *   register(manifest)   upsert by id (re-register replaces; first
@@ -51,15 +74,22 @@
  *                        in the DOM and is re-open()ed on later calls.
  *                        Rejects on script load failure (console.error +
  *                        sac.toast if available).
- *   close(id)            closes the window (element + window stay in the DOM)
- *   remove(id)           unregister; if a window exists, calls the app's
- *                        unmount() (when present) and removes the window.
+                        kind:"view" does the same injection, then puts the
+ *                        element on the shell's stage and sets the hash to
+ *                        "#/<id>" — the address IS the open call, so a link
+ *                        works as well as a click.
+ *   close(id)            window: closes it (element + window stay in the DOM).
+ *                        view: leaves the stage, back to the home section.
+ *   remove(id)           unregister; if the app was created, calls its
+ *                        unmount() (when present) and drops window or view.
  *                        Emits "sac:apps-changed".
- *   isOpen(id)           → boolean (window exists and is open)
- *   init()               binds click on [data-app="<id>"] tiles (delegated,
- *                        so tiles rendered later work too) and handles the
+ *   isOpen(id)           → boolean (window open, or view currently on stage)
+ *   active()             → id of the view on stage, or null
+ *   init(options?)       binds click on [data-app="<id>"] tiles (delegated,
+ *                        so tiles rendered later work too), handles the
  *                        ?app=<id> deep link, then cleans the URL via
- *                        replaceState. Legacy compatibility: [data-overlay]
+ *                        replaceState, and — when any view app is registered —
+ *                        routes the hash. Legacy compatibility: [data-overlay]
  *                        and ?tool= are honored the same way.
  *
  * mount(context) lifecycle:
@@ -72,10 +102,23 @@
  *   context = {
  *       appId: "color-bucket",
  *       params: URLSearchParams,   // deep-link params snapshot at open (empty if none)
+ *       route: "components",       // views only: the sub-route after the app id
+ *                                  // in "#/<id>/<route>" ("" when there is none)
+ *       onRoute(cb),               // views only: cb(route) whenever the sub-route
+ *                                  // changes from outside — a rail link, the back
+ *                                  // button, a pasted URL. Returns an unsubscribe.
+ *       sidebar: {                 // views only: this app's slice of the shell rail.
+ *           set(items),            // items render while THIS app is on stage and
+ *           clear()                // are restored when you switch back to it
+ *       },
  *       deepLink: {
- *           set(obj)               // writes ?app=<id>&<obj entries> via
+ *           set(x)                 // window: writes ?app=<id>&<x entries> via
  *                                  // history.replaceState; set(null) cleans the
- *                                  // URL back to the bare path (hash preserved)
+ *                                  // URL back to the bare path (hash preserved).
+ *                                  // view: set("components") writes the sub-route
+ *                                  // "#/<id>/components", set(null) "#/<id>" —
+ *                                  // replaceState, so a view swap stays one history
+ *                                  // entry
  *       },
  *       theme: {
  *           get(),                 // "dark" | "light" | "auto" (the flag, not the resolution)
@@ -99,10 +142,39 @@
 
     const registry = new Map();   // id  → manifest (internal copy)
     const windows  = new Map();   // id  → { win, el }
+    const views    = new Map();   // id  → { el, route, sidebar, routeCbs }
     const injected = new Map();   // src → Promise (each script injected once)
     const opening  = new Map();   // id  → in-flight open() Promise
     let stackOffset = 0;          // cascade multiple open windows slightly
     let inited = false;
+    let hashBound = false;
+    let viewHost  = null;         // element the view elements live in
+    let homeEl    = null;         // shown while no view is on stage ("#/")
+    let activeId  = null;         // the view currently on stage
+    let baseTitle = "";           // document.title at init, restored at home
+
+    /* ------------------------------------------------------------- URL ---- */
+
+    function resolveEl(ref) {
+        if (!ref) return null;
+        return typeof ref === "string" ? document.querySelector(ref) : ref;
+    }
+
+    /** replaceState never fires hashchange — the caller has already acted. */
+    function replaceHash(hash) {
+        window.history.replaceState({}, document.title,
+            window.location.pathname + window.location.search + hash);
+    }
+
+    /** "#/styleguide/components" → { id: "styleguide", route: "components" } */
+    function parseHash() {
+        const m = /^#\/([^/?]+)(?:\/([^?]*))?/.exec(window.location.hash || "");
+        if (!m) return null;
+        return {
+            id:    decodeURIComponent(m[1]),
+            route: m[2] ? decodeURIComponent(m[2]) : "",
+        };
+    }
 
     /* ------------------------------------------------------------ theme --
        One source of truth with <sac-theme-toggle>: the data-theme attribute
@@ -176,11 +248,18 @@
 
     /* ---------------------------------------------------------- context -- */
 
-    function makeContext(id, params) {
-        return {
+    function makeContext(manifest, params) {
+        const id = manifest.id;
+        const ctx = {
             appId: id,
             params: params == null ? new URLSearchParams() : new URLSearchParams(params),
-            deepLink: {
+            theme,
+            fs: null,       // reserved — future shared storage capability
+            identity: null, // reserved — future shell identity capability
+        };
+
+        if (manifest.kind !== "view") {
+            ctx.deepLink = {
                 set(obj) {
                     const tail = window.location.hash;
                     if (obj == null) {
@@ -196,11 +275,43 @@
                     window.history.replaceState({}, document.title,
                         `${window.location.pathname}?${qs}${tail}`);
                 }
-            },
-            theme,
-            fs: null,       // reserved — future shared storage capability
-            identity: null, // reserved — future shell identity capability
+            };
+            return ctx;
+        }
+
+        /* ---- view-only capabilities: the stage, the rail, the sub-route --- */
+
+        const rec = views.get(id);
+        ctx.route = rec ? rec.route : "";
+
+        ctx.onRoute = (cb) => {
+            const r = views.get(id);
+            if (typeof cb !== "function" || !r) return () => {};
+            r.routeCbs.add(cb);
+            return () => r.routeCbs.delete(cb);
         };
+
+        // Scoped rail: items are remembered per app and rendered only while
+        // that app is on stage, so switching away and back restores them.
+        ctx.sidebar = {
+            set(items) {
+                const r = views.get(id);
+                if (!r) return;
+                r.sidebar = Array.isArray(items) ? items : [];
+                if (activeId === id && window.sac.sidebar) sac.sidebar.set(r.sidebar);
+            },
+            clear() { this.set([]); },
+        };
+
+        ctx.deepLink = {
+            set(route) {
+                const clean = route == null ? "" : String(route).replace(/^\/+|\/+$/g, "");
+                const r = views.get(id);
+                if (r) r.route = clean;
+                replaceHash(`#/${id}${clean ? "/" + clean : ""}`);
+            }
+        };
+        return ctx;
     }
 
     /* --------------------------------------------------------- registry -- */
@@ -220,6 +331,15 @@
         // Upsert: Map.set keeps the original position for existing keys, so
         // the order of FIRST registration is the list order.
         registry.set(manifest.id, Object.assign({}, manifest));
+
+        // A view is a destination, so it belongs in the nav panel — one
+        // registration, both renderings. `nav: false` opts out.
+        if (manifest.kind === "view" && manifest.nav !== false && window.sac.router) {
+            sac.router.register(`#/${manifest.id}`, null, {
+                label: displayName(manifest),
+                icon:  manifest.icon || null,
+            });
+        }
         emitChanged(manifest.id, "register");
     }
 
@@ -257,6 +377,102 @@
             .then(() => customElements.whenDefined(manifest.tag));
     }
 
+    /* ------------------------------------------------------------ views -- */
+
+    /** Hand a changed sub-route to the app. Silent when nothing moved, so a
+     *  re-activation does not look like navigation. */
+    function deliverRoute(id, route) {
+        const rec = views.get(id);
+        if (!rec) return;
+        const next = route || "";
+        if (rec.route === next) return;
+        rec.route = next;
+        rec.routeCbs.forEach((cb) => {
+            try { cb(next); }
+            catch (err) { console.error(`[sac.apps] ${id} onRoute handler threw:`, err); }
+        });
+    }
+
+    /** Put one view on stage: hide the others and the home section, restore
+     *  the app's rail. The elements stay in the DOM — state survives a swap. */
+    function showView(id, route) {
+        const rec = views.get(id);
+        if (!rec) return;
+        views.forEach((r, key) => { r.el.hidden = key !== id; });
+        if (homeEl) homeEl.hidden = true;
+        activeId = id;
+        deliverRoute(id, route);
+        if (window.sac.sidebar) sac.sidebar.set(rec.sidebar);
+        const manifest = registry.get(id);
+        if (baseTitle && manifest) document.title = `${displayName(manifest)} · ${baseTitle}`;
+        emitChanged(id, "view");
+    }
+
+    function goHome() {
+        views.forEach((r) => { r.el.hidden = true; });
+        activeId = null;
+        if (homeEl) homeEl.hidden = false;
+        if (window.sac.sidebar) sac.sidebar.clear();
+        if (baseTitle) document.title = baseTitle;
+        emitChanged(null, "home");
+    }
+
+    async function openView(manifest, route, params) {
+        const id = manifest.id;
+        if (!views.has(id)) {
+            try {
+                await ensureDefined(manifest);
+            } catch (err) {
+                console.error(`[sac.apps] ${err.message}`);
+                if (typeof sac.toast === "function") {
+                    sac.toast(`Could not load "${displayName(manifest)}".`, { kind: "error" });
+                }
+                throw err;
+            }
+            if (!registry.has(id)) throw new Error(`[sac.apps] app removed while loading: ${id}`);
+
+            const host = viewHost || document.getElementById("app-root");
+            if (!host) {
+                const msg = `[sac.apps] no view host for "${id}" — pass init({ viewHost })`;
+                console.error(msg);
+                throw new Error(msg);
+            }
+
+            const el = document.createElement(manifest.tag);
+            el.className = "sac-app-view";
+            // Per-app accent: one seed on the view, everything derived follows.
+            if (manifest.accent) el.style.setProperty("--accent", manifest.accent);
+
+            // The record exists BEFORE mount(): context.route and
+            // context.sidebar read through it.
+            views.set(id, { el, route: route || "", sidebar: [], routeCbs: new Set() });
+            host.appendChild(el);
+
+            if (typeof el.mount === "function") {
+                try { el.mount(makeContext(manifest, params)); }
+                catch (err) { console.error(`[sac.apps] ${id}.mount() threw:`, err); }
+            }
+        }
+        showView(id, route);
+        return views.get(id).el;
+    }
+
+    /** The hash is the address of the stage. Routes only what we own: an
+     *  unknown id belongs to another router (sac.router) and is left alone. */
+    function routeFromHash() {
+        const parsed = parseHash();
+        if (!parsed) {
+            if (activeId) goHome();
+            return;
+        }
+        const manifest = registry.get(parsed.id);
+        if (!manifest || manifest.kind !== "view") return;
+        if (activeId === parsed.id) { deliverRoute(parsed.id, parsed.route); return; }
+        openView(manifest, parsed.route).catch(() => {});
+    }
+
+    /* ------------------------------------------------------------- open --- */
+
     async function doOpen(id, params) {
         const manifest = registry.get(id);
         if (!manifest) {
@@ -270,6 +486,19 @@
             if (qs) href += (href.includes("?") ? "&" : "?") + qs;
             window.location.href = href;
             return new Promise(() => {}); // navigating away — never resolves
+        }
+
+        if (manifest.kind === "view") {
+            // The address IS the open call, so a plain link does what a click
+            // does. pushState (not replace) — back returns where you came from.
+            const known = views.get(id);
+            const route = known ? known.route : "";
+            const target = `#/${id}${route ? "/" + route : ""}`;
+            if (window.location.hash !== target) {
+                window.history.pushState({}, document.title,
+                    window.location.pathname + window.location.search + target);
+            }
+            return openView(manifest, route, params);
         }
 
         // kind:"window" (the default — legacy specs carry no kind field).
@@ -323,7 +552,7 @@
         // mount(context): exactly once per element lifetime, right after the
         // element lands in the document. Opt-in — apps without mount() work.
         if (typeof el.mount === "function") {
-            try { el.mount(makeContext(id, params)); }
+            try { el.mount(makeContext(manifest, params)); }
             catch (err) { console.error(`[sac.apps] ${id}.mount() threw:`, err); }
         }
 
@@ -344,32 +573,58 @@
     /* ------------------------------------------------- close / remove ---- */
 
     function close(id) {
+        const manifest = registry.get(id);
+        if (manifest && manifest.kind === "view") {
+            if (activeId === id) { replaceHash("#/"); goHome(); }
+            return;
+        }
         const rec = windows.get(id);
         if (rec) rec.win.close();
+    }
+
+    function unmountEl(id, el) {
+        if (typeof el.unmount !== "function") return;
+        try { el.unmount(); }
+        catch (err) { console.error(`[sac.apps] ${id}.unmount() threw:`, err); }
     }
 
     function remove(id) {
         registry.delete(id);
         const rec = windows.get(id);
         if (rec) {
-            if (typeof rec.el.unmount === "function") {
-                try { rec.el.unmount(); }
-                catch (err) { console.error(`[sac.apps] ${id}.unmount() threw:`, err); }
-            }
+            unmountEl(id, rec.el);
             rec.win.remove();
             windows.delete(id);
+        }
+        const view = views.get(id);
+        if (view) {
+            unmountEl(id, view.el);
+            view.el.remove();
+            views.delete(id);
+            if (activeId === id) { replaceHash("#/"); goHome(); }
         }
         emitChanged(id, "remove");
     }
 
     function isOpen(id) {
+        if (activeId === id) return true;
         const rec = windows.get(id);
         return !!(rec && rec.win.isConnected && rec.win.hasAttribute("open"));
     }
 
+    /** The view currently on stage, or null at home. */
+    function active() { return activeId; }
+
     /* ------------------------------------------------------------ init --- */
 
-    function init() {
+    function init(options) {
+        const opts = options || {};
+        // The stage and the home section. Defaults keep the plain SPA case
+        // working with no options at all.
+        viewHost = resolveEl(opts.viewHost) || viewHost || document.getElementById("app-root");
+        if (opts.home) homeEl = resolveEl(opts.home);
+        if (!baseTitle) baseTitle = document.title;
+
         if (!inited) {
             inited = true;
             // Tiles: [data-app="<id>"] opens that app. Delegated, so tiles
@@ -397,9 +652,18 @@
             window.history.replaceState({}, document.title,
                 window.location.pathname + window.location.hash);
         }
+
+        // The hash addresses the stage. Bound once; popstate as well as
+        // hashchange, because open() pushes its address itself.
+        if (!hashBound) {
+            hashBound = true;
+            window.addEventListener("hashchange", routeFromHash);
+            window.addEventListener("popstate", routeFromHash);
+        }
+        routeFromHash();
     }
 
-    sac.apps = { register, list, get, open, close, remove, isOpen, init };
+    sac.apps = { register, list, get, open, close, remove, isOpen, active, init };
 
     /**
      * @deprecated sac.launcher is the pre-apps name of this API and forwards

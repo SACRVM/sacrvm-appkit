@@ -16,24 +16,17 @@
 
     <link rel="stylesheet" href="kit/css/ui.css">
 
-    <!-- This page is built WITH the kit, and loads only what it uses. -->
-    <script defer src="kit/js/lib/globals.js"></script>
-    <script defer src="kit/js/lib/icons.js"></script>
-    <script defer src="kit/js/lib/router.js"></script>
-    <script defer src="kit/js/lib/apps.js"></script>
-    <script defer src="kit/js/components/sac-icon.js"></script>
-    <script defer src="kit/js/components/sac-nav.js"></script>
-    <script defer src="kit/js/components/sac-theme-toggle.js"></script>
-    <script defer src="kit/js/components/sac-copy-button.js"></script>
-    <script defer src="kit/js/components/sac-footer.js"></script>
-    <!-- The window app below runs in this page: sac-window hosts it, and its
-         own markup uses chips and a slider. -->
-    <script defer src="kit/js/components/sac-window.js"></script>
-    <script defer src="kit/js/components/sac-chip.js"></script>
-    <script defer src="kit/js/components/sac-slider.js"></script>
+    <!-- The shell hosts every app in this suite, and those apps between them
+         demo the whole kit — so here the union IS everything. A normal app
+         cherry-picks (style guide → Helpers → "Script load order"). -->
+    <script defer src="kit/js/all.js"></script>
+    <!-- The markdown help loader is an ES module the apps import themselves;
+         its two vendored libraries are shared, so the shell brings them. -->
+    <script defer src="kit/js/vendor/marked.min.js"></script>
+    <script defer src="kit/js/vendor/purify.min.js"></script>
 
     <style>
-        /* Page-local layout only — every value comes from a kit token, the
+        /* Shell-local layout only — every value comes from a kit token, the
            same way styleguide.css and roadmap.css stay on the system. */
         .section {
             max-width: 1400px;
@@ -118,8 +111,10 @@
         }
     </style>
 </head>
-<body>
-    <sac-nav brand="SACRVM APPKIT" brand-icon="cube" brand-href="./" app-name="v1.0.0">
+<body class="app-page">
+    <!-- ONE hub. The nav ribbon, the rail and the stage belong to the shell;
+         everything else in this suite is an app that runs on that stage. -->
+    <sac-nav brand="SACRVM APPKIT" brand-icon="cube" brand-href="#/" app-name="v1.0.0">
         <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
         <div slot="toolbar" class="toolbar">
             <a class="btn" href="https://github.com/SACRVM/sacrvm-appkit">
@@ -128,94 +123,105 @@
         </div>
     </sac-nav>
 
-    <div class="orb"></div>
+    <div class="workspace">
+        <div class="main-layout">
+            <!-- The rail renders whatever the app on stage projects into it
+                 (context.sidebar); with nothing projected it hides itself. -->
+            <sac-sidebar></sac-sidebar>
 
-    <div class="hub-container">
-        <header>
-            <h1>SACRVM APPKIT</h1>
-            <p class="intro-text">
-                A complete UI system for tool-style web apps — launcher hubs, workspace pages,
-                floating windows and seed-driven themes.
-                Zero dependencies, zero build: plain HTML, Custom Elements and CSS tokens, served as-is.
-            </p>
-        </header>
+            <div class="app-stage" id="app-stage">
+                <!-- Home: shown at "#/", hidden while a view app is on stage. -->
+                <div id="app-home">
+                    <div class="orb"></div>
 
-        <main class="grid">
-            <a class="tile" href="styleguide/">
-                <sac-icon name="star"></sac-icon>
-                <div>
-                    <h2>Style Guide</h2>
-                    <p>Every token, component and pattern, live — and built with the kit itself.</p>
-                    <p class="tile-meta">Start here</p>
-                </div>
-            </a>
-            <a class="tile" href="demo/orb-lab/">
-                <sac-icon name="globe"></sac-icon>
-                <div>
-                    <h2>Orb Lab</h2>
-                    <p>The workspace layout as a running tool: sidebar controls, pan/zoom viewport,
-                       log, HUD and a floating help window.</p>
-                    <p class="tile-meta">Demo app · own page</p>
-                </div>
-            </a>
-            <!-- A window app, right here: the click injects its script and
-                 mounts it into a floating sac-window. ?app=about does the same
-                 without JS on the tile. -->
-            <a class="tile tile-window" href="?app=about" data-app="about">
-                <sac-icon name="info"></sac-icon>
-                <div>
-                    <h2>About This Kit</h2>
-                    <p>An app that is one custom element in one script, lazily loaded and mounted
-                       into a floating window through the app contract.</p>
-                    <p class="tile-meta">Demo app · opens in a window</p>
-                </div>
-            </a>
-            <a class="tile" id="download-tile" href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.0.0/sacrvm-appkit-1.0.0.zip">
-                <sac-icon name="download"></sac-icon>
-                <div>
-                    <h2>Download</h2>
-                    <p>The <code>kit/</code> folder plus the licence, ready to drop into your project.</p>
-                    <p class="tile-meta">v1.0.0 · 390 KB ZIP</p>
-                </div>
-            </a>
-            <a class="tile" href="roadmap/">
-                <sac-icon name="document"></sac-icon>
-                <div>
-                    <h2>Roadmap</h2>
-                    <p>What is done, what comes next, and what this kit deliberately will not do.</p>
-                    <p class="tile-meta">Incl. non-goals</p>
-                </div>
-            </a>
-            <a class="tile" href="https://github.com/SACRVM/sacrvm-appkit">
-                <sac-icon name="github"></sac-icon>
-                <div>
-                    <h2>Source</h2>
-                    <p>The whole kit, the style guide, this page — one repository, MIT licensed.</p>
-                    <p class="tile-meta">GitHub</p>
-                </div>
-            </a>
-        </main>
-    </div>
+                    <div class="hub-container">
+                        <header>
+                            <h1>SACRVM APPKIT</h1>
+                            <p class="intro-text">
+                                A complete UI system for tool-style web apps — launcher hubs, workspace pages,
+                                floating windows and seed-driven themes.
+                                Zero dependencies, zero build: plain HTML, Custom Elements and CSS tokens, served as-is.
+                            </p>
+                        </header>
 
-    <div class="section">
-        <h2>Get it</h2>
-        <p class="lead">
-            Vendoring is the primary model: copy the versioned <code>kit/</code> folder into your
-            own repo and upgrade when <em>you</em> choose. No install step, no lockfile, fully offline.
-        </p>
-
-        <div class="two-col">
-            <div class="card">
-                <ol class="steps">
-                    <li><strong>Download</strong> the ZIP, or clone the repo.</li>
-                    <li><strong>Copy <code>kit/</code></strong> into your project.</li>
-                    <li><strong>Link the stylesheet</strong> and the components you use.</li>
-                </ol>
-                <div class="snippet">
-                    <div class="snippet-head">
-                        <span>index.html</span>
-                        <sac-copy-button for="#snippet-code" label="Copy the snippet"></sac-copy-button>
+                        <main class="grid">
+                            <!-- View apps are addressed by hash, so a plain link
+                                 opens them: no click handler in the way, and
+                                 middle-click and "copy link" do the right thing. -->
+                            <a class="tile" href="#/styleguide">
+                                <sac-icon name="star"></sac-icon>
+                                <div>
+                                    <h2>Style Guide</h2>
+                                    <p>Every token, component and pattern, live — and built with the kit itself.</p>
+                                    <p class="tile-meta">App · start here</p>
+                                </div>
+                            </a>
+                            <a class="tile" href="#/orb-lab">
+                                <sac-icon name="globe"></sac-icon>
+                                <div>
+                                    <h2>Orb Lab</h2>
+                                    <p>The workspace layout as a running tool: sidebar controls, pan/zoom viewport,
+                                       log, HUD and a floating help window.</p>
+                                    <p class="tile-meta">App · demo</p>
+                                </div>
+                            </a>
+                            <!-- A window app: the click injects its script and
+                                 mounts it into a floating sac-window. -->
+                            <a class="tile tile-window" href="?app=about" data-app="about">
+                                <sac-icon name="info"></sac-icon>
+                                <div>
+                                    <h2>About This Kit</h2>
+                                    <p>An app that is one custom element in one script, lazily loaded and mounted
+                                       into a floating window through the app contract.</p>
+                                    <p class="tile-meta">App · opens in a window</p>
+                                </div>
+                            </a>
+                            <a class="tile" href="#/roadmap">
+                                <sac-icon name="document"></sac-icon>
+                                <div>
+                                    <h2>Roadmap</h2>
+                                    <p>What is done, what comes next, and what this kit deliberately will not do.</p>
+                                    <p class="tile-meta">App · incl. non-goals</p>
+                                </div>
+                            </a>
+                            <a class="tile" id="download-tile" href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.0.0/sacrvm-appkit-1.0.0.zip">
+                                <sac-icon name="download"></sac-icon>
+                                <div>
+                                    <h2>Download</h2>
+                                    <p>The <code>kit/</code> folder plus the licence, ready to drop into your project.</p>
+                                    <p class="tile-meta">v1.0.0 · 390 KB ZIP</p>
+                                </div>
+                            </a>
+                            <a class="tile" href="https://github.com/SACRVM/sacrvm-appkit">
+                                <sac-icon name="github"></sac-icon>
+                                <div>
+                                    <h2>Source</h2>
+                                    <p>The whole kit, the style guide, this shell — one repository, MIT licensed.</p>
+                                    <p class="tile-meta">GitHub</p>
+                                </div>
+                            </a>
+                        </main>
                     </div>
+
+                    <div class="section">
+                        <h2>Get it</h2>
+                        <p class="lead">
+                            Vendoring is the primary model: copy the versioned <code>kit/</code> folder into your
+                            own repo and upgrade when <em>you</em> choose. No install step, no lockfile, fully offline.
+                        </p>
+
+                        <div class="two-col">
+                            <div class="card">
+                                <ol class="steps">
+                                    <li><strong>Download</strong> the ZIP, or clone the repo.</li>
+                                    <li><strong>Copy <code>kit/</code></strong> into your project.</li>
+                                    <li><strong>Link the stylesheet</strong> and the components you use.</li>
+                                </ol>
+                                <div class="snippet">
+                                    <div class="snippet-head">
+                                        <span>index.html</span>
+                                        <sac-copy-button for="#snippet-code" label="Copy the snippet"></sac-copy-button>
+                                    </div>
 <pre id="snippet-code" style="margin:0.5rem 0 0">&lt;link rel="stylesheet" href="kit/css/ui.css"&gt;
 
 &lt;script defer src="kit/js/lib/globals.js"&gt;&lt;/script&gt;
@@ -224,54 +230,73 @@
 &lt;script defer src="kit/js/components/sac-toggle.js"&gt;&lt;/script&gt;
 
 &lt;sac-toggle label="Ready" checked&gt;&lt;/sac-toggle&gt;</pre>
-                </div>
-                <p class="tile-meta" style="margin-top:1rem">
-                    <code>kit/templates/</code> holds copy-out skeletons for a launcher hub, a tool
-                    page and an SPA shell. Older releases:
-                    <a href="https://github.com/SACRVM/sacrvm-appkit/releases">all releases</a>.
-                </p>
-            </div>
+                                </div>
+                                <p class="tile-meta" style="margin-top:1rem">
+                                    <code>kit/templates/</code> holds copy-out skeletons for a launcher hub, a tool
+                                    page, an SPA shell and this app shell. Older releases:
+                                    <a href="https://github.com/SACRVM/sacrvm-appkit/releases">all releases</a>.
+                                </p>
+                            </div>
 
-            <div class="card">
-                <table class="facts">
-                    <tr><td>Custom elements</td><td>40, in 36 files</td></tr>
-                    <tr><td>Helper modules</td><td>10 — router, icons, apps, colour, pan/zoom, hotkeys, dialog, scope, help loader, globals</td></tr>
-                    <tr><td>Dependencies</td><td>None. Vendored: marked + DOMPurify, only for the markdown help loader</td></tr>
-                    <tr><td>Build step</td><td>None, by design — <code>npx serve .</code> and reload</td></tr>
-                    <tr><td>Theming</td><td>Nine seed colours plus a light-or-dark flag; everything else derived with <code>color-mix()</code></td></tr>
-                    <tr><td>Contrast</td><td>State colours solved to WCAG 2.1 AA in both themes</td></tr>
-                    <tr><td>Translation</td><td>Every kit string behind <code>sac.i18n</code>, English inline as the fallback</td></tr>
-                    <tr><td>Browsers</td><td>Chromium, Firefox and Safari — Shadow DOM, Custom Elements, <code>color-mix()</code></td></tr>
-                    <tr><td>Licence</td><td>MIT</td></tr>
-                </table>
+                            <div class="card">
+                                <table class="facts">
+                                    <tr><td>Custom elements</td><td>41, in 37 files</td></tr>
+                                    <tr><td>Helper modules</td><td>10 — router, icons, apps, colour, pan/zoom, hotkeys, dialog, scope, help loader, globals</td></tr>
+                                    <tr><td>Dependencies</td><td>None. Vendored: marked + DOMPurify, only for the markdown help loader</td></tr>
+                                    <tr><td>Build step</td><td>None, by design — <code>npx serve .</code> and reload</td></tr>
+                                    <tr><td>Theming</td><td>Nine seed colours plus a light-or-dark flag; everything else derived with <code>color-mix()</code></td></tr>
+                                    <tr><td>Contrast</td><td>State colours solved to WCAG 2.1 AA in both themes</td></tr>
+                                    <tr><td>Translation</td><td>Every kit string behind <code>sac.i18n</code>, English inline as the fallback</td></tr>
+                                    <tr><td>Browsers</td><td>Chromium, Firefox and Safari — Shadow DOM, Custom Elements, <code>color-mix()</code></td></tr>
+                                    <tr><td>Licence</td><td>MIT</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <sac-footer brand="SACRVM APPKIT" version="1.0.0"
+                                link-href="https://github.com/SACRVM/sacrvm-appkit" link-label="GITHUB"></sac-footer>
+                </div>
+                <!-- View apps are appended here by sac.apps. -->
             </div>
         </div>
     </div>
 
-    <sac-footer brand="SACRVM APPKIT" version="1.0.0"
-                link-href="https://github.com/SACRVM/sacrvm-appkit" link-label="GITHUB"></sac-footer>
+    <!-- Ctrl-K, shell-wide. -->
+    <sac-command-palette></sac-command-palette>
 
     <script defer>
-        window.addEventListener("DOMContentLoaded", () => {
-            // The nav panel mirrors the tiles — one registry, both renderings.
-            // Paths are absolute (sac-nav derives the active entry from
-            // location.pathname) but built from this page's own location, so
-            // the site also works under a prefix: a Pages project site does.
-            const base = location.pathname.replace(/\/(index\.html)?$/, "");
-            // The release URL lives in the tile's href — read it back rather
-            // than repeating it here, so a version bump touches one line.
-            const zip = document.getElementById("download-tile").href;
-            sac.router.register(base + "/styleguide/",  null, { label: "Style Guide", icon: "star" });
-            sac.router.register(base + "/demo/orb-lab/", null, { label: "Orb Lab",    icon: "globe" });
-            sac.router.register(base + "/?app=about",   null, { label: "About",       icon: "info" });
-            sac.router.register(zip,                    null, { label: "Download",    icon: "download" });
-            sac.router.register(base + "/roadmap/",     null, { label: "Roadmap",     icon: "document" });
-            sac.router.register("https://github.com/SACRVM/sacrvm-appkit",
-                                                        null, { label: "Source",      icon: "github" });
-
-            // This page is the launcher: the window app runs here, no second
-            // dashboard in between. init() binds the [data-app] tile and the
-            // ?app=about deep link.
+        // all.js injects its scripts, and injected scripts do not hold up
+        // DOMContentLoaded — boot on the autoloader's readiness signal.
+        function boot() {
+            // Every destination in this suite is an app on this one hub.
+            // kind:"view" apps live at "#/<id>" and are listed in the nav
+            // panel automatically; the window app opens in place.
+            sac.apps.register({
+                id:          "styleguide",
+                name:        "Style Guide",
+                icon:        "star",
+                description: "Every token, component and pattern — the kit documenting itself.",
+                kind:        "page",
+                href:        "styleguide/",
+            });
+            sac.apps.register({
+                id:          "orb-lab",
+                name:        "Orb Lab",
+                icon:        "globe",
+                description: "A workspace-layout tool: sidebar controls, pan/zoom viewport, log and HUD.",
+                kind:        "page",
+                href:        "demo/orb-lab/",
+            });
+            sac.apps.register({
+                id:          "roadmap",
+                name:        "Roadmap",
+                icon:        "document",
+                description: "Gap analysis, what ships next, and the non-goals.",
+                kind:        "view",
+                tag:         "app-roadmap",
+                src:         "roadmap/app.js",
+            });
             sac.apps.register({
                 id:          "about",
                 name:        "About This Kit",
@@ -284,8 +309,19 @@
                 width:       "460px",
                 height:      "560px",
             });
-            sac.apps.init();
-        });
+
+            // Download and source are destinations too — links, not apps, so
+            // they are registered for the nav panel only.
+            const zip = document.getElementById("download-tile").href;
+            sac.router.register(zip, null, { label: "Download", icon: "download" });
+            sac.router.register("https://github.com/SACRVM/sacrvm-appkit",
+                                null, { label: "Source", icon: "github" });
+
+            sac.apps.init({ viewHost: "#app-stage", home: "#app-home" });
+        }
+
+        if (window.sacReady) boot();
+        else document.addEventListener("sac:ready", boot, { once: true });
     </script>
 </body>
 </html>

@@ -100,8 +100,11 @@ class SacNav extends HTMLElement {
         // highlights the right nav item in every scope.
         const currentResource = window.sac?.router?.currentResource?.() || window.location.hash || "#/";
         const hrefFor = (h) => (h.startsWith("#") && window.sac?.scope?.hashFor) ? sac.scope.hashFor(h) : h;
+        // A route with sub-routes stays active while you are inside it:
+        // "#/styleguide" owns "#/styleguide/components" (sac.apps view apps
+        // address their own state that way).
         const isActive = (r) => r.hash.startsWith("#")
-            ? r.hash === currentResource
+            ? (r.hash === currentResource || currentResource.startsWith(r.hash + "/"))
             : window.location.pathname === r.hash;
 
         // Kit strings: attribute position gets quote-escaping, the empty

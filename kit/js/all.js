@@ -13,6 +13,18 @@
  * included — pull those in yourself when a view needs markdown help.
  * Components define themselves as they arrive; loading order only matters
  * because later scripts may reference sac.* globals set up by earlier ones.
+ *
+ * Readiness: these scripts are injected, and injected scripts do not hold up
+ * DOMContentLoaded — so page code that calls sac.* must NOT boot from that
+ * event. Wait for "sac:ready" on document (fired once, after the last file
+ * settles), and take the flag into account in case you missed it:
+ *
+ *   const boot = () => { sac.apps.register(...); sac.apps.init(); };
+ *   if (window.sacReady) boot();
+ *   else document.addEventListener("sac:ready", boot, { once: true });
+ *
+ * Cherry-picked <script defer> tags have no such caveat: the parser holds
+ * DOMContentLoaded for them.
  */
 (function () {
     const base = document.currentScript.src.replace(/all\.js(\?.*)?$/, "");
@@ -32,6 +44,7 @@
         // components — any order, except where a comment says otherwise
         "components/sac-icon.js",
         "components/sac-nav.js",
+        "components/sac-sidebar.js",
         "components/sac-footer.js",
         "components/sac-window.js",
         "components/sac-dialog.js",
@@ -75,10 +88,20 @@
         "components/sac-launcher.js",
     ];
 
+    let pending = files.length;
+
     for (const file of files) {
         const s = document.createElement("script");
         s.src = base + file;
         s.async = false; // dynamically inserted classic scripts + async=false = insertion order
+        // Injected scripts do NOT hold up DOMContentLoaded, so code that
+        // needs sac.* cannot simply listen for that event — wait for
+        // "sac:ready" instead (see the doc block above).
+        s.onload = s.onerror = () => {
+            if (--pending) return;
+            window.sacReady = true;
+            document.dispatchEvent(new CustomEvent("sac:ready", { bubbles: true }));
+        };
         document.head.appendChild(s);
     }
 })();
