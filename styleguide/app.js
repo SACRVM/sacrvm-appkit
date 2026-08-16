@@ -2292,7 +2292,8 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>theme.get()</code></td><td>The flag: <code>"dark"</code> | <code>"light"</code> | <code>"auto"</code>.</td></tr>
                     <tr><td><code>theme.set(mode)</code></td><td>Same values; routes through <code>&lt;sac-theme-toggle&gt;</code> when present (one source of truth: <code>data-theme</code> on <code>&lt;html&gt;</code> + the <code>sac-theme</code> localStorage key).</td></tr>
                     <tr><td><code>theme.onChange(cb)</code></td><td><code>cb(resolved)</code> with <code>"dark"</code>/<code>"light"</code> on every effective change, incl. OS flips in auto. Returns an unsubscribe function.</td></tr>
-                    <tr><td><code>fs</code>, <code>identity</code></td><td>Reserved capability slots — <code>null</code> in this tier.</td></tr>
+                    <tr><td><code>fs</code></td><td>Storage scoped to this app — see <code>sac.fs</code> below. <code>null</code> when the host did not load <code>lib/fs.js</code>, so an app checks before reaching for it.</td></tr>
+                    <tr><td><code>identity</code></td><td>Reserved capability slot — <code>null</code> in this tier.</td></tr>
                 </table>
                 ${code(`mount(context) {
     this._ctx = context;                         // once per element lifetime
@@ -2355,6 +2356,58 @@ unmount() { this._offTheme?.(); }                // called by sac.apps.remove()`
                    not <code>requestAnimationFrame</code>, which never fires in a background tab.
                    An app opened in a tab you have not looked at yet must still be running when you
                    get there.</p>
+
+                <h2>sac.fs — storage behind context.fs</h2>
+                <p>An app never touches <code>localStorage</code> directly: it gets a handle scoped
+                   to itself as <code>context.fs</code>. Three properties make that worth the layer —
+                   every path lives under <code>sac.fs/&lt;appId&gt;/</code>, so two apps cannot collide
+                   on <code>"settings"</code>; every method is a <b>Promise</b>, even though the
+                   default backend answers immediately; and the bytes go through a four-method
+                   backend a host can replace without any app noticing.</p>
+                ${code(`await context.fs.write("notes/2026-08", { title: "…", body: "…" });
+const note  = await context.fs.read("notes/2026-08", null);   // fallback if absent
+const paths = await context.fs.list("notes/");                 // app-relative, sorted
+await context.fs.remove("notes/2026-08");`)}
+                <table class="sg">
+                    <tr><th style="width:260px">Method</th><th>Description</th></tr>
+                    <tr><td><code>read(path, fallback = null)</code></td><td>The stored value, or <code>fallback</code> when the path is absent. Unreadable JSON warns and returns the fallback too — corrupt data is not worth crashing an app over.</td></tr>
+                    <tr><td><code>write(path, value)</code></td><td>Stores any JSON-serializable value. <b>Rejects</b> when there is no room left, or when the value is a function, a symbol or <code>undefined</code> — quota is the one failure an app can act on, so it arrives as a rejection rather than a swallowed console line.</td></tr>
+                    <tr><td><code>remove(path)</code></td><td>Deletes one path.</td></tr>
+                    <tr><td><code>list(prefix = "")</code></td><td>App-relative paths, sorted. <code>list("notes/")</code> is how a collection is enumerated.</td></tr>
+                    <tr><td><code>clear()</code></td><td>Deletes everything this app stored — and only what this app stored.</td></tr>
+                    <tr><td><code>usage()</code></td><td><code>{ bytes, count }</code>. A host uses this to show what an app is keeping, or to offer deleting it.</td></tr>
+                    <tr><td><code>watch(cb)</code></td><td><code>cb(path, value)</code> on every change, <code>value === null</code> for a delete — including writes from <b>another tab</b> of the same origin. Returns an unsubscribe.</td></tr>
+                </table>
+                <p>Paths are slash-separated strings; leading, trailing and empty segments are
+                   stripped, and <code>..</code> is not a way out of the app's own root. Values are
+                   JSON — not Blobs: binary needs a backend that can hold it, and that is exactly the
+                   point at which a host supplies its own.</p>
+                <h3>Swapping the backend</h3>
+                <p>The namespacing, JSON and notification layers are the kit's. The bytes are four
+                   methods, and a host that wants IndexedDB, the File System Access API or a server
+                   replaces them once — apps keep their code.</p>
+                ${code(`sac.fs.backend = {
+    get(key),          // → string | null   (a Promise is fine)
+    set(key, value),   // string
+    del(key),
+    keys(prefix),      // → string[]
+};`)}
+                <h3>Host side</h3>
+                <p><code>sac.fs.for(id)</code> is also how a <b>host</b> reaches an app's data without
+                   being that app: what an app keeps (<code>usage()</code>) and offering to delete it
+                   (<code>clear()</code>) when the app is uninstalled. Deleting an app's data is a
+                   separate decision from removing the app — SACRVM DESKTOP asks, and keeps the data
+                   by default, so reinstalling brings your notes back.</p>
+                ${code(`const ids = await sac.fs.apps();             // ids that stored something
+const { bytes } = await sac.fs.for("notes").usage();
+await sac.fs.for("notes").clear();           // on an explicit "delete its data"`)}
+                <p><code>sac.fs.apps()</code> is host-only in spirit: an app only ever sees its own
+                   drawer. A host needs the list, or the data of an app somebody uninstalled a year
+                   ago is unreachable and unaccountable.</p>
+                <p class="sg-note">Standalone, the same handle comes from the app's tag with the
+                   <code>app-</code> prefix removed (<code>&lt;app-notes&gt;</code> → <code>notes</code>).
+                   Follow the template's naming — <code>tag = "app-" + id</code> — and an app keeps
+                   its data when it moves from its own page onto a desktop.</p>
 
                 <h2>loadHelp — markdown help loader (ES module)</h2>
                 <p>Fetch a markdown file, render via the vendored <code>marked</code>, sanitize via the

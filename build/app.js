@@ -129,8 +129,37 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
         ["<code>sidebar.set([…])</code><br><code>sidebar.clear()</code>", "Projects navigation into the host's rail instead of drawing your own. Items are <code>{ label, icon, href, active }</code>, or <code>{ section }</code> for a heading."],
         ["<code>params</code>", "The query parameters the host was opened with."],
         ["<code>appId</code>", "Your id, as the host registered it."],
-        ["<code>fs</code>, <code>identity</code>", "Reserved for storage and who-you-are, still <code>null</code>. Use <code>localStorage</code> until they land — the contract will not change shape when they do."],
+        ["<code>fs</code>", "Storage scoped to your app — see below. <code>null</code> if the host granted none, so check before you reach for it."],
+        ["<code>identity</code>", "Reserved for who-you-are, still <code>null</code>. The contract will not change shape when it lands."],
     ])}
+
+    <h3>Storing things</h3>
+    <p><code>context.fs</code> is a small async store, scoped to your app: every
+       path lives under your id, so nothing you write can collide with another
+       app, and nothing another app writes can collide with you.</p>
+    ${code(`async onMount(context) {
+    this.store = context.fs;                       // null if the host grants none
+    const settings = this.store
+        ? await this.store.read("settings", { sort: "date" })
+        : { sort: "date" };
+}
+
+await this.store.write("notes/2026-08", { title: "…", body: "…" });
+const paths = await this.store.list("notes/");     // app-relative, sorted
+await this.store.remove("notes/2026-08");`)}
+    ${table(["Method", "Description"], [
+        ["<code>read(path, fallback)</code>", "The value, or <code>fallback</code> when nothing is stored there."],
+        ["<code>write(path, value)</code>", "Any JSON value. <b>Rejects</b> when storage is full — catch it and tell the user; a note that was not saved must not look saved."],
+        ["<code>remove(path)</code> · <code>clear()</code>", "Delete one path, or everything of yours."],
+        ["<code>list(prefix)</code>", "Enumerate a collection: <code>list(\"notes/\")</code>."],
+        ["<code>usage()</code>", "<code>{ bytes, count }</code> — what you are keeping."],
+        ["<code>watch(cb)</code>", "Changes as they happen, <b>including from another tab</b>. Returns an unsubscribe for <code>onUnmount</code>."],
+    ])}
+    <p class="bd-note">Async on purpose. Today it is this browser's storage; a
+       host is free to back it with IndexedDB, the File System Access API or a
+       server, and an app written against these seven methods does not change a
+       line. That is also why you never call <code>localStorage</code> directly:
+       you would be opting out of every host that offers something better.</p>
     <p class="bd-note">Everything on <code>sac</code> beyond <code>sac.app</code>
        belongs to the <b>host</b> and is optional. <code>sac.toast</code> is the usual
        example: guard it with <code>typeof sac.toast === "function"</code> rather than
