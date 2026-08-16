@@ -19,6 +19,7 @@
     <!-- This page is built WITH the kit, and loads only what it uses. -->
     <script defer src="kit/js/lib/globals.js"></script>
     <script defer src="kit/js/lib/icons.js"></script>
+    <script defer src="kit/js/lib/router.js"></script>
     <script defer src="kit/js/components/sac-icon.js"></script>
     <script defer src="kit/js/components/sac-nav.js"></script>
     <script defer src="kit/js/components/sac-theme-toggle.js"></script>
@@ -150,7 +151,7 @@
                     <p class="tile-meta">Orb Lab</p>
                 </div>
             </a>
-            <a class="tile" href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.0.0/sacrvm-appkit-1.0.0.zip">
+            <a class="tile" id="download-tile" href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.0.0/sacrvm-appkit-1.0.0.zip">
                 <sac-icon name="download"></sac-icon>
                 <div>
                     <h2>Download</h2>
@@ -222,5 +223,22 @@
 
     <sac-footer brand="SACRVM APPKIT" version="1.0.0"
                 link-href="https://github.com/SACRVM/sacrvm-appkit" link-label="GITHUB"></sac-footer>
+
+    <script defer>
+        window.addEventListener("DOMContentLoaded", () => {
+            // The nav panel mirrors the tiles — one registry, both renderings.
+            // Paths are absolute (sac-nav derives the active entry from
+            // location.pathname) but built from this page's own location, so
+            // the site also works under a prefix: a Pages project site does.
+            const base = location.pathname.replace(/\/(index\.html)?$/, "");
+            // The release URL lives in the tile's href — read it back rather
+            // than repeating it here, so a version bump touches one line.
+            const zip = document.getElementById("download-tile").href;
+            sac.router.register(base + "/styleguide/", null, { label: "Style Guide", icon: "star" });
+            sac.router.register(base + "/demo/",       null, { label: "Demo",        icon: "cube" });
+            sac.router.register(zip,                   null, { label: "Download",    icon: "download" });
+            sac.router.register(base + "/roadmap/",    null, { label: "Roadmap",     icon: "document" });
+        });
+    </script>
 </body>
 </html>
