@@ -129,12 +129,17 @@
                 if (typeof this.build === "function") this.build();
             }
             if (this._sacMounted || this._sacSoloQueued) return;
-            // A host mounts within the same frame. If none did, nobody will —
-            // we are standalone, so mount ourselves.
+            // A host mounts in the same task or the microtasks right after it.
+            // If none did, nobody will — we are standalone, so mount ourselves.
+            //
+            // setTimeout, deliberately not requestAnimationFrame: a background
+            // tab paints no frames, so a rAF check never runs and the app
+            // would sit blank until the tab is looked at. A timeout is
+            // throttled there, but it does fire.
             this._sacSoloQueued = true;
-            requestAnimationFrame(() => {
+            setTimeout(() => {
                 if (!this._sacMounted && this.isConnected) this.mount(standaloneContext(this));
-            });
+            }, 0);
         }
 
         /** Called by the host (sac.apps) — or by the fallback above. */
