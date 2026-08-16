@@ -5,6 +5,10 @@
     max-width: 1100px;
     margin: 0 auto;
     padding: 2.5rem 2rem 4rem;
+    /* The shell's <body class="app-page"> turns selection off; a reference
+       page has to stay copyable, so the guide re-enables it for itself. */
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 .sg-page h1 {
@@ -175,6 +179,29 @@ table.sg td:first-child { white-space: nowrap; }
 }
 .sg-accent-dots button:hover { transform: scale(1.15); }
 .sg-accent-dots button.active { border-color: var(--text); }
+
+/* Accent-seed playground, in the Tokens section: the nav ribbon belongs to
+   the shell, but the per-app --accent override is style-guide material. */
+.sg-accent-play {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.sg-accent-play label { margin: 0; }
+.sg-accent-play .sg-accent-dots {
+    border-left: none;
+    margin-left: 0;
+    padding: 0;
+    gap: 8px;
+}
+.sg-accent-play .sg-accent-dots button { width: 22px; height: 22px; }
+.sg-accent-play .sg-accent-note {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    flex: 1;
+    min-width: 240px;
+}
 
 /* Misc */
 .sg-note {

@@ -128,8 +128,16 @@
    3. DERIVED TOKENS — never set these in a theme; override a seed instead.
    (The cascade still lets a brand pin an individual derived token if it
    truly must — that is the escape hatch, not the mechanism.)
+
+   Also derived ON the per-app hosts, not only on :root. A view app or a
+   floating window that carries its own --accent (sac.apps manifest.accent)
+   would otherwise get half a retheme: direct var(--accent) users follow it,
+   while everything derived still resolves against the root's accent. Same
+   rule, one seed, wherever the seed is set.
    -------------------------------------------------------------------------- */
-:root {
+:root,
+.sac-app-view,
+sac-window {
     /* Surfaces */
     --panel:       color-mix(in srgb, var(--bg) 95%, var(--lift));      /* sidebars, cards   */
     --panel-2:     color-mix(in srgb, var(--bg) 90%, var(--lift));      /* elevated panel    */

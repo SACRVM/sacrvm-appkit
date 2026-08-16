@@ -277,16 +277,21 @@
                 name:        "Style Guide",
                 icon:        "star",
                 description: "Every token, component and pattern — the kit documenting itself.",
-                kind:        "page",
-                href:        "styleguide/",
+                kind:        "view",
+                tag:         "app-styleguide",
+                src:         "styleguide/app.js",
             });
             sac.apps.register({
                 id:          "orb-lab",
                 name:        "Orb Lab",
                 icon:        "globe",
                 description: "A workspace-layout tool: sidebar controls, pan/zoom viewport, log and HUD.",
-                kind:        "page",
-                href:        "demo/orb-lab/",
+                kind:        "view",
+                tag:         "app-orb-lab",
+                src:         "demo/orb-lab/app.js",
+                // Its accent is its own identity — the app's stylesheet sets
+                // it, so it stays green standalone too. manifest.accent is for
+                // when the SHELL wants to tint an app it hosts.
             });
             sac.apps.register({
                 id:          "roadmap",

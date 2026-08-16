@@ -1,14 +1,43 @@
+/* Orb Lab — the demo tool's own stylesheet, injected by app.js as one <link>.
+   The @import keeps the retired standalone document (index.html) rendering;
+   inside the shell it resolves to the already-cached ui.css. */
 @import '../../kit/css/ui.css';
 
-/* Per-app accent override — THE retheme mechanism. Everything derived from
-   --accent (buttons, glows, active states, HUD, orb, slider thumbs) follows. */
-:root {
+app-orb-lab {
+    /* Per-app accent override — THE retheme mechanism. Scoped to the app
+       element, not :root, so everything derived from --accent (buttons,
+       glows, active states, HUD, orbs, slider thumbs) follows inside the
+       tool while the shell around it keeps its own identity. */
     --accent: #10b981;
+
+    /* The shell's stage is a scroll container; the tool fills it instead. */
+    height: 100%;
 }
+
+/* min-height:0 all the way down — without it a flex child refuses to shrink
+   below its content and the viewport pushes the page into a scrollbar. */
+app-orb-lab .ol-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+app-orb-lab .ol-split {
+    flex: 1;
+    min-height: 0;
+}
+
+/* The split panel owns the widths now — the control panel just fills it. */
+app-orb-lab .sidebar,
+app-orb-lab .ol-viewport { width: 100%; height: 100%; }
+
+/* Four options no longer fit one row at the panel's minimum width. */
+app-orb-lab .ol-colors { flex-wrap: wrap; }
+app-orb-lab .ol-log { height: 160px; }
 
 /* Tool-specific bits only below this line. */
 .viewport.grabbing { cursor: grabbing; }
 
-/* The <sac-split> divider draws the edge between sidebar and viewport now —
+/* The <sac-split> divider draws the edge between control panel and viewport —
    drop the sidebar's own hairline so the two don't stack. */
 .sidebar { border-right: none; }
