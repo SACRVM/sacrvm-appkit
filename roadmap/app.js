@@ -22,10 +22,11 @@
         document.head.appendChild(link);
     }
 
+    // Trim AFTER the cut too, or a slug can end on the dash the cut created.
     const slug = (text) => text.toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .slice(0, 40);
+        .slice(0, 40)
+        .replace(/^-+|-+$/g, "");
 
     class AppRoadmap extends HTMLElement {
         connectedCallback() {
@@ -391,12 +392,12 @@
             });
 
             this._project(context.route);
-            if (context.route) this._scrollTo(context.route, false);
+            if (context.route) this._scrollTo(context.route);
 
-            // Back/forward and pasted URLs arrive here.
+            // Back/forward, rail clicks and pasted URLs all arrive here.
             this._offRoute = context.onRoute((route) => {
                 this._project(route);
-                if (route) this._scrollTo(route, true);
+                if (route) this._scrollTo(route);
             });
         }
 
@@ -417,14 +418,13 @@
             ]);
         }
 
-        _scrollTo(id, smooth) {
+        /** Instant, deliberately: a smooth scroll is a compositor animation
+         *  that silently does nothing in some contexts (an unfocused tab is
+         *  one), and a jump that always lands beats a glide that sometimes
+         *  never starts. It is also what reduced-motion would ask for. */
+        _scrollTo(id) {
             const section = this._sections.find((s) => s.id === id);
-            if (!section) return;
-            section.el.scrollIntoView({
-                block: "start",
-                behavior: smooth && !matchMedia("(prefers-reduced-motion: reduce)").matches
-                    ? "smooth" : "auto",
-            });
+            if (section) section.el.scrollIntoView({ block: "start" });
         }
     }
 

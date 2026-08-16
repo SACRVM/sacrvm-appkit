@@ -93,9 +93,12 @@
  *                        and ?tool= are honored the same way.
  *
  * mount(context) lifecycle:
- *   After the app element is first created and appended into its window, the
- *   host calls el.mount(context) IF the method exists — exactly once per
- *   element lifetime (re-opening an existing window does NOT re-mount).
+ *   The host calls el.mount(context) IF the method exists — exactly once per
+ *   element lifetime (re-opening an existing window, or returning to a view,
+ *   does NOT re-mount). Windows mount right after the element is appended;
+ *   views mount when they first appear on the stage, never while hidden, so
+ *   an app that measures (sizing a canvas, scrolling to its route) has a real
+ *   box to measure.
  *   el.unmount() (if present) is called only by sac.apps.remove(). Apps that
  *   define neither still work — the contract is opt-in.
  *
@@ -145,6 +148,7 @@
     const views    = new Map();   // id  → { el, route, sidebar, routeCbs }
     const injected = new Map();   // src → Promise (each script injected once)
     const opening  = new Map();   // id  → in-flight open() Promise
+    const viewOpening = new Map();// id  → in-flight view creation Promise
     let stackOffset = 0;          // cascade multiple open windows slightly
     let inited = false;
     let hashBound = false;
@@ -401,6 +405,20 @@
         views.forEach((r, key) => { r.el.hidden = key !== id; });
         if (homeEl) homeEl.hidden = true;
         activeId = id;
+
+        // mount() runs on the app's FIRST appearance, never while it is still
+        // hidden: an app that measures — sizing a canvas, scrolling to its
+        // route — gets a real box this way. Still exactly once per element.
+        if (!rec.mounted) {
+            rec.mounted = true;
+            const manifest = registry.get(id);
+            if (manifest && typeof rec.el.mount === "function") {
+                try { rec.el.mount(makeContext(manifest, rec.params)); }
+                catch (err) { console.error(`[sac.apps] ${id}.mount() threw:`, err); }
+            }
+            rec.params = null;
+        }
+
         deliverRoute(id, route);
         if (window.sac.sidebar) sac.sidebar.set(rec.sidebar);
         const manifest = registry.get(id);
@@ -417,44 +435,58 @@
         emitChanged(null, "home");
     }
 
-    async function openView(manifest, route, params) {
+    /** @returns Promise<HTMLElement> — the created element, on stage. */
+    function openView(manifest, route, params) {
         const id = manifest.id;
-        if (!views.has(id)) {
-            try {
-                await ensureDefined(manifest);
-            } catch (err) {
-                console.error(`[sac.apps] ${err.message}`);
-                if (typeof sac.toast === "function") {
-                    sac.toast(`Could not load "${displayName(manifest)}".`, { kind: "error" });
-                }
-                throw err;
-            }
-            if (!registry.has(id)) throw new Error(`[sac.apps] app removed while loading: ${id}`);
-
-            const host = viewHost || document.getElementById("app-root");
-            if (!host) {
-                const msg = `[sac.apps] no view host for "${id}" — pass init({ viewHost })`;
-                console.error(msg);
-                throw new Error(msg);
-            }
-
-            const el = document.createElement(manifest.tag);
-            el.className = "sac-app-view";
-            // Per-app accent: one seed on the view, everything derived follows.
-            if (manifest.accent) el.style.setProperty("--accent", manifest.accent);
-
-            // The record exists BEFORE mount(): context.route and
-            // context.sidebar read through it.
-            views.set(id, { el, route: route || "", sidebar: [], routeCbs: new Set() });
-            host.appendChild(el);
-
-            if (typeof el.mount === "function") {
-                try { el.mount(makeContext(manifest, params)); }
-                catch (err) { console.error(`[sac.apps] ${id}.mount() threw:`, err); }
-            }
+        if (views.has(id)) {
+            showView(id, route);
+            return Promise.resolve(views.get(id).el);
         }
-        showView(id, route);
-        return views.get(id).el;
+        // Creation is async (the script has to arrive), and the trigger can
+        // fire twice for one navigation — a hash-only history move fires
+        // hashchange AND popstate. Without this the second call sails past
+        // the views.has() check and builds a second, orphaned element.
+        if (!viewOpening.has(id)) {
+            viewOpening.set(id, createView(manifest, route, params)
+                .finally(() => viewOpening.delete(id)));
+        }
+        return viewOpening.get(id).then((el) => { showView(id, route); return el; });
+    }
+
+    async function createView(manifest, route, params) {
+        const id = manifest.id;
+        try {
+            await ensureDefined(manifest);
+        } catch (err) {
+            console.error(`[sac.apps] ${err.message}`);
+            if (typeof sac.toast === "function") {
+                sac.toast(`Could not load "${displayName(manifest)}".`, { kind: "error" });
+            }
+            throw err;
+        }
+        if (!registry.has(id)) throw new Error(`[sac.apps] app removed while loading: ${id}`);
+
+        const host = viewHost || document.getElementById("app-root");
+        if (!host) {
+            const msg = `[sac.apps] no view host for "${id}" — pass init({ viewHost })`;
+            console.error(msg);
+            throw new Error(msg);
+        }
+
+        const el = document.createElement(manifest.tag);
+        el.className = "sac-app-view";
+        el.hidden = true;              // showView() decides when it appears
+        // Per-app accent: one seed on the view, everything derived follows.
+        if (manifest.accent) el.style.setProperty("--accent", manifest.accent);
+
+        // The record exists BEFORE mount(): context.route and context.sidebar
+        // read through it. showView() does the mounting, once it is visible.
+        views.set(id, {
+            el, route: route || "", sidebar: [], routeCbs: new Set(),
+            mounted: false, params,
+        });
+        host.appendChild(el);
+        return el;
     }
 
     /** The hash is the address of the stage. Routes only what we own: an
