@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SACRVM APPKIT</title>
+    <meta name="description" content="A zero-dependency HTML UI kit for tool-style web apps: seed-driven themes, 40 sac-* web components, workspace layouts. No build step — vendor the kit/ folder as plain files.">
+
+    <meta property="og:title" content="SACRVM APPKIT">
+    <meta property="og:description" content="A zero-dependency HTML UI kit for tool-style web apps. No build step — vendor the kit/ folder as plain files.">
+    <meta property="og:url" content="https://sacrvm.github.io/sacrvm-appkit/">
+    <meta property="og:type" content="website">
+
+    <!-- The kit's own cube mark, inlined so the page requests nothing extra. -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/><polyline points='3.27 6.96 12 12.01 20.73 6.96'/><line x1='12' y1='22.08' x2='12' y2='12'/></svg>">
+
+    <link rel="stylesheet" href="kit/css/ui.css">
+
+    <!-- This page is built WITH the kit, and loads only what it uses. -->
+    <script defer src="kit/js/lib/globals.js"></script>
+    <script defer src="kit/js/lib/icons.js"></script>
+    <script defer src="kit/js/components/sac-icon.js"></script>
+    <script defer src="kit/js/components/sac-nav.js"></script>
+    <script defer src="kit/js/components/sac-theme-toggle.js"></script>
+    <script defer src="kit/js/components/sac-copy-button.js"></script>
+    <script defer src="kit/js/components/sac-footer.js"></script>
+
+    <style>
+        /* Page-local layout only — every value comes from a kit token, the
+           same way styleguide.css and roadmap.css stay on the system. */
+        .section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem 3rem;
+        }
+        .section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .section .lead {
+            color: var(--text-muted);
+            max-width: 60ch;
+            margin: 0 0 1.5rem;
+        }
+
+        /* Two columns on wide screens, stacked below. */
+        .two-col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .steps {
+            margin: 0;
+            padding-left: 1.2rem;
+            color: var(--text-muted);
+            line-height: 1.9;
+        }
+        .steps strong { color: var(--text); font-weight: 600; }
+
+        .snippet {
+            position: relative;
+            margin: 1rem 0 0;
+            padding: 0.9rem 1rem;
+            background: var(--field);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-m);
+            overflow-x: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.75rem;
+            line-height: 1.7;
+            color: var(--text-muted);
+        }
+        .snippet-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .snippet-head span {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        .facts {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .facts td {
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        .facts tr:last-child td { border-bottom: none; }
+        .facts td:first-child {
+            color: var(--text-muted);
+            padding-right: 1.5rem;
+            white-space: nowrap;
+        }
+
+        /* Tile footnote — the small line under a tile's own description. */
+        .tile-meta {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            margin-top: 0.35rem;
+        }
+    </style>
+</head>
+<body>
+    <sac-nav brand="SACRVM APPKIT" brand-icon="cube" brand-href="./" app-name="v1.0.0">
+        <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
+        <div slot="toolbar" class="toolbar">
+            <a class="btn" href="https://github.com/SACRVM/sacrvm-appkit">
+                <sac-icon name="github"></sac-icon> GitHub
+            </a>
+        </div>
+    </sac-nav>
+
+    <div class="orb"></div>
+
+    <div class="hub-container">
+        <header>
+            <h1>SACRVM APPKIT</h1>
+            <p class="intro-text">
+                A complete UI system for tool-style web apps — launcher hubs, workspace pages,
+                floating windows and seed-driven themes.
+                Zero dependencies, zero build: plain HTML, Custom Elements and CSS tokens, served as-is.
+            </p>
+        </header>
+
+        <main class="grid">
+            <a class="tile" href="styleguide/">
+                <sac-icon name="star"></sac-icon>
+                <div>
+                    <h2>Style Guide</h2>
+                    <p>Every token, component and pattern, live — and built with the kit itself.</p>
+                    <p class="tile-meta">Start here</p>
+                </div>
+            </a>
+            <a class="tile" href="demo/">
+                <sac-icon name="cube"></sac-icon>
+                <div>
+                    <h2>Demo App</h2>
+                    <p>A launcher hub and a real workspace tool: sidebar, canvas, overlays, deep links.</p>
+                    <p class="tile-meta">Orb Lab</p>
+                </div>
+            </a>
+            <a class="tile" href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.0.0/sacrvm-appkit-1.0.0.zip">
+                <sac-icon name="download"></sac-icon>
+                <div>
+                    <h2>Download</h2>
+                    <p>The <code>kit/</code> folder plus the licence, ready to drop into your project.</p>
+                    <p class="tile-meta">v1.0.0 · 390 KB ZIP</p>
+                </div>
+            </a>
+            <a class="tile" href="roadmap/">
+                <sac-icon name="document"></sac-icon>
+                <div>
+                    <h2>Roadmap</h2>
+                    <p>What is done, what comes next, and what this kit deliberately will not do.</p>
+                    <p class="tile-meta">Incl. non-goals</p>
+                </div>
+            </a>
+        </main>
+    </div>
+
+    <div class="section">
+        <h2>Get it</h2>
+        <p class="lead">
+            Vendoring is the primary model: copy the versioned <code>kit/</code> folder into your
+            own repo and upgrade when <em>you</em> choose. No install step, no lockfile, fully offline.
+        </p>
+
+        <div class="two-col">
+            <div class="card">
+                <ol class="steps">
+                    <li><strong>Download</strong> the ZIP, or clone the repo.</li>
+                    <li><strong>Copy <code>kit/</code></strong> into your project.</li>
+                    <li><strong>Link the stylesheet</strong> and the components you use.</li>
+                </ol>
+                <div class="snippet">
+                    <div class="snippet-head">
+                        <span>index.html</span>
+                        <sac-copy-button for="#snippet-code" label="Copy the snippet"></sac-copy-button>
+                    </div>
+<pre id="snippet-code" style="margin:0.5rem 0 0">&lt;link rel="stylesheet" href="kit/css/ui.css"&gt;
+
+&lt;script defer src="kit/js/lib/globals.js"&gt;&lt;/script&gt;
+&lt;script defer src="kit/js/lib/icons.js"&gt;&lt;/script&gt;
+&lt;script defer src="kit/js/components/sac-icon.js"&gt;&lt;/script&gt;
+&lt;script defer src="kit/js/components/sac-toggle.js"&gt;&lt;/script&gt;
+
+&lt;sac-toggle label="Ready" checked&gt;&lt;/sac-toggle&gt;</pre>
+                </div>
+                <p class="tile-meta" style="margin-top:1rem">
+                    <code>kit/templates/</code> holds copy-out skeletons for a launcher hub, a tool
+                    page and an SPA shell. Older releases:
+                    <a href="https://github.com/SACRVM/sacrvm-appkit/releases">all releases</a>.
+                </p>
+            </div>
+
+            <div class="card">
+                <table class="facts">
+                    <tr><td>Custom elements</td><td>40, in 36 files</td></tr>
+                    <tr><td>Helper modules</td><td>10 — router, icons, apps, colour, pan/zoom, hotkeys, dialog, scope, help loader, globals</td></tr>
+                    <tr><td>Dependencies</td><td>None. Vendored: marked + DOMPurify, only for the markdown help loader</td></tr>
+                    <tr><td>Build step</td><td>None, by design — <code>npx serve .</code> and reload</td></tr>
+                    <tr><td>Theming</td><td>Nine seed colours plus a light-or-dark flag; everything else derived with <code>color-mix()</code></td></tr>
+                    <tr><td>Contrast</td><td>State colours solved to WCAG 2.1 AA in both themes</td></tr>
+                    <tr><td>Translation</td><td>Every kit string behind <code>sac.i18n</code>, English inline as the fallback</td></tr>
+                    <tr><td>Browsers</td><td>Chromium, Firefox and Safari — Shadow DOM, Custom Elements, <code>color-mix()</code></td></tr>
+                    <tr><td>Licence</td><td>MIT</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <sac-footer brand="SACRVM APPKIT" version="1.0.0"
+                link-href="https://github.com/SACRVM/sacrvm-appkit" link-label="GITHUB"></sac-footer>
+</body>
+</html>

@@ -6,6 +6,9 @@ workspace pages, floating windows, and a seed-driven theme system.
 **Zero dependencies. Zero build.** Plain HTML, vanilla JS Custom Elements,
 plain CSS. Files are served as-is.
 
+**Live: <https://sacrvm.github.io/sacrvm-appkit/>** — landing page, style
+guide, demo app and roadmap, all built with the kit.
+
 ## Run it
 
 ```bash
