@@ -22,19 +22,25 @@
       "name": "Styleguide",
       "type": "Url",
       "icon": "\uD83C\uDFA8",
-      "url": "http://localhost:3000/styleguide/"
+      "url": "http://localhost:3000/#/styleguide"
     },
     {
       "name": "Demo",
       "type": "Url",
       "icon": "\uD83E\uDDEA",
-      "url": "http://localhost:3000/demo/"
+      "url": "http://localhost:3000/#/orb-lab"
     },
     {
       "name": "Roadmap",
       "type": "Url",
       "icon": "\uD83D\uDDFA\uFE0F",
-      "url": "http://localhost:3000/roadmap/"
+      "url": "http://localhost:3000/#/roadmap"
+    },
+    {
+      "name": "GitHub",
+      "type": "Url",
+      "icon": "\uD83D\uDC19",
+      "url": "https://github.com/SACRVM/sacrvm-appkit"
     }
   ]
 }

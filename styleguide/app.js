@@ -1143,7 +1143,7 @@ group.active = "two";   // programmatic switch — no event`)}
                 ])}
                 ${table("Attribute / Method", [
                     ["open", "Presence = panel visible. Reflected by the methods; settable directly (it positions itself either way)."],
-                    ["open() / close() / toggle()", "Show, hide, flip. <code>open()</code> anchors the panel to the trigger's viewport rect; the panel is <code>position: fixed</code> — no <code>overflow: hidden</code> ancestor can clip it — flips above the trigger when there is no room below, and re-anchors on scroll/resize."],
+                    ["open() / close() / toggle()", "Show, hide, flip. <code>open()</code> anchors the panel to the trigger's viewport rect and shows it in the <strong>top layer</strong> (<code>popover</code>), so neither a clipping ancestor nor a transformed one can reach it — a menu works inside a <code>.tile</code>, which is both. It flips above the trigger when there is no room below, and re-anchors on scroll/resize."],
                 ])}
                 ${table("Event", [["sac:menu-select", "detail { action }."]])}
                 ${table("Keyboard", [
