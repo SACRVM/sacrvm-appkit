@@ -52,7 +52,7 @@ class SgHomeView extends HTMLElement {
                     </a>
                 </main>
             </div>
-            <sac-footer brand="SACRVM APPKIT" version="0.1.0"></sac-footer>
+            <sac-footer brand="SACRVM APPKIT" version="1.0.0"></sac-footer>
         `;
     }
 }

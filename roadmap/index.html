@@ -16,7 +16,7 @@
     <script defer src="../kit/js/components/sac-chip.js"></script>
 </head>
 <body>
-    <sac-nav brand="SACRVM APPKIT" app-name="ROADMAP" brand-icon="cube" brand-href="/roadmap/"></sac-nav>
+    <sac-nav brand="SACRVM APPKIT" app-name="ROADMAP" brand-icon="cube" brand-href="./"></sac-nav>
     <div class="orb"></div>
 
     <div class="rm-page">
@@ -363,13 +363,19 @@
         </p>
     </div>
 
-    <sac-footer brand="SACRVM APPKIT" version="0.1.0"></sac-footer>
+    <sac-footer brand="SACRVM APPKIT" version="1.0.0"></sac-footer>
 
     <script defer>
         window.addEventListener("DOMContentLoaded", () => {
-            sac.router.register("/roadmap/", null, { label: "Roadmap", icon: "check" });
-            sac.router.register("/styleguide/", null, { label: "Style Guide", icon: "document" });
-            sac.router.register("/demo/", null, { label: "Demo", icon: "globe" });
+            // Multi-page nav entries need ABSOLUTE paths — sac-nav marks the
+            // active one by comparing location.pathname. The site may sit
+            // under a prefix (a GitHub Pages project site does), so derive
+            // the base instead of hardcoding "/".
+            const base = location.pathname.replace(/\/roadmap\/.*$/, "");
+            sac.router.register(base + "/",            null, { label: "Appkit",      icon: "cube" });
+            sac.router.register(base + "/roadmap/",    null, { label: "Roadmap",     icon: "check" });
+            sac.router.register(base + "/styleguide/", null, { label: "Style Guide", icon: "document" });
+            sac.router.register(base + "/demo/",       null, { label: "Demo",        icon: "globe" });
         });
     </script>
 </body>

@@ -92,6 +92,13 @@
         window.addEventListener("DOMContentLoaded", () => {
             if (sac.router) sac.router.mount("#app-root");
 
+            // One multi-page entry beside the guide's own hash routes: the
+            // way back to the site around it. Absolute (sac-nav matches
+            // location.pathname) and prefix-aware, since the site may sit
+            // under a path — a GitHub Pages project site does.
+            const base = location.pathname.replace(/\/styleguide\/.*$/, "");
+            sac.router.register(base + "/", null, { label: "Appkit", icon: "cube" });
+
             // Theme playground: <sac-theme-toggle> owns the light/dark flag;
             // this handler only swaps the --accent seed. Everything derived
             // follows — that IS the demo.

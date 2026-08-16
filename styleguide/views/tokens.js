@@ -163,7 +163,7 @@
                 <p class="sg-note"><b>Light seeds:</b> new design work, signed off as final — bright on
                    purpose. Apps wanting a softer light theme override the seeds as shown above.</p>
             </div>
-            <sac-footer brand="SACRVM APPKIT" version="0.1.0"></sac-footer>
+            <sac-footer brand="SACRVM APPKIT" version="1.0.0"></sac-footer>
             `;
         }
     }

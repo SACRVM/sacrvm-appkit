@@ -43,14 +43,19 @@
         </main>
     </div>
 
-    <sac-footer brand="SACRVM APPKIT DEMO" version="0.1.0"></sac-footer>
+    <sac-footer brand="SACRVM APPKIT DEMO" version="1.0.0"></sac-footer>
 
     <script defer>
         window.addEventListener("DOMContentLoaded", () => {
-            // Nav panel entries (multi-page registry).
-            sac.router.register("/demo/", null, { label: "Hub", icon: "home" });
-            sac.router.register("/demo/orb-lab/", null, { label: "Orb Lab", icon: "globe" });
-            sac.router.register("/styleguide/", null, { label: "Style Guide", icon: "palette" });
+            // Nav panel entries (multi-page registry). These need ABSOLUTE
+            // paths — sac-nav marks the active one by comparing
+            // location.pathname — but the site may sit under a prefix (a
+            // GitHub Pages project site does), so derive the base.
+            const base = location.pathname.replace(/\/demo\/.*$/, "");
+            sac.router.register(base + "/",             null, { label: "Appkit",      icon: "cube" });
+            sac.router.register(base + "/demo/",        null, { label: "Hub",         icon: "home" });
+            sac.router.register(base + "/demo/orb-lab/", null, { label: "Orb Lab",    icon: "globe" });
+            sac.router.register(base + "/styleguide/",  null, { label: "Style Guide", icon: "palette" });
 
             // App manifests — the <sac-launcher> above renders one tile each.
             // kind:"page" tiles are plain links; kind:"window" tiles open the

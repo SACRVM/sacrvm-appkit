@@ -120,7 +120,7 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                    <em>not</em> pierce Shadow DOM. A component with its own scrollable shadow content must
                    duplicate them (all kit components already do).</p>
             </div>
-            <sac-footer brand="SACRVM APPKIT" version="0.1.0"></sac-footer>
+            <sac-footer brand="SACRVM APPKIT" version="1.0.0"></sac-footer>
             `;
         }
     }

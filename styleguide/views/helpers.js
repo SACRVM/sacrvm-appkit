@@ -310,7 +310,7 @@ unmount() { this._offTheme?.(); }                // called by sac.apps.remove()`
 sac.icons.register("brand", "<path …/>", { filled: true });  // fill, not stroke
 sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             </div>
-            <sac-footer brand="SACRVM APPKIT" version="0.1.0"></sac-footer>
+            <sac-footer brand="SACRVM APPKIT" version="1.0.0"></sac-footer>
             `;
         }
 

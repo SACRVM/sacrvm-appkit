@@ -1076,7 +1076,7 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
                 ${table("Property", [["theme", "get/set \"dark\" | \"light\" | \"auto\". Setting applies + persists + re-highlights the pill (no event — that's reserved for user clicks)."]])}
                 ${table("Event", [["sac:theme-changed", "Fired on click; detail { theme } (bubbles, composed)."]])}
             </div>
-            <sac-footer brand="SACRVM APPKIT" version="0.1.0"></sac-footer>
+            <sac-footer brand="SACRVM APPKIT" version="1.0.0"></sac-footer>
             `;
         }
 
