@@ -1,38 +1,57 @@
-# One hub, everything else an app: the shell architecture and sac.apps kind view
+# One hub, everything else an app: shell, app toolkit, install by origin
 
-Decided with the owner 2026-08-16, implemented the same day. The site (and the Tier-4 direction) has exactly ONE desktop; every other destination is an app running on it.
-
-## Why
-
-`kind: "page"` means *its own document*, and every document brings its own nav — so three tile-grid landings appeared (GitHub landing page, demo hub, style guide home). Three desktops contradicted the web-OS-shell goal.
+Decided and built with the owner 2026-08-16. There is exactly ONE desktop; every other destination is an app running on it. Live proof: <https://desktop.sacrvm.dev> installs apps from other repositories by URL.
 
 ## The three kinds
 
 | Kind | Where it runs | For |
 |---|---|---|
-| `window` | floating `<sac-window>` above the shell | small tools, dialog-like apps (calculator) |
-| `view` | the shell's stage, addressed `#/<id>` with the app's sub-route after it (`#/styleguide/components`) | anything that used to be its own page |
+| `window` | floating `<sac-window>` above the shell | dialog-style tools (calculator) |
+| `view` | the shell's stage, addressed `#/<id>` with the app's sub-route after it | anything that used to be its own page |
 | `page` | its own document | only apps that must also stand alone |
 
-## The primitives added to the kit
+## Host side (sac.apps)
 
-- **`sac.sidebar` + `<sac-sidebar>`** — the left-rail counterpart to the existing `sac.toolbar` ribbon projection. An app never draws chrome; it projects navigation (`context.sidebar.set([{label, icon, href, active} | {section}])`) and the shell renders it. This is the answer to "how does the app's navigation get into the shell".
-- **context grows** `route`, `onRoute(cb)` and the scoped `sidebar` handle; `deepLink.set("sub")` writes the view's sub-route via replaceState.
-- View elements are created once and hidden on switch — state survives, `mount()` stays once per element lifetime.
-- `sac.apps.init({ viewHost, home })`; `sac.apps.active()` returns the view on stage.
-- `sac-nav` keeps a route active while inside its sub-routes.
-- **`all.js` now fires `sac:ready`** (+ `window.sacReady`): injected scripts do NOT hold up DOMContentLoaded, so boot code that used that event failed silently. Cherry-picked `<script defer>` tags are unaffected.
-- Shell skeleton: `kit/templates/shell.html`.
+- `sac.apps.init({ viewHost, home })`; `active()` returns the view on stage.
+- View elements are created once and hidden on switch — state survives; `mount()` runs once, and **only when the element is visible**, so apps that measure (canvas, deep-link scroll) get a real box.
+- View creation is keyed by an in-flight promise: one hash navigation fires `hashchange` AND `popstate`, which otherwise built two elements.
+- `sac.apps.inspect(url)` fetches and validates an app manifest — **data only, no code runs**. `sac.apps.add(manifest)` registers it. Splitting them is what makes an informed install dialog possible.
+- Manifest URL resolution: `github.com/owner/repo` → `https://owner.github.io/repo/app.json`.
 
-## App-side rules (unchanged contract, restated)
+## App side (sac.app — the toolkit)
 
-ONE custom element in ONE classic script, guarded define, no other tags registered, light DOM so `ui.css` applies, own stylesheet injected via a `<link>` guarded by id, BASE resolved from `document.currentScript.src` at parse time.
+`base()`, `styles(href, id)`, `define(tag, Class)`, and `Element` with three hooks: `build()` / `onMount(context)` / `onUnmount()`. Its **standalone fallback** mounts the element itself when no host does, so one app file runs on a desktop and alone in its own harness page.
 
-Controls that are not navigation (sliders, colour fields) stay INSIDE the app — the rail is a navigation rail. Ribbon actions still go through `sac.toolbar`.
+`context`: `appId, params, route, onRoute(cb), sidebar{set,clear}, href(route), deepLink{set}, theme, fs: null, identity: null`.
 
-## Agreed direction, not yet built (2026-08-16)
+**`context.href(route)` is mandatory for links** — the host owns the address space (`#/<id>/<route>` on a desktop, `#/<route>` standalone). An app that builds its own hash breaks standalone.
 
-- **Origin in the registry**: an app describes itself in a tiny `app.manifest.js` next to it that calls `sac.apps.register(...)`. The desktop then stores only URLs. Chosen over a JSON manifest because classic scripts are exempt from CORS — foreign origins work with no server cooperation.
-- **App toolkit** (`kit/js/lib/app.js`): the app-side half of the contract — tag guard, BASE, stylesheet injection, and a standalone fallback (self-mount with a default context when no shell mounts it), so one file runs both on a shell and alone. Plus a dev harness page.
-- **Trust model**: the registry holds the owner's own apps, same realm (direct API injection, shared tokens). An iframe/postMessage kind is only for third-party apps, and would be an additional kind, never a rewrite.
-- First external proof planned: a calculator as a `window` app living in another repo.
+## Measured facts (verified, do not re-derive)
+
+| Source | Content-Type | CORS | Usable as a script? |
+|---|---|---|---|
+| GitHub Pages | correct (`application/javascript`, `application/json`) | `*` | yes — the delivery surface |
+| raw.githubusercontent | `text/plain` + `nosniff` | `*` | **no** |
+| Release asset | `application/octet-stream` | — | **no** |
+
+## Traps this cost us (all fixed in the kit)
+
+- **Custom properties are substituted where they are DECLARED.** Accent derivations living only on `:root` ignore any `--accent` set further down, so a per-app accent half-worked. The derivations now also run on `.sac-app` (set by `sac.app.Element` on every app element), `.sac-app-view` and `sac-window`.
+- **`requestAnimationFrame` never runs in a background tab.** Anything that REVEALS something must not wait for a frame: the standalone mount, `sac.dialog`, window open and `sac-loader` all use timeouts now. Measurement and focus refinements still use rAF, which is what it is for. Smooth scrolling is affected too — prefer instant.
+- **`all.js` injects its scripts, and injected scripts do not hold up DOMContentLoaded.** Boot code must wait for `sac:ready` / `window.sacReady`. Cherry-picked `<script defer>` tags are unaffected.
+- Pattern rules like `.empty-state sac-icon` must be **direct-child** selectors, or they paint icons inside nested buttons.
+
+## Repos (one repo, one app — binding guideline)
+
+`sacrvm-appkit` (the kit + its site), `sacrvm-desktop` (the shell at desktop.sacrvm.dev, kit VENDORED), `sacrvm-calculator` (window app), `sacrvm-notes` (view app). App repo shape: `app.json`, `app.js`, `app.css`, `index.html` harness, README, LICENSE. Templates: `kit/templates/app-dialog/` and `app-fullscreen/`.
+
+## Trust model
+
+Same realm, informed install: the manifest is read and shown (name, version, origin, kind) before the app's script is ever loaded, and every tile carries its origin. An iframe/sandbox kind would be an ADDITIONAL kind, never a rewrite.
+
+## Still open
+
+- A "Build an App" page on the appkit site (docs + template downloads + the TODO list).
+- `context.fs` / `identity` are reserved and still null — the notes app uses localStorage meanwhile.
+- No calculator glyph in `sac.icons` (the app borrows `note`).
+- Installed apps are not version-pinned; the desktop re-reads the origin.
