@@ -11,3 +11,5 @@ Thumbs.db
 .claude/settings.local.json
 .claude/*.lock
 .claude/agent-memory/
+*.serve.log
+.serve.log
