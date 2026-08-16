@@ -3,7 +3,8 @@
 .rm-page {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 5rem 2rem 3rem;   /* room for the fixed nav */
+    /* Same top rhythm as .hub-container: 50px of nav clearance plus 4rem. */
+    padding: calc(50px + 4rem) 2rem 3rem;
 }
 
 .rm-page header { margin-bottom: 2.5rem; }

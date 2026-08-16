@@ -815,8 +815,13 @@ kbd {
 .hub-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 4rem 2rem 2rem;
+    /* 50px clears the fixed <sac-nav> — the same clearance .main-layout and
+       #app-root carry; the 4rem on top is the hero's own breathing room. */
+    padding: calc(50px + 4rem) 2rem 2rem;
 }
+/* Inside the SPA shell the nav is already cleared by #app-root — take the
+   50px back so the two never stack. */
+#app-root .hub-container { padding-top: 4rem; }
 .hub-container header {
     margin-bottom: 3rem;
 }
