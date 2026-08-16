@@ -2293,7 +2293,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>theme.set(mode)</code></td><td>Same values; routes through <code>&lt;sac-theme-toggle&gt;</code> when present (one source of truth: <code>data-theme</code> on <code>&lt;html&gt;</code> + the <code>sac-theme</code> localStorage key).</td></tr>
                     <tr><td><code>theme.onChange(cb)</code></td><td><code>cb(resolved)</code> with <code>"dark"</code>/<code>"light"</code> on every effective change, incl. OS flips in auto. Returns an unsubscribe function.</td></tr>
                     <tr><td><code>fs</code></td><td>Storage scoped to this app — see <code>sac.fs</code> below. <code>null</code> when the host did not load <code>lib/fs.js</code>, so an app checks before reaching for it.</td></tr>
-                    <tr><td><code>identity</code></td><td>Reserved capability slot — <code>null</code> in this tier.</td></tr>
+                    <tr><td><code>identity</code></td><td>Who is at this desktop — see <code>sac.identity</code> below. Read-only for apps, and <code>null</code> when the host granted none.</td></tr>
                 </table>
                 ${code(`mount(context) {
     this._ctx = context;                         // once per element lifetime
@@ -2408,6 +2408,41 @@ await sac.fs.for("notes").clear();           // on an explicit "delete its data"
                    <code>app-</code> prefix removed (<code>&lt;app-notes&gt;</code> → <code>notes</code>).
                    Follow the template's naming — <code>tag = "app-" + id</code> — and an app keeps
                    its data when it moves from its own page onto a desktop.</p>
+
+                <h2>sac.identity — who is at this desktop</h2>
+                <p><b>Not authentication.</b> There is no server, no password, no verification and no
+                   secret: a profile is a name and a face somebody typed into their own browser.
+                   Never gate access on it, never treat it as proof, never send it anywhere the user
+                   did not ask for. What it is instead: the difference between an app that greets you
+                   and an app that cannot tell whether anyone is there.</p>
+                ${code(`// app side — read-only
+const me = context.identity && context.identity.get();   // { id, name, avatar } | null
+this._off = context.identity.onChange((me) => this.paint(me));
+
+// host side — the desktop's settings, not an app
+sac.identity.set({ name: "Ada", avatar: "ada.png" });
+sac.identity.clear();`)}
+                <table class="sg">
+                    <tr><th style="width:260px">Member</th><th>Description</th></tr>
+                    <tr><td><code>get()</code></td><td><code>{ id, name, avatar? }</code>, or <code>null</code> when nobody has said who they are — which is the default. Anonymous is a valid state, so handle it first.</td></tr>
+                    <tr><td><code>onChange(cb)</code></td><td><code>cb(profile|null)</code> on every change, including from another tab. Returns an unsubscribe.</td></tr>
+                    <tr><td><code>set({name, avatar})</code> <b>(host)</b></td><td>Keeps the existing <code>id</code> — renaming yourself does not make you somebody else. An empty name is <code>clear()</code>.</td></tr>
+                    <tr><td><code>clear()</code> <b>(host)</b></td><td>Back to nobody, id included. This is "forget me".</td></tr>
+                    <tr><td><code>forApp()</code> <b>(host)</b></td><td>The read-only view handed to apps as <code>context.identity</code> — <code>get</code> and <code>onChange</code>, nothing that writes.</td></tr>
+                </table>
+                <p>Apps read, the host writes. An app that wants a name of its own asks in its own UI
+                   and keeps it in its own <code>context.fs</code>; it does not get to rename you
+                   everywhere. <code>id</code> is stable, meaningless and not a fingerprint: it
+                   exists so an app can key data by "who", and so a future account has something to
+                   attach to.</p>
+                <p class="sg-note">The shape is chosen to survive becoming more. If a host one day
+                   backs this with a real account, <code>{ id, name, avatar }</code> plus
+                   <code>onChange</code> still describes it — and apps written today keep working.
+                   Storage rides on the <code>sac.fs</code> backend, at a key outside every app's
+                   drawer.</p>
+                <p>Pair it with <a href="#/styleguide/components/sac-avatar">&lt;sac-avatar&gt;</a>,
+                   which turns a name into initials and a deterministic palette colour, and takes the
+                   optional image as <code>src</code>.</p>
 
                 <h2>loadHelp — markdown help loader (ES module)</h2>
                 <p>Fetch a markdown file, render via the vendored <code>marked</code>, sanitize via the

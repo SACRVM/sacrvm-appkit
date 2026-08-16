@@ -130,7 +130,7 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
         ["<code>params</code>", "The query parameters the host was opened with."],
         ["<code>appId</code>", "Your id, as the host registered it."],
         ["<code>fs</code>", "Storage scoped to your app — see below. <code>null</code> if the host granted none, so check before you reach for it."],
-        ["<code>identity</code>", "Reserved for who-you-are, still <code>null</code>. The contract will not change shape when it lands."],
+        ["<code>identity</code>", "Who is at this desktop: <code>get()</code> → <code>{ id, name, avatar }</code> or <code>null</code>, plus <code>onChange</code>. Read-only, and <b>not</b> authentication — see below."],
     ])}
 
     <h3>Storing things</h3>
@@ -160,6 +160,24 @@ await this.store.remove("notes/2026-08");`)}
        server, and an app written against these seven methods does not change a
        line. That is also why you never call <code>localStorage</code> directly:
        you would be opting out of every host that offers something better.</p>
+
+    <h3>Knowing who is there</h3>
+    <p><code>context.identity</code> is a name and a face, read-only, and
+       <b>anonymous by default</b> — <code>get()</code> returns <code>null</code>
+       until somebody fills in the host's profile. Handle that first; it is the
+       normal case, not an error.</p>
+    ${code(`onMount(context) {
+    const paint = (me) => {
+        this.querySelector(".who").textContent = me ? me.name : "Not signed in";
+    };
+    paint(context.identity && context.identity.get());
+    this._offMe = context.identity && context.identity.onChange(paint);
+}`)}
+    <p class="bd-note"><b>It is not authentication.</b> No server, no password,
+       nothing verified — somebody typed a name into their own browser. Greet
+       people with it, colour their avatar with it, key your own data by
+       <code>id</code> if you like. Never gate access on it, never treat it as
+       proof of anyone, and never send it anywhere the user did not ask you to.</p>
     <p class="bd-note">Everything on <code>sac</code> beyond <code>sac.app</code>
        belongs to the <b>host</b> and is optional. <code>sac.toast</code> is the usual
        example: guard it with <code>typeof sac.toast === "function"</code> rather than
