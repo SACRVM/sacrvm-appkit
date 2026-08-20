@@ -463,9 +463,15 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
 
                 <h2 id="sac-dialog">&lt;sac-dialog&gt;</h2>
                 <p>Modal confirm with focus trap, Escape = cancel, and <strong>armed destructive
-                   buttons</strong>. Use the <code>sac.dialog.confirm()</code> promise wrapper.</p>
+                   buttons</strong>. Use the <code>sac.dialog.confirm()</code> promise wrapper — or
+                   <code>sac.dialog.info()</code> for the one-button "read, dismiss" case (an About
+                   panel, the licence notice an app with vendored code owes). <code>message</code>
+                   takes a string or an <em>array of paragraphs</em>, always rendered via
+                   <code>textContent</code>. A dialog with more content than the viewport caps out
+                   and scrolls its body; title and buttons stay put.</p>
                 <div class="sg-demo sg-row">
                     <button class="btn danger" style="width:auto" id="demo-dialog">Delete something…</button>
+                    <button class="btn" style="width:auto" id="demo-dialog-info">About…</button>
                     <span id="demo-dialog-result" style="color:var(--text-muted);font-size:0.85rem;"></span>
                 </div>
                 ${table("Button spec", [
@@ -481,7 +487,13 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
         { action: "cancel", label: "Cancel" },
         { action: "delete", label: "Delete", kind: "destructive", armAfterMs: 2000 },
     ],
-});   // → "delete" | "cancel" | null (Escape/backdrop = null)`)}
+});   // → "delete" | "cancel" | null (Escape/backdrop = null)
+
+await sac.dialog.info({
+    title:   "About",
+    message: ["One paragraph per array entry.", "Licence text lives well here."],
+    label:   "Got it",          // default "OK"
+});   // announce, not ask — the resolution carries no information`)}
 
                 <h2 id="sac-status-banner">&lt;sac-status-banner&gt;</h2>
                 <p>Inline, non-modal status strip: sits where you put it, hidden until something
@@ -729,10 +741,28 @@ field.value = "#22c55e";   // programmatic — updates the UI, fires nothing`)}
                         <span id="demo-swatches-state" style="color:var(--text-muted);font-size:0.85rem;">selected: #3b82f6</span>
                     </div>
                 </div>
+                <p>An ordered strip whose cells need names — a token ramp, a heatmap legend, a
+                   severity scale — uses <code>caption</code>: a quiet label that is part of the
+                   swatch, not a badge on it.</p>
+                <div class="sg-demo" style="max-width:420px;">
+                    <sac-swatch-grid columns="10">
+                        <sac-swatch value="#f8fafc" caption="50"></sac-swatch>
+                        <sac-swatch value="#f1f5f9" caption="100"></sac-swatch>
+                        <sac-swatch value="#e2e8f0" caption="200"></sac-swatch>
+                        <sac-swatch value="#cbd5e1" caption="300"></sac-swatch>
+                        <sac-swatch value="#94a3b8" caption="400"></sac-swatch>
+                        <sac-swatch value="#64748b" caption="500"></sac-swatch>
+                        <sac-swatch value="#475569" caption="600"></sac-swatch>
+                        <sac-swatch value="#334155" caption="700"></sac-swatch>
+                        <sac-swatch value="#1e293b" caption="800"></sac-swatch>
+                        <sac-swatch value="#0f172a" caption="900"></sac-swatch>
+                    </sac-swatch-grid>
+                </div>
                 ${table("sac-swatch attribute", [
                     ["value", "Any CSS color string (data, not theme). <code>transparent</code> is special-cased to a checkerboard + thin neutral diagonal line rather than a flat fill."],
                     ["label", "Sets aria-label + title on the internal button. Falls back to <code>value</code> when absent, so a swatch is never nameless."],
-                    ["count", "Small corner pill. The attribute's <em>presence</em> shows it — <code>count=\"0\"</code> still renders “0”; omit it entirely for no pill."],
+                    ["count", "Small corner pill. The attribute's <em>presence</em> shows it — <code>count=\"0\"</code> still renders “0”; omit it entirely for no pill. A count, nothing else — naming a cell with it is misuse; that is what <code>caption</code> is for."],
+                    ["caption", "Quiet muted label under the cell (a ramp step “500”, a legend entry). Ellipsized, never widens its column. When no <code>label</code> is set it joins the accessible name: “500 · #64748b”."],
                     ["selected", "Boolean, reflected. A 2px <code>--accent</code> outline at 2px offset — an outline, not a border. Set by the grid in selectable mode, or directly on a stand-alone swatch."],
                     ["disabled", "Boolean, reflected. Unclickable, unfocusable, skipped by the keyboard walk and excluded from the roving tabindex."],
                 ])}
@@ -741,9 +771,9 @@ field.value = "#22c55e";   // programmatic — updates the UI, fires nothing`)}
                     ["selectable", "Turns on click-to-select (single selection) and switches the grid's role to listbox/option (plain <code>group</code> otherwise)."],
                 ])}
                 ${table("Property", [
-                    ["sac-swatch.value / .label / .count", "String get/set; <code>\"\"</code> clears label/count."],
+                    ["sac-swatch.value / .label / .count / .caption", "String get/set; <code>\"\"</code> clears label/count/caption."],
                     ["sac-swatch.selected / .disabled", "Boolean get/set. <code>focus()</code> forwards to the shadow-internal button."],
-                    ["sac-swatch-grid.colors", "get/set <code>[{ value, label?, count?, selected?, disabled? }]</code>. The setter rebuilds the light-DOM <code>&lt;sac-swatch&gt;</code> children from scratch — the one sanctioned bulk rebuild, for JS-driven palettes. Getter and setter carry the same shape, so <code>grid.colors = grid.colors</code> is a lossless round-trip."],
+                    ["sac-swatch-grid.colors", "get/set <code>[{ value, label?, count?, caption?, selected?, disabled? }]</code>. The setter rebuilds the light-DOM <code>&lt;sac-swatch&gt;</code> children from scratch — the one sanctioned bulk rebuild, for JS-driven palettes (a computed ramp sets <code>caption</code> per step). Getter and setter carry the same shape, so <code>grid.colors = grid.colors</code> is a lossless round-trip."],
                 ])}
                 ${table("Event", [
                     ["sac:swatch-select", "detail { value, swatch }. Fires only on a user click or keyboard activation that selects a different, non-disabled swatch — never for programmatic <code>selected</code> writes or the <code>.colors</code> setter."],
@@ -1500,6 +1530,18 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
             });
             dlgResult.textContent = `resolved: ${JSON.stringify(answer)}`;
         });
+        root.querySelector("#demo-dialog-info").addEventListener("click", async () => {
+            await sac.dialog.info({
+                title: "About this demo",
+                message: [
+                    "Each array entry becomes its own paragraph, set with textContent — the escaping guarantee of confirm() is unchanged.",
+                    "This is the one-button case: announce, not ask. An About panel or a licence notice is the typical tenant.",
+                    "Give a dialog more text than the viewport has room for and the body scrolls while title and button stay put.",
+                ],
+                label: "Got it",
+            });
+            dlgResult.textContent = "info dismissed";
+        });
 
         // Banner
         const banner = root.querySelector("#demo-banner");
@@ -1967,6 +2009,38 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                    <code>background</code> shorthand</strong> — that wipes the chevron. Set
                    <code>background-color</code> if you need a different fill.</p>
 
+                <h2>Surfaces painted from data — the onColor rule</h2>
+                <p>Sometimes a surface's background IS the app's output: the colour a picker just
+                   mixed, a user's brand value, a result only known at runtime. No token can promise
+                   contrast against a colour that is not in the theme, so this is a rule, not a
+                   component: <strong>the ink comes from <code>sac.color.onColor()</code></strong>
+                   (black or white, flipping at luma 0.35 — see Helpers), and <strong>controls
+                   standing on the plane inherit <code>currentColor</code></strong> instead of the
+                   button tokens — an <code>--accent</code> fill on an arbitrary background is a
+                   coin flip. The plane's layout is the app's business; the ink is not.</p>
+                <div class="sg-demo">
+                    <div class="sg-row" style="align-items:stretch;">
+                        <div style="flex:1 1 180px;background:#a3e635;color:#000000;border-radius:var(--radius-m);padding:1rem;">
+                            <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:600;">#a3e635</div>
+                            <button class="btn" style="width:auto;margin-top:0.75rem;background:transparent;border-color:currentColor;color:inherit;">Copy</button>
+                        </div>
+                        <div style="flex:1 1 180px;background:#1e3a8a;color:#ffffff;border-radius:var(--radius-m);padding:1rem;">
+                            <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:600;">#1e3a8a</div>
+                            <button class="btn" style="width:auto;margin-top:0.75rem;background:transparent;border-color:currentColor;color:inherit;">Copy</button>
+                        </div>
+                    </div>
+                </div>
+                ${code(`// JS: paint the plane, then let the kit pick the ink
+plane.style.background = value;                                  // data, not theme
+plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | "#ffffff"
+
+/* CSS: controls ON the plane borrow its ink */
+.plane .btn {
+    background: transparent;
+    border-color: currentColor;
+    color: inherit;
+}`)}
+
                 <h2>Cards &amp; glass — .card, .glass, .floating-menu</h2>
                 <div class="sg-demo on-bg">
                     <div class="sg-row" style="align-items:stretch;">
@@ -2258,8 +2332,12 @@ sac.sidebar.clear();`)}
                    rather than this global. The rail is for <b>navigation</b>: sliders and colour
                    fields belong in the app's own area, not in the shell's chrome.</p>
 
-                <h2>sac.dialog — confirm helper</h2>
-                <p>Promise wrapper over <code>&lt;sac-dialog&gt;</code> — see the
+                <h2>sac.dialog — confirm + info helpers</h2>
+                <p>Promise wrappers over <code>&lt;sac-dialog&gt;</code>:
+                   <code>confirm()</code> asks a question, <code>info()</code> announces —
+                   one button (label default <code>"OK"</code>), no answer to carry. Both take
+                   <code>message</code> as a string or an array of paragraphs, always rendered
+                   via <code>textContent</code>. See the
                    <a href="#/styleguide/components">Components</a> page for the live demo and the armed-button rules.</p>
 
                 <h2>sac.apps — apps as web components</h2>
