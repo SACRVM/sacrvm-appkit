@@ -1112,8 +1112,60 @@ zone.addEventListener("sac:rejected", (e) => {
                     </sac-tab-group>
                     <span id="demo-tabs-state" style="color:var(--text-muted);font-size:0.85rem;">active: one</span>
                 </div>
+                <p>By default the strip is a single unwrapped row — past the point where the tabs
+                   stop fitting, it overflows its container. The <code>overflow</code> attribute
+                   decides what happens instead: <code>wrap</code> folds the tabs into extra rows
+                   (a sidebar — vertical room is cheap and seeing every choice at once is the
+                   point), <code>scroll</code> keeps the strip one row tall and pans it like an
+                   editor's tab bar — mouse wheel over the strip, ‹ › buttons at the ends while
+                   there is more in that direction, never a scrollbar. With <code>scroll</code>,
+                   the active tab is panned into view whenever <code>active</code> changes — the
+                   second group below loads with a far tab active to show it.</p>
+                <div class="sg-demo sg-row" style="align-items:flex-start;">
+                    <div style="width:240px;">
+                        <sac-tab-group overflow="wrap" active="general">
+                            <sac-tab name="general">General</sac-tab>
+                            <sac-tab name="display">Display</sac-tab>
+                            <sac-tab name="audio">Audio</sac-tab>
+                            <sac-tab name="input">Input</sac-tab>
+                            <sac-tab name="network">Network</sac-tab>
+                            <sac-tab name="sync">Sync</sac-tab>
+                            <sac-tab name="privacy">Privacy</sac-tab>
+                            <sac-tab name="advanced">Advanced</sac-tab>
+                            <sac-tab-panel name="general"><p style="margin:0;"><code>overflow="wrap"</code> in a 240px column.</p></sac-tab-panel>
+                            <sac-tab-panel name="display"><p style="margin:0;">Display settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="audio"><p style="margin:0;">Audio settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="input"><p style="margin:0;">Input settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="network"><p style="margin:0;">Network settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="sync"><p style="margin:0;">Sync settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="privacy"><p style="margin:0;">Privacy settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="advanced"><p style="margin:0;">Advanced settings.</p></sac-tab-panel>
+                        </sac-tab-group>
+                    </div>
+                    <div style="width:240px;">
+                        <sac-tab-group overflow="scroll" active="privacy">
+                            <sac-tab name="general">General</sac-tab>
+                            <sac-tab name="display">Display</sac-tab>
+                            <sac-tab name="audio">Audio</sac-tab>
+                            <sac-tab name="input">Input</sac-tab>
+                            <sac-tab name="network">Network</sac-tab>
+                            <sac-tab name="sync">Sync</sac-tab>
+                            <sac-tab name="privacy">Privacy</sac-tab>
+                            <sac-tab name="advanced">Advanced</sac-tab>
+                            <sac-tab-panel name="general"><p style="margin:0;">General settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="display"><p style="margin:0;">Display settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="audio"><p style="margin:0;">Audio settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="input"><p style="margin:0;">Input settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="network"><p style="margin:0;">Network settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="sync"><p style="margin:0;">Sync settings.</p></sac-tab-panel>
+                            <sac-tab-panel name="privacy"><p style="margin:0;"><code>overflow="scroll"</code> — this tab was panned into view on load.</p></sac-tab-panel>
+                            <sac-tab-panel name="advanced"><p style="margin:0;">Advanced settings.</p></sac-tab-panel>
+                        </sac-tab-group>
+                    </div>
+                </div>
                 ${table("sac-tab-group attribute", [
                     ["active", "Name of the active tab. Observed; applied in place. Absent on connect → the first tab is activated. Property <code>.active</code> mirrors it (setting it switches tabs but fires no event — the caller already knows)."],
+                    ["overflow", "What happens when the tabs outgrow the strip. <code>wrap</code>: fold into extra rows — the hairline closes the strip under the last row only, deliberately. <code>scroll</code>: one row, panned like an editor's tab bar — mouse wheel over the strip, ‹ › buttons at the ends while there is more in that direction, never a scrollbar; the active tab is panned into view whenever <code>active</code> changes, so a deep link can't select a tab nobody can see. Absent: a single unwrapped row (unchanged default)."],
                 ])}
                 ${table("sac-tab attribute", [
                     ["name", "The key a panel matches on."],
@@ -1857,6 +1909,13 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                 <p>THE button (one class replaces the legacy <code>.btn</code>/<code>.tool-btn</code> pair).
                    Default shape: full-width uppercase sidebar button. Variants: <code>.primary</code>,
                    <code>.danger</code>, <code>:disabled</code>.</p>
+                <p><strong>Full width is the default</strong>, sized for a sidebar column. Buttons
+                   sharing a flex line shrink against each other and look right on their own — a
+                   button standing alone in a wide container is the first place an app notices;
+                   give it <code>width: auto</code> (or a container) when it shouldn't span.
+                   The <code>hidden</code> attribute works on <code>.btn</code>: <code>ui.css</code>
+                   carries the explicit <code>.btn[hidden]</code> rule, because a class with a
+                   <code>display</code> of its own would otherwise beat the UA's hidden rule.</p>
                 <div class="sg-demo sg-col">
                     <button class="btn">Default</button>
                     <button class="btn primary">Primary</button>
