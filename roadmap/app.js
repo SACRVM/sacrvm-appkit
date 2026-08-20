@@ -327,7 +327,7 @@
         <tr><th>Item</th><th>What</th><th>Status</th></tr>
         <tr data-item="release-zip">
             <td>Semver tag + release ZIP</td>
-            <td>Semver tags; the release action attaches a ZIP of <code>kit/</code> with a VERSION stamp. v1.0.0 and v1.1.0 are released on GitHub.</td>
+            <td>Semver tags; the release action attaches a ZIP of <code>kit/</code> with a VERSION stamp. v1.0.0 through v1.2.0 are released on GitHub.</td>
             <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
         <tr data-item="npm-channel">
