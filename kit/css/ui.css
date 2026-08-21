@@ -950,16 +950,6 @@ a.nav-icon-btn { text-decoration: none; }
     box-shadow: none;
     background: var(--tile);
 }
-/* Dashed border = opens as an overlay window, not a page. */
-.tile-window {
-    background: color-mix(in srgb, var(--glass-hue) 60%, transparent);
-    border: 1px dashed var(--border-strong);
-}
-.tile-window:hover {
-    background: color-mix(in srgb, var(--glass-hue) 90%, transparent);
-    border: 1px dashed var(--accent);
-}
-
 .tile-badge {
     position: absolute;
     top: 24px;

@@ -22,6 +22,18 @@
  *                                             // "wide" (2 columns) | "large" (2 columns
  *                                             // × 2 rows); unknown values fall back to
  *                                             // medium silently
+ *       tiles: [                              // optional — MULTIPLE launcher tiles for
+ *           { id: "today",                    // one app (complex apps deploy several
+ *             name: "Today",                  // entry points into a desktop). When set,
+ *             icon: "clock",                  // these REPLACE the app's default tile.
+ *             description: "…",               // Each entry may override name/icon/
+ *             route: "today",                 // description/badge/tile/accent and adds:
+ *             accent: "#e59500" },            //   route  — views: opens "#/<id>/<route>"
+ *           …                                 //   params — windows: handed to open()
+ *       ],                                    //   accent — colors the tile AND the app
+ *                                             //            opened through it (its --accent
+ *                                             //            seed — the Windows-Phone move:
+ *                                             //            tile color = app highlight)
  *       kind:        "window",                // "window" | "view" | "page"
  *       // kind:"window" and kind:"view":
  *       tag:         "app-color-bucket",      // the app's custom element
@@ -76,9 +88,14 @@
  *                        "sac:apps-changed" on document.
  *   list()               → array of manifest copies, registration order
  *   get(id)              → manifest copy or null
- *   open(id, params?)    → Promise<HTMLElement> resolving to the app element.
+ *   open(id, params?, opts?) → Promise<HTMLElement> resolving to the app
+ *                        element.
  *                        params: URLSearchParams | object | string, handed to
- *                        the app via context.params. kind:"page" navigates
+ *                        the app via context.params.
+ *                        opts { route, accent }: what a launcher tile carries —
+ *                        route opens a view at "#/<id>/<route>", accent seeds
+ *                        the app's --accent (tile color = app highlight).
+ *                        kind:"page" navigates
  *                        (params appended) and the promise never resolves.
  *                        kind:"window" injects src once (keyed by src), awaits
  *                        customElements.whenDefined(tag) and shows the app in
@@ -467,9 +484,11 @@
     }
 
     /** @returns Promise<HTMLElement> — the created element, on stage. */
-    function openView(manifest, route, params) {
+    function openView(manifest, route, params, accent) {
         const id = manifest.id;
         if (views.has(id)) {
+            // A tile-supplied accent re-seeds the existing element.
+            if (accent) views.get(id).el.style.setProperty("--accent", accent);
             showView(id, route);
             return Promise.resolve(views.get(id).el);
         }
@@ -478,13 +497,13 @@
         // hashchange AND popstate. Without this the second call sails past
         // the views.has() check and builds a second, orphaned element.
         if (!viewOpening.has(id)) {
-            viewOpening.set(id, createView(manifest, route, params)
+            viewOpening.set(id, createView(manifest, route, params, accent)
                 .finally(() => viewOpening.delete(id)));
         }
         return viewOpening.get(id).then((el) => { showView(id, route); return el; });
     }
 
-    async function createView(manifest, route, params) {
+    async function createView(manifest, route, params, accent) {
         const id = manifest.id;
         try {
             await ensureDefined(manifest);
@@ -508,7 +527,9 @@
         el.className = "sac-app-view";
         el.hidden = true;              // showView() decides when it appears
         // Per-app accent: one seed on the view, everything derived follows.
-        if (manifest.accent) el.style.setProperty("--accent", manifest.accent);
+        // A tile's own accent (opened via a colored launcher tile) wins.
+        const seed = accent || manifest.accent;
+        if (seed) el.style.setProperty("--accent", seed);
 
         // The record exists BEFORE mount(): context.route reads through it.
         // showView() does the mounting, once it is visible.
@@ -536,7 +557,8 @@
 
     /* ------------------------------------------------------------- open --- */
 
-    async function doOpen(id, params) {
+    async function doOpen(id, params, opts) {
+        const o = opts || {};
         const manifest = registry.get(id);
         if (!manifest) {
             console.warn(`[sac.apps] unknown app: ${id}`);
@@ -554,14 +576,15 @@
         if (manifest.kind === "view") {
             // The address IS the open call, so a plain link does what a click
             // does. pushState (not replace) — back returns where you came from.
+            // A tile's route (opts.route) targets a spot inside the app.
             const known = views.get(id);
-            const route = known ? known.route : "";
+            const route = o.route != null ? String(o.route) : (known ? known.route : "");
             const target = `#/${id}${route ? "/" + route : ""}`;
             if (window.location.hash !== target) {
                 window.history.pushState({}, document.title,
                     window.location.pathname + window.location.search + target);
             }
-            return openView(manifest, route, params);
+            return openView(manifest, route, params, o.accent);
         }
 
         // kind:"window" (the default — legacy specs carry no kind field).
@@ -569,6 +592,7 @@
         if (existing && existing.win.isConnected) {
             // Re-opening an app the user minimized must show the app, not the
             // collapsed title bar. A maximized window keeps its state.
+            if (o.accent) existing.win.style.setProperty("--accent", o.accent);
             if (existing.win.hasAttribute("minimized")) existing.win.restore?.();
             existing.win.open();
             return existing.el;
@@ -600,7 +624,9 @@
         win.setAttribute("top",  `${top}px`);
 
         // Per-app accent: one seed on the window, everything derived follows.
-        if (manifest.accent) win.style.setProperty("--accent", manifest.accent);
+        // A tile's own accent (opened via a colored launcher tile) wins.
+        const seed = o.accent || manifest.accent;
+        if (seed) win.style.setProperty("--accent", seed);
 
         // Window chrome, the app's choice: controls subset + fixed size.
         if (manifest.controls != null) win.setAttribute("controls", String(manifest.controls));
@@ -626,10 +652,10 @@
         return el;
     }
 
-    function open(id, params) {
+    function open(id, params, opts) {
         // Collapse rapid double-opens into one window creation.
         if (opening.has(id)) return opening.get(id);
-        const p = doOpen(id, params);
+        const p = doOpen(id, params, opts);
         opening.set(id, p);
         p.finally(() => opening.delete(id)).catch(() => {});
         return p;
