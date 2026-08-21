@@ -331,13 +331,17 @@
                 ])}
 
                 <h2 id="sac-launcher">&lt;sac-launcher&gt;</h2>
-                <p>One tile per app in the <code>sac.apps</code> registry. Light DOM, so the
-                   global <code>.grid</code>/<code>.tile</code> patterns apply — the one
+                <p>One tile per app in the <code>sac.apps</code> registry — or several: a
+                   manifest with a <code>tiles</code> array deploys multiple entry points for
+                   one app (the two "Suite" tiles below are one registration). Light DOM, so
+                   the global <code>.grid</code>/<code>.tile</code> patterns apply — the one
                    documented exception to the shadow rule. Page apps are real links, window
-                   apps real buttons. The manifest decides the tile's look
-                   (<code>badge</code>, <code>tile</code> footprint — see sac.apps in
-                   Helpers); a <code>storage</code> key adds the persisted user layer.
-                   This demo is storage-less; the demo app's hub is the live one.</p>
+                   and view apps real buttons; every tile looks the same. The manifest decides
+                   the tile's look (<code>badge</code>, <code>tile</code> footprint,
+                   <code>accent</code> — see sac.apps in Helpers); a tile's accent colors the
+                   tile and rides into the app opened through it. A <code>storage</code> key
+                   adds the persisted user layer. This demo is storage-less; the demo app's
+                   hub is the live one.</p>
                 <div class="sg-demo">
                     <sac-launcher id="sg-launcher-plain"></sac-launcher>
                 </div>
@@ -1450,6 +1454,19 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
                                 description: "Another window app.",
                                 kind: "window", tag: "sg-demo-app", src: "sg-demo-app.js",
                                 width: "380px", height: "260px" });
+            // One app, several tiles: `tiles` replaces the default tile.
+            // Each tile's accent colors the tile AND the app opened by it.
+            sac.apps.register({ id: "sg-demo-suite", name: "Suite", icon: "shapes",
+                                kind: "window", tag: "sg-demo-app", src: "sg-demo-app.js",
+                                width: "380px", height: "260px",
+                                tiles: [
+                                    { id: "amber", name: "Suite · Amber", icon: "lightbulb",
+                                      description: "tiles[] entry with accent — the window opens amber.",
+                                      accent: "#e59500" },
+                                    { id: "pink", name: "Suite · Pink", icon: "palette",
+                                      description: "Same app, second tile, its own accent.",
+                                      accent: "#ec4899" },
+                                ] });
             sac.apps.register({ id: "sg-demo-docs", name: "Docs", icon: "document",
                                 description: "A page app — the tile is a plain link. tile: \"wide\" spans two grid columns.",
                                 kind: "page", href: "#/styleguide/components", tile: "wide" });
@@ -1874,9 +1891,10 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
                 <h2>Launcher hub</h2>
                 <p>Full-page tile grid (<code>.hub-container</code> + <code>.grid</code> +
                    <code>.tile</code>, see CSS Patterns): <strong>page tiles</strong> are plain links,
-                   <strong>window tiles</strong> (dashed) open a lazy app in a
+                   <strong>window tiles</strong> open a lazy app in a
                    <code>&lt;sac-window&gt;</code> via <code>sac.apps</code>, <code>?app=&lt;id&gt;</code>
-                   deep links included. The modern shape is <code>&lt;sac-launcher&gt;</code> — one tile
+                   deep links included — all tiles look the same; what a click does is not
+                   encoded in the border. The modern shape is <code>&lt;sac-launcher&gt;</code> — one tile
                    per registered manifest, user-composable via its <code>storage</code> attribute (see
                    <a href="#/styleguide/components">Components</a> and <a href="#/styleguide/helpers">Helpers</a>).
                    The demo app's hub is the live example.</p>
@@ -1889,7 +1907,7 @@ sac.apps.register({ id: "foo", name: "Foo", icon: "lightbulb",
                     width: "500px", height: "750px" });
 sac.apps.init();   // ?app=foo deep links (+ hand-written [data-app] tiles)`)}
                 <p>Hand-written tiles remain possible anywhere on the page —
-                   <code>&lt;a class="tile tile-window" data-app="foo"&gt;</code> — and
+                   <code>&lt;a class="tile" data-app="foo"&gt;</code> — and
                    <code>sac.apps.init()</code> binds them. Template:
                    <code>kit/templates/launcher.html</code>.</p>
 
@@ -2069,9 +2087,12 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                 </div>
 
                 <h2>Tiles — .grid + .tile</h2>
-                <p>Variants: <code>.tile.large</code> (2 columns), <code>.tile-window</code> (dashed =
-                   overlay tool), <code>.tile.disabled</code> (grayscale — but prefer the no-dead-tiles
-                   rule: don't show what doesn't work), <code>.tile-badge</code> (+<code>.accent</code>).</p>
+                <p>Variants: <code>.tile.large</code> (2 columns), <code>.tile.disabled</code>
+                   (grayscale — but prefer the no-dead-tiles rule: don't show what doesn't work),
+                   <code>.tile-badge</code> (+<code>.accent</code>). One tile look for every kind —
+                   what a click does (page, view, window) is not encoded in the border. A tile can
+                   carry its own <code>--accent</code> seed: icon, hover ring and glow follow, and
+                   opened through <code>sac.apps</code> the same color becomes the app's highlight.</p>
                 <div class="sg-demo on-bg">
                     <div class="grid" style="grid-auto-rows:200px;">
                         <a class="tile" href="#/styleguide/patterns">
@@ -2083,9 +2104,9 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                             <sac-icon name="vector"></sac-icon>
                             <div><h2 style="font-size:1.2rem;">Badged</h2><p>.tile-badge.accent</p></div>
                         </a>
-                        <a class="tile tile-window" href="#/styleguide/patterns">
+                        <a class="tile" href="#/styleguide/patterns" style="--accent:#e59500;">
                             <sac-icon name="lightbulb"></sac-icon>
-                            <div><h2 style="font-size:1.2rem;">Overlay tile</h2><p>Dashed = opens a window.</p></div>
+                            <div><h2 style="font-size:1.2rem;">Accented tile</h2><p>Own <code>--accent</code> seed — the Windows-Phone move.</p></div>
                         </a>
                     </div>
                 </div>
@@ -2365,7 +2386,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>register(manifest)</code></td><td>Upsert by <code>id</code> — re-register replaces, first registration fixes list order. Emits <code>sac:apps-changed</code> on <code>document</code>.</td></tr>
                     <tr><td><code>list()</code></td><td>Array of manifest copies, registration order.</td></tr>
                     <tr><td><code>get(id)</code></td><td>Manifest copy or <code>null</code>.</td></tr>
-                    <tr><td><code>open(id, params?)</code></td><td><code>Promise&lt;HTMLElement&gt;</code> (the app element). <code>kind:"page"</code> navigates to <code>href</code> (params appended, promise never resolves). <code>kind:"window"</code> injects <code>src</code> once (keyed by src), awaits <code>customElements.whenDefined(tag)</code>, shows the app in a centered, cascaded <code>&lt;sac-window&gt;</code> that stays in the DOM and is re-opened later (minimized → restored). Rejects on script-load failure (console.error + error toast).</td></tr>
+                    <tr><td><code>open(id, params?, opts?)</code></td><td><code>Promise&lt;HTMLElement&gt;</code> (the app element). <code>opts { route, accent }</code> is what a launcher tile carries: <code>route</code> opens a view at <code>#/&lt;id&gt;/&lt;route&gt;</code>, <code>accent</code> seeds the app's <code>--accent</code> (tile color = app highlight). <code>kind:"page"</code> navigates to <code>href</code> (params appended, promise never resolves). <code>kind:"window"</code> injects <code>src</code> once (keyed by src), awaits <code>customElements.whenDefined(tag)</code>, shows the app in a centered, cascaded <code>&lt;sac-window&gt;</code> that stays in the DOM and is re-opened later (minimized → restored). Rejects on script-load failure (console.error + error toast).</td></tr>
                     <tr><td><code>close(id)</code></td><td>Closes the window — element and window stay in the DOM.</td></tr>
                     <tr><td><code>remove(id)</code></td><td>Unregister; calls the app's <code>unmount()</code> if present and removes its window. Emits <code>sac:apps-changed</code>.</td></tr>
                     <tr><td><code>isOpen(id)</code></td><td><code>true</code> if the app's window exists and is open.</td></tr>
@@ -2420,7 +2441,8 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>nav</code></td><td>view only: <code>false</code> keeps the app out of the nav panel (it stays reachable by hash).</td></tr>
                     <tr><td><code>tag</code>, <code>src</code></td><td>window + view: the app's single custom element + its classic script, injected once on first open. The script guards its definition with <code>customElements.get</code> and registers no other tags; the element fills its window (<code>height: 100%</code> is set for you).</td></tr>
                     <tr><td><code>width</code>, <code>height</code></td><td>window only: <code>sac-window</code> size (defaults 500px / 600px).</td></tr>
-                    <tr><td><code>accent</code></td><td>window only, optional: set as <code>--accent</code> on the window — the per-app retheme.</td></tr>
+                    <tr><td><code>accent</code></td><td>window + view, optional: set as <code>--accent</code> on the window / view element — the per-app retheme. A tile's own accent (see <code>tiles</code>) wins for the open it triggers.</td></tr>
+                    <tr><td><code>tiles</code></td><td>Optional: an array of launcher tiles for ONE app — complex apps deploy several entry points. When present it <b>replaces</b> the default tile. Each entry may override <code>name</code>/<code>icon</code>/<code>description</code>/<code>badge</code>/<code>tile</code> and adds <code>route</code> (views: opens <code>#/&lt;id&gt;/&lt;route&gt;</code>), <code>params</code> (windows), and <code>accent</code> — the tile's color, which also becomes the app's highlight when opened through that tile (tile color = app identity, the Windows-Phone move). Give entries a stable <code>id</code> so user layouts survive reordering.</td></tr>
                     <tr><td><code>controls</code>, <code>resizable</code></td><td>window only, optional: <code>controls</code> = space-separated subset of <code>min max close</code> (window chrome); <code>resizable: false</code> sets <code>no-resize</code>. Absent = all three dots, resizable.</td></tr>
                     <tr><td><code>href</code></td><td>page only: the tile becomes a normal link.</td></tr>
                 </table>
@@ -2439,7 +2461,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>route</code> <b>(view)</b></td><td>The sub-route the app was opened at — everything after <code>#/&lt;id&gt;/</code>, <code>""</code> at the app's root.</td></tr>
                     <tr><td><code>onRoute(cb)</code> <b>(view)</b></td><td><code>cb(route)</code> on every change: rail clicks, the back button and pasted links all arrive here. Returns an unsubscribe.</td></tr>
                     <tr><td><code>href(route)</code> <b>(view)</b></td><td>Builds <code>#/&lt;id&gt;/&lt;route&gt;</code>. Apps must never assemble that string themselves — the host owns the address space, and standalone there is no id.</td></tr>
-                    <tr><td><code>host</code> <b>(view)</b></td><td><code>{ name, icon, href }</code> — the host's presence, from <code>init({ host })</code>; <code>null</code> when the host declared none and always <code>null</code> standalone. The app copies it onto its own <code>&lt;sac-nav&gt;</code>'s <code>host-*</code> attributes; that jump is the ONLY thing a host adds to an app's chrome.</td></tr>
+                    <tr><td><code>host</code> <b>(view)</b></td><td><code>{ name, icon, href, nav, toolbar }</code> — the host's package, from <code>init({ host })</code>; <code>null</code> when the host declared none and always <code>null</code> standalone. One line in <code>mount()</code>: <code>this._nav.host = context.host</code> — the app's own nav renders the ⌂ jump, the suite nav in its burger and the host controls in its ribbon. The host supplies data; it never paints into the app's chrome.</td></tr>
                     <tr><td><code>deepLink.set(…)</code></td><td>view: <code>set(route)</code> writes <code>#/&lt;id&gt;/&lt;route&gt;</code> (replaceState — switching sections is not a new history entry). window/page: <code>set(obj)</code> writes <code>?app=&lt;id&gt;&amp;&lt;obj entries&gt;</code>; <code>set(null)</code> cleans back to the bare path (hash preserved).</td></tr>
                     <tr><td><code>theme.get()</code></td><td>The flag: <code>"dark"</code> | <code>"light"</code> | <code>"auto"</code>.</td></tr>
                     <tr><td><code>theme.set(mode)</code></td><td>Same values; routes through <code>&lt;sac-theme-toggle&gt;</code> when present (one source of truth: <code>data-theme</code> on <code>&lt;html&gt;</code> + the <code>sac-theme</code> localStorage key).</td></tr>

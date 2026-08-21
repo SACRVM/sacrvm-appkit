@@ -267,6 +267,7 @@ const rows = await fetch("/api/things", { headers: auth() }).then((r) => r.json(
         ["<code>width</code> / <code>height</code>", "<code>window</code> apps: the initial window size."],
         ["<code>resizable</code> / <code>controls</code>", "<code>window</code> apps: passed through to <code>&lt;sac-window&gt;</code>."],
         ["<code>nav</code>", "<code>view</code> apps: <code>false</code> keeps the app out of the host's nav panel."],
+        ["<code>tiles</code>", "Several launcher tiles for one app — a complex app deploys multiple entry points. Replaces the default tile; each entry may override <code>name</code>/<code>icon</code>/<code>description</code>/<code>badge</code>/<code>tile</code> and carry <code>route</code> (views), <code>params</code> (windows) and <code>accent</code> — the tile's color, which also becomes the app's highlight when opened through it. Give entries a stable <code>id</code>."],
     ])}
 
     <h2>Two shapes</h2>
