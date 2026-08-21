@@ -36,7 +36,27 @@
     class AppBuild extends sac.app.Element {
         build() {
             sac.app.styles(BASE + "build.css", "sac-app-build-css");
-            this.innerHTML = `
+
+            // The app is complete: its own nav, its own rail, its own
+            // scrolling body. A host adds nothing but context.host.
+            this._nav = document.createElement("sac-nav");
+            this._nav.setAttribute("brand", "BUILD AN APP");
+            this._nav.setAttribute("brand-icon", "plus");
+            this._nav.setAttribute("brand-href", "#/build");
+            const ctxSlot = document.createElement("div");
+            ctxSlot.slot = "context";
+            ctxSlot.appendChild(document.createElement("sac-theme-toggle"));
+            this._nav.appendChild(ctxSlot);
+
+            const layout = document.createElement("div");
+            layout.className = "main-layout";
+            this._rail   = document.createElement("sac-sidebar");
+            this._scroll = document.createElement("div");
+            this._scroll.className = "app-scroll";
+            layout.append(this._rail, this._scroll);
+            this.append(this._nav, layout);
+
+            this._scroll.innerHTML = `
 <div class="bd-page">
     <header>
         <h1>Build an App</h1>
@@ -113,7 +133,7 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
     ${table(["Hook", "When, and what belongs there"], [
         ["<code>build()</code>", "Once, on first connect. Write your markup and load your stylesheet. The element may not be visible yet — do not measure here."],
         ["<code>onMount(context)</code>", "Once, when the app is really on screen. Subscriptions, measurements, first render, reading the route. This is where the host hands you its capabilities."],
-        ["<code>onUnmount()</code>", "The host removed the app. Undo exactly what <code>onMount</code> did: every unsubscribe, and <code>context.sidebar.clear()</code> if you filled the rail."],
+        ["<code>onUnmount()</code>", "The host removed the app. Undo exactly what <code>onMount</code> did: every unsubscribe."],
     ])}
     <p>Switching away from a view app does <b>not</b> unmount it — the element stays
        alive and comes back as you left it. <code>onUnmount</code> means gone.</p>
@@ -126,7 +146,7 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
         ["<code>route</code><br><code>onRoute(cb)</code>", "Your sub-route — the part after <code>#/&lt;id&gt;/</code> — now, and on every change. Rail clicks, the back button and pasted links all arrive here."],
         ["<code>href(route)</code>", "Builds a link into your own app. Never hand-assemble <code>#/id/route</code>: the host owns the address space, and standalone there is no id at all."],
         ["<code>deepLink.set(route)</code>", "Makes the current state linkable (<code>replaceState</code> — switching sections is not a new page in the history)."],
-        ["<code>sidebar.set([…])</code><br><code>sidebar.clear()</code>", "Projects navigation into the host's rail instead of drawing your own. Items are <code>{ label, icon, href, active }</code>, or <code>{ section }</code> for a heading."],
+        ["<code>host</code>", "The host's presence, or <code>null</code> standalone: <code>{ name, icon, href }</code>. Your app is COMPLETE — it draws its own <code>&lt;sac-nav&gt;</code>, toolbar and rail (<code>&lt;sac-sidebar&gt;</code> with the <code>items</code> property). The one thing a host adds is this jump home: copy it onto your nav's <code>host-label</code>/<code>host-href</code>/<code>host-icon</code> attributes and you are done. Nothing is ever projected out of the app."],
         ["<code>params</code>", "The query parameters the host was opened with."],
         ["<code>appId</code>", "Your id, as the host registered it."],
         ["<code>fs</code>", "Storage scoped to your app — see below. <code>null</code> if the host granted none, so check before you reach for it."],
@@ -263,8 +283,8 @@ const rows = await fetch("/api/things", { headers: auth() }).then((r) => r.json(
         <div class="card bd-shape">
             <div class="bd-shape-head"><sac-icon name="globe"></sac-icon><h3>view</h3></div>
             <p>Takes the whole stage at <code>#/&lt;id&gt;</code>, owns a sub-route, and
-               projects its navigation into the host's rail. For anything that used to
-               be a page of its own.</p>
+               draws its complete chrome — nav, rail, toolbar — itself. For anything
+               that used to be a page of its own.</p>
             <p class="bd-eg">Example: <a href="https://github.com/SACRVM/sacrvm-notes" target="_blank" rel="noopener">notes</a> — and this page</p>
         </div>
     </div>
@@ -274,26 +294,39 @@ const rows = await fetch("/api/things", { headers: auth() }).then((r) => r.json(
     <p>Three edits, about ten lines:</p>
     ${code(`// 1. app.json — "kind": "view", and drop width/height
 
-// 2. app.js — read the route, fill the rail, publish the address
+// 2. app.js — draw your own chrome in build(), then read the route,
+//    fill YOUR rail, publish the address
+build() {
+    this.innerHTML = \`
+        <sac-nav brand="MY APP" brand-icon="cube"></sac-nav>
+        <div class="main-layout">
+            <sac-sidebar></sac-sidebar>
+            <div class="app-scroll"><div class="page"></div></div>
+        </div>\`;
+    this._nav  = this.querySelector("sac-nav");
+    this._rail = this.querySelector("sac-sidebar");
+}
+
 onMount(context) {
     this._ctx = context;
+    this._nav.setAttribute("brand-href", context.href(""));
+    if (context.host) {              // the host's presence, in YOUR nav
+        this._nav.setAttribute("host-label", context.host.name);
+        this._nav.setAttribute("host-href",  context.host.href);
+        this._nav.setAttribute("host-icon",  context.host.icon || "home");
+    }
     this._show(context.route || "first");
     this._offRoute = context.onRoute((r) => this._show(r || "first"));
 }
 
 _show(id) {
     /* …render the section… */
-    this._ctx.sidebar.set([
+    this._rail.items = [
         { section: "My App" },
         { label: "First",  icon: "star",   href: this._ctx.href("first"),  active: id === "first" },
         { label: "Second", icon: "shapes", href: this._ctx.href("second"), active: id === "second" },
-    ]);
+    ];
     this._ctx.deepLink.set(id);
-}
-
-onUnmount() {
-    if (this._offRoute) { this._offRoute(); this._offRoute = null; }
-    this._ctx.sidebar.clear();
 }
 
 // 3. index.html — drop the .frame wrapper, put the element straight in <body>`)}
@@ -363,7 +396,7 @@ sac.apps.add(manifest);      // registers it — the script is injected on
     <h2>Where to look next</h2>
     ${table(["", ""], [
         ["<a href=\"#/styleguide\">Style Guide</a>", "Every component, token and pattern, with live examples. What you build your app out of."],
-        ["<a href=\"#/styleguide/helpers\">Helpers</a>", "<code>sac.app</code>, <code>sac.apps</code>, the sidebar and toolbar projections, the router — the host side of the contract."],
+        ["<a href=\"#/styleguide/helpers\">Helpers</a>", "<code>sac.app</code>, <code>sac.apps</code>, the router — the host side of the contract. (Nothing is ever projected: the app draws its own chrome, the host injects <code>context.host</code>.)"],
         [`<a href="${TEMPLATE_REPO}" target="_blank" rel="noopener">Template repo</a>`, "The starting point, with the same contract written as a README."],
         ["<a href=\"https://github.com/SACRVM/sacrvm-calculator\" target=\"_blank\" rel=\"noopener\">calculator</a> · <a href=\"https://github.com/SACRVM/sacrvm-notes\" target=\"_blank\" rel=\"noopener\">notes</a>", "Two finished apps, one of each shape. Small enough to read in a sitting."],
     ])}
@@ -372,6 +405,12 @@ sac.apps.add(manifest);      // registers it — the script is injected on
 
         onMount(context) {
             this._ctx = context;
+            // The host's injected presence, rendered by OUR nav.
+            if (context.host) {
+                this._nav.setAttribute("host-label", context.host.name || "");
+                this._nav.setAttribute("host-href",  context.host.href || "#/");
+                if (context.host.icon) this._nav.setAttribute("host-icon", context.host.icon);
+            }
 
             // Sections come from the headings, so adding one needs no second
             // edit here — same trick the roadmap app uses.
@@ -396,11 +435,10 @@ sac.apps.add(manifest);      // registers it — the script is injected on
         onUnmount() {
             if (this._offRoute) { this._offRoute(); this._offRoute = null; }
             if (this._installBtn) this._installBtn.removeEventListener("click", this._onInstall);
-            this._ctx.sidebar.clear();
         }
 
         _project(active) {
-            this._ctx.sidebar.set([
+            this._rail.items = [
                 { section: "Build an App" },
                 ...this._sections.map((s) => ({
                     label:  s.label,
@@ -408,7 +446,7 @@ sac.apps.add(manifest);      // registers it — the script is injected on
                     href:   this._ctx.href(s.id),
                     active: s.id === active,
                 })),
-            ]);
+            ];
         }
 
         /** Instant, deliberately: a smooth scroll is a compositor animation that

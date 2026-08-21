@@ -2,9 +2,10 @@
  * <app-roadmap> — the roadmap as a view app.
  *
  * kind:"view": it runs on the shell's stage, not in a document of its own.
- * It brings its own stylesheet, projects its section list into the shell's
- * rail (context.sidebar) and addresses the section you are reading through
- * the sub-route ("#/roadmap/the-gaps"), so a link lands where it points.
+ * The app is COMPLETE: its own nav (with the host's injected jump), its own
+ * rail (<sac-sidebar>, items property), its own scrolling body. The section
+ * you are reading is addressed through the sub-route ("#/roadmap/the-gaps"),
+ * so a link lands where it points.
  */
 (function () {
     // Resolved at parse time: the app's own folder, wherever it was injected
@@ -32,7 +33,27 @@
         connectedCallback() {
             if (this.firstElementChild) return;   // a stage swap re-connects
             ensureStyles();
-            this.innerHTML = `
+
+            // The app is complete: its own nav, its own rail, its own
+            // scrolling body. A host adds nothing but context.host.
+            this._nav = document.createElement("sac-nav");
+            this._nav.setAttribute("brand", "ROADMAP");
+            this._nav.setAttribute("brand-icon", "document");
+            this._nav.setAttribute("brand-href", "#/roadmap");
+            const ctxSlot = document.createElement("div");
+            ctxSlot.slot = "context";
+            ctxSlot.appendChild(document.createElement("sac-theme-toggle"));
+            this._nav.appendChild(ctxSlot);
+
+            const layout = document.createElement("div");
+            layout.className = "main-layout";
+            this._rail   = document.createElement("sac-sidebar");
+            this._scroll = document.createElement("div");
+            this._scroll.className = "app-scroll";
+            layout.append(this._rail, this._scroll);
+            this.append(this._nav, layout);
+
+            this._scroll.innerHTML = `
 <div class="rm-page">
     <header>
         <h1>Gap Analysis &amp; Roadmap</h1>
@@ -101,7 +122,7 @@
     <h2>2 · What we have that none of them do</h2>
     <p>Worth naming before we chase gaps — the appkit's identity is the part nobody else ships:</p>
     <ul class="rm-strengths">
-        <li><b>A whole app shell</b> — hash router + self-registering views + nav that renders itself + toolbar projection. Shoelace gives you parts; we give you the car.</li>
+        <li><b>A whole app shell</b> — hash router + self-registering views + nav that renders itself. Shoelace gives you parts; we give you the car.</li>
         <li><b>The workspace layout</b> — fixed nav / sidebar / viewport with pan-zoom, HUD, log. Purpose-built for tools; no component library has this.</li>
         <li><b>Floating windows + launcher overlays</b> with <code>?tool=</code> deep links — lazy tools as custom elements.</li>
         <li><b>Seed-derived theming</b> — 8 seeds + a flag → the whole palette via <code>color-mix()</code>. Open Props gives tokens; we give the derivation.</li>
@@ -315,6 +336,22 @@
             <td>Packaging only at release via GitHub Actions: one self-contained .js per app, prefixed internal tags, no local build ever.</td>
             <td><sac-chip label="open" color="gray"></sac-chip></td>
         </tr>
+        <tr data-item="apps-own-chrome">
+            <td>Apps own their chrome</td>
+            <td>Owner ruling (2026-08-20): the ownership model was inverted, and now it is not.
+                <strong>An app is complete and autonomous</strong> — it draws its whole UI: its
+                own <code>&lt;sac-nav&gt;</code>, its own toolbar, its own rail
+                (<code>&lt;sac-sidebar&gt;</code> with the <code>items</code> property).
+                Standing alone it is its own host — no fake harness hull. Inside a desktop the
+                host <em>injects into the app</em> (the way <code>identity</code> already works):
+                <code>context.host</code> carries the host's name and jump-home address, and the
+                app renders that jump in its own nav (<code>host-*</code> attributes on
+                <code>sac-nav</code>). The projection globals (<code>sac.toolbar</code>,
+                <code>sac.sidebar</code>) are gone; palette-worthy actions register on
+                <code>sac.commands</code>. This shell, all its apps and the templates run the
+                model.</td>
+            <td><sac-chip label="done" color="green"></sac-chip></td>
+        </tr>
     </table>
 
     <h3>Delivery — how other projects consume the kit</h3>
@@ -386,6 +423,12 @@
         /** App contract: called once by sac.apps, right after the first insert. */
         mount(context) {
             this._ctx = context;
+            // The host's injected presence, rendered by OUR nav.
+            if (context.host) {
+                this._nav.setAttribute("host-label", context.host.name || "");
+                this._nav.setAttribute("host-href",  context.host.href || "#/");
+                if (context.host.icon) this._nav.setAttribute("host-icon", context.host.icon);
+            }
 
             // Every section becomes a rail entry and an address. Derived from
             // the content, so adding a section needs no second edit here.
@@ -411,7 +454,7 @@
 
         _project(active) {
             if (!this._ctx) return;
-            this._ctx.sidebar.set([
+            this._rail.items = [
                 { section: "Roadmap" },
                 ...this._sections.map((s) => ({
                     label:  s.label,
@@ -419,7 +462,7 @@
                     href:   this._ctx.href(s.id),   // the host owns the prefix
                     active: s.id === active,
                 })),
-            ]);
+            ];
         }
 
         /** Instant, deliberately: a smooth scroll is a compositor animation

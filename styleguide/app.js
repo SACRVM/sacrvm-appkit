@@ -6,12 +6,12 @@
  * DOM, because the components section alone is three dozen live demos. The
  * sub-route addresses the section ("#/styleguide/patterns") and, on the
  * components section, the component you are reading ("#/styleguide/components/
- * sac-calendar"), so every link lands where it points. Section navigation is
- * projected into the shell's rail (context.sidebar) instead of drawn here.
+ * sac-calendar"), so every link lands where it points.
  *
- * The nav ribbon, the theme toggle, the command palette and the footer belong
- * to the shell. The accent-seed playground does not — it demonstrates the
- * per-app --accent override, so it lives in the Tokens section.
+ * The app is COMPLETE: it draws its own nav (with the host's injected jump,
+ * context.host), its own rail (<sac-sidebar>, items property) and its own
+ * scrolling body. The accent-seed playground demonstrates the per-app
+ * --accent override, so it lives in the Tokens section.
  */
 (function () {
     // Resolved at parse time: the app's own folder, wherever it was injected
@@ -286,8 +286,9 @@
                 ${code(`<sac-icon name="cube" style="--icon-size: 48px; color: var(--accent);"></sac-icon>`)}
 
                 <h2 id="sac-nav">&lt;sac-nav&gt;</h2>
-                <p>The fixed 50px glassmorphic ribbon + slide-out panel you are looking at right now.
-                   The panel list is computed from <code>sac.router.routes()</code> — nothing hardcoded;
+                <p>The fixed 50px glassmorphic ribbon + slide-out panel you are looking at right now
+                   — <em>this app's own</em>, like every app's. The panel list is computed from
+                   <code>sac.router.routes()</code> — nothing hardcoded;
                    it re-renders on <code>sac:route-registered</code>, <code>hashchange</code> and
                    <code>sac:scope-changed</code>. Content below needs <code>padding-top: 50px</code>
                    (<code>#app-root</code> / <code>.main-layout</code> handle this).</p>
@@ -296,13 +297,11 @@
                     ["brand-icon", "Icon name rendered before the brand text."],
                     ["brand-href", "Brand link target (default <code>#/</code>, scope-aware)."],
                     ["app-name", "Accent-colored text after “BRAND ·”."],
+                    ["host-href / host-label / host-icon", "The HOST'S injected presence (the “⌂ SACRVM APPKIT ·” at the top of this page): a muted jump before the brand. Observed — a hosted app copies <code>context.host</code> onto these in <code>mount()</code>; standalone they are absent and nothing renders. Icon default <code>home</code>."],
                 ])}
                 ${table("Slot", [
-                    ["context", "Never touched by toolbar repaints — for persistent controls (the theme switcher above lives here)."],
-                    ["toolbar", "Right-aligned per-page content. Use the <code>.toolbar</code> recipe for sizing."],
-                ])}
-                ${table("API", [
-                    ["sac.toolbar.set(items)", "Projection alternative for SPA views: <code>[{icon, title, onClick, active?, disabled?}]</code>. The router clears items between view swaps."],
+                    ["context", "For persistent controls (the theme switcher above lives here)."],
+                    ["toolbar", "Right-aligned content — the <em>owner's</em> chrome: whoever writes the <code>&lt;sac-nav&gt;</code> markup puts their own buttons here. There is no projection surface; an app draws its own toolbar in its own area (see Orb Lab). Use the <code>.toolbar</code> recipe for sizing."],
                 ])}
                 ${code(`<sac-nav brand="MY TOOLS" app-name="EDITOR" brand-icon="cube">
     <div slot="toolbar" class="toolbar">
@@ -311,19 +310,20 @@
 </sac-nav>`)}
 
                 <h2 id="sac-sidebar">&lt;sac-sidebar&gt;</h2>
-                <p>The rail on the left of this page. It has no content of its own: it renders
-                   whatever the active app projected through <code>sac.sidebar</code> (or, inside an
-                   app, <code>context.sidebar</code>), registers itself as the renderer on connect,
-                   and hides itself while there are no items — so a shell can keep one in its
-                   markup and a page without navigation simply has no rail. Item shape and the
-                   projection API are on the <a href="#/styleguide/helpers">Helpers</a> page.</p>
+                <p>The rail on the left of this page — and it is <em>this app's own</em>: the app
+                   puts the element in its own markup and assigns <code>items</code>. Nothing is
+                   projected from anywhere (the same inversion as toolbars: a host injects context
+                   into an app, it never offers the app a hull). With no items the rail hides
+                   itself, so a page without navigation simply has no rail.</p>
                 ${code(`<div class="main-layout">
     <sac-sidebar></sac-sidebar>
-    <div class="app-stage" id="app-stage">…</div>
+    <div class="app-scroll">…the app's scrolling content…</div>
 </div>`)}
-                ${table("API", [
-                    ["sac.sidebar.set(items)", "<code>[{label, icon?, href?, onClick?, active?, disabled?}]</code>, or <code>{section}</code> alone for a heading."],
-                    ["sac.sidebar.clear()", "Empties the rail, which hides it. <code>sac.apps</code> does this between view swaps."],
+                ${table("Property", [
+                    ["items", "Array, re-renders on assignment: <code>[{label, icon?, href?, onClick?, active?, disabled?}]</code>, or <code>{section}</code> alone for a heading. <code>href</code> renders a link, <code>onClick</code> a button — give one, not both."],
+                ])}
+                ${table("Attribute", [
+                    ["width", "Rail width, default 220px — also settable via <code>--sidebar-width</code>."],
                 ])}
 
                 <h2 id="sac-launcher">&lt;sac-launcher&gt;</h2>
@@ -1260,11 +1260,10 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
                 <h2 id="sac-command-palette">&lt;sac-command-palette&gt;</h2>
                 <p>Ctrl-K palette — one line of markup per app
                    (<code>&lt;sac-command-palette&gt;&lt;/sac-command-palette&gt;</code> in the shell
-                   template), no command list of its own. Every open merges three <em>live</em> sources:
-                   the router's registered <strong>views</strong>, the ribbon's current toolbar
-                   <strong>actions</strong> (<code>sac.toolbar</code> — per-view actions become
-                   keyboard-reachable for free), and the app's own <strong>commands</strong> from
-                   <code>sac.commands</code>.</p>
+                   template), no command list of its own. Every open merges two <em>live</em> sources:
+                   the router's registered <strong>views</strong> and the app's own
+                   <strong>commands</strong> from <code>sac.commands</code> — an app owns its
+                   toolbar, so it registers the actions it wants keyboard-reachable there.</p>
                 <div class="sg-demo">
                     <div class="sg-row">
                         <button class="btn" style="width:auto" id="palette-open">Open the palette</button>
@@ -1897,8 +1896,7 @@ sac.apps.init();   // ?app=foo deep links (+ hand-written [data-app] tiles)`)}
                 ${code(`// views/my-notes-view.js  (the canonical view shape)
 class MyNotesView extends HTMLElement {
     connectedCallback() {
-        this.render();
-        sac.toolbar.set([{ icon: "plus", title: "New", onClick: () => this.create() }]);
+        this.render();   // the view draws its own toolbar (.toolbar recipe) in here
     }
     disconnectedCallback() { /* remove window/document listeners here */ }
     render() { this.innerHTML = \`<div class="hub-container">…</div>\`; }
@@ -1911,7 +1909,7 @@ sac.router.register("#/notes", "my-notes-view", { label: "Notes", icon: "note" }
                     <tr><td><code>routes()</code></td><td>[{hash, tag, label, icon}] — what sac-nav renders.</td></tr>
                     <tr><td><code>current() / currentResource()</code></td><td>Raw hash / hash with any scope prefix stripped.</td></tr>
                     <tr><td><code>navigate(hash)</code></td><td>Sets location.hash.</td></tr>
-                    <tr><td><code>mount(selector)</code></td><td>Starts rendering views into the mount point. On hashchange it swaps <code>innerHTML</code> to the matching tag — and clears <code>sac.toolbar</code>, so outgoing views never clean the ribbon themselves.</td></tr>
+                    <tr><td><code>mount(selector)</code></td><td>Starts rendering views into the mount point. On hashchange it swaps <code>innerHTML</code> to the matching tag.</td></tr>
                 </table>
                 <p>Template: <code>kit/templates/app-shell.html</code>.</p>
 
@@ -2297,40 +2295,31 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
 pz.reset();                               // e.g. when a new image loads`)}
                 <p>Each layer must fill its pane — the kit's <code>.pz-layer</code> class does exactly that.</p>
 
-                <h2>sac.toolbar — ribbon projection</h2>
-                <p>SPA views declare <em>what</em> actions they have; the nav ribbon owns <em>how</em> they
-                   look. The router clears the items between view swaps.</p>
-                ${code(`sac.toolbar.set([
-    { icon: "plus",  title: "New note",  onClick: () => this.create() },
-    { icon: "trash", title: "Delete",    onClick: () => this.remove(), disabled: !sel },
-    { icon: "pin",   title: "Pinned",    onClick: () => this.pin(),    active: pinned },
-]);`)}
+                <h2>Toolbars — no projection, by design</h2>
+                <p><strong>The app owns its top area.</strong> There is no <code>sac.toolbar</code>:
+                   a view that has actions draws its own toolbar row (the <code>.toolbar</code>
+                   recipe) inside its own markup — see Orb Lab for the shape — and registers the
+                   actions it wants keyboard-reachable on <code>sac.commands</code>, which the
+                   command palette lists. A host injects context <em>into</em> an app (identity,
+                   theme, routes); it does not offer the app its hull. (The projection global was
+                   removed 2026-08-20; the roadmap's “apps own their chrome” tracks the rest.)</p>
 
-                <h2>sac.sidebar — rail projection</h2>
-                <p>The left-rail counterpart to <code>sac.toolbar</code>: a view app hands over its
-                   <em>navigation</em> and the shell draws it, so every app in the shell wears the
-                   same chrome instead of shipping its own sidebar. <code>&lt;sac-sidebar&gt;</code>
-                   registers itself as the renderer on connect and hides itself while there are no
-                   items; <code>sac.apps</code> clears them between view swaps, so an outgoing app
-                   never has to tidy up after itself.</p>
-                ${code(`sac.sidebar.set([
+                <h2>Rails — the app's own, like everything else</h2>
+                <p>There is no <code>sac.sidebar</code> global and no rail projection: an app puts
+                   <code>&lt;sac-sidebar&gt;</code> in its <em>own</em> markup and assigns the
+                   <code>items</code> property (shape and demo on the
+                   <a href="#/styleguide/components">Components</a> page). The rail is for
+                   <b>navigation</b> — links built with <code>context.href(route)</code>; sliders
+                   and colour fields belong in the content area. What a host contributes to an
+                   app's chrome arrives as <code>context.host</code> and is rendered by the app's
+                   own <code>&lt;sac-nav&gt;</code> (<code>host-label</code> /
+                   <code>host-href</code> / <code>host-icon</code>).</p>
+                ${code(`this._rail.items = [
     { section: "Reference" },                                  // a heading
-    { label: "Tokens",  icon: "star",  href: "#/styleguide/tokens", active: true },
+    { label: "Tokens",  icon: "star",  href: ctx.href("tokens"), active: true },
     { label: "Rebuild", icon: "sync",  onClick: () => rebuild() },
     { label: "Export",  icon: "download", disabled: true },
-]);
-sac.sidebar.clear();`)}
-                <table class="sg">
-                    <tr><th style="width:260px">Item key</th><th>Description</th></tr>
-                    <tr><td><code>label</code></td><td>The entry's text. Required for an entry.</td></tr>
-                    <tr><td><code>section</code></td><td>Alone in an object: a group heading instead of an entry.</td></tr>
-                    <tr><td><code>icon</code></td><td><code>sac-icon</code> name, optional.</td></tr>
-                    <tr><td><code>href</code> / <code>onClick</code></td><td>A link or a button — give one, not both. Inside an app, build the href with <code>context.href(route)</code>: the host owns the address space.</td></tr>
-                    <tr><td><code>active</code>, <code>disabled</code></td><td>Current entry (accent tint, no border stripe) and unavailable entry.</td></tr>
-                </table>
-                <p class="sg-note">Apps use <code>context.sidebar</code>, which is scoped to them,
-                   rather than this global. The rail is for <b>navigation</b>: sliders and colour
-                   fields belong in the app's own area, not in the shell's chrome.</p>
+];`)}
 
                 <h2>sac.dialog — confirm + info helpers</h2>
                 <p>Promise wrappers over <code>&lt;sac-dialog&gt;</code>:
@@ -2378,12 +2367,17 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>add(manifest|url)</code></td><td><code>Promise&lt;manifest&gt;</code>. Registers an inspected manifest (or inspects a URL first). Registering still does not run the app: its script is injected on first open, exactly like an app the shell declared itself.</td></tr>
                 </table>
                 <h3>Hosting view apps</h3>
-                <p>A shell that wants full-stage apps hands <code>init()</code> two elements: the
-                   stage view apps are appended into, and the home screen to hide while one is up.
-                   From there <code>#/&lt;id&gt;</code> shows an app and <code>#/&lt;id&gt;/&lt;route&gt;</code>
-                   reaches into it; the back button, pasted links and rail clicks all go through the
-                   same path.</p>
-                ${code(`sac.apps.init({ viewHost: "#app-stage", home: "#app-home" });
+                <p>A shell that wants full-stage apps hands <code>init()</code> two elements — the
+                   stage view apps are appended into, and the home screen to hide while one is up —
+                   plus its <code>host</code> identity, injected into every app as
+                   <code>context.host</code>. From there <code>#/&lt;id&gt;</code> shows an app and
+                   <code>#/&lt;id&gt;/&lt;route&gt;</code> reaches into it; the back button, pasted
+                   links and rail clicks all go through the same path.</p>
+                ${code(`sac.apps.init({
+    viewHost: "#app-stage",
+    home:     "#app-home",
+    host:     { name: "MY SUITE", icon: "cube", href: "#/" },
+});
 
 // #/notes          → mounts <app-notes> on the stage, hides the home screen
 // #/notes/2026-08  → same, and hands "2026-08" to the app as context.route
@@ -2424,7 +2418,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>route</code> <b>(view)</b></td><td>The sub-route the app was opened at — everything after <code>#/&lt;id&gt;/</code>, <code>""</code> at the app's root.</td></tr>
                     <tr><td><code>onRoute(cb)</code> <b>(view)</b></td><td><code>cb(route)</code> on every change: rail clicks, the back button and pasted links all arrive here. Returns an unsubscribe.</td></tr>
                     <tr><td><code>href(route)</code> <b>(view)</b></td><td>Builds <code>#/&lt;id&gt;/&lt;route&gt;</code>. Apps must never assemble that string themselves — the host owns the address space, and standalone there is no id.</td></tr>
-                    <tr><td><code>sidebar.set(items)</code><br><code>sidebar.clear()</code> <b>(view)</b></td><td>Projects navigation into the shell's rail (item shape under <code>sac.sidebar</code> above). Scoped and remembered per app: the items render only while this app is on stage, and come back with it.</td></tr>
+                    <tr><td><code>host</code> <b>(view)</b></td><td><code>{ name, icon, href }</code> — the host's presence, from <code>init({ host })</code>; <code>null</code> when the host declared none and always <code>null</code> standalone. The app copies it onto its own <code>&lt;sac-nav&gt;</code>'s <code>host-*</code> attributes; that jump is the ONLY thing a host adds to an app's chrome.</td></tr>
                     <tr><td><code>deepLink.set(…)</code></td><td>view: <code>set(route)</code> writes <code>#/&lt;id&gt;/&lt;route&gt;</code> (replaceState — switching sections is not a new history entry). window/page: <code>set(obj)</code> writes <code>?app=&lt;id&gt;&amp;&lt;obj entries&gt;</code>; <code>set(null)</code> cleans back to the bare path (hash preserved).</td></tr>
                     <tr><td><code>theme.get()</code></td><td>The flag: <code>"dark"</code> | <code>"light"</code> | <code>"auto"</code>.</td></tr>
                     <tr><td><code>theme.set(mode)</code></td><td>Same values; routes through <code>&lt;sac-theme-toggle&gt;</code> when present (one source of truth: <code>data-theme</code> on <code>&lt;html&gt;</code> + the <code>sac-theme</code> localStorage key).</td></tr>
@@ -2848,13 +2842,38 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             ensureStyles();
             this._anchors = [];
             this._anchor = "";
-            this._body = document.createElement("div");
-            this.appendChild(this._body);
+
+            // The app is complete: its own nav, its own rail, its own
+            // scrolling body. A host adds nothing but context.host.
+            this._nav = document.createElement("sac-nav");
+            this._nav.setAttribute("brand", "STYLE GUIDE");
+            this._nav.setAttribute("brand-icon", "star");
+            this._nav.setAttribute("brand-href", "#/styleguide");
+            const ctxSlot = document.createElement("div");
+            ctxSlot.slot = "context";
+            ctxSlot.appendChild(document.createElement("sac-theme-toggle"));
+            this._nav.appendChild(ctxSlot);
+
+            const layout = document.createElement("div");
+            layout.className = "main-layout";
+            this._rail   = document.createElement("sac-sidebar");
+            this._scroll = document.createElement("div");
+            this._scroll.className = "app-scroll";
+            this._body   = document.createElement("div");
+            this._scroll.appendChild(this._body);
+            layout.append(this._rail, this._scroll);
+            this.append(this._nav, layout);
         }
 
         /** App contract: called once by sac.apps, right after the first insert. */
         mount(context) {
             this._ctx = context;
+            // The host's injected presence, rendered by OUR nav.
+            if (context.host) {
+                this._nav.setAttribute("host-label", context.host.name || "");
+                this._nav.setAttribute("host-href",  context.host.href || "#/");
+                if (context.host.icon) this._nav.setAttribute("host-icon", context.host.icon);
+            }
             const target = splitRoute(context.route);
             this._go(target.id, target.anchor, false);
 
@@ -2900,7 +2919,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             else if (swapped) this._scroller().scrollTop = 0;
         }
 
-        /** The rail is this app's section navigation — replaced on every move. */
+        /** The rail is this app's OWN chrome — replaced on every move. */
         _project() {
             if (!this._ctx) return;
             const items = [
@@ -2922,18 +2941,12 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                     active: a.id === this._anchor,
                 }));
             }
-            this._ctx.sidebar.set(items);
+            this._rail.items = items;
         }
 
-        /** The shell's stage owns the scrolling; fall back to the document. */
+        /** The app owns its scrolling — the .app-scroll region beside the rail. */
         _scroller() {
-            let el = this.parentElement;
-            while (el && el !== document.body) {
-                const oy = getComputedStyle(el).overflowY;
-                if (oy === "auto" || oy === "scroll") return el;
-                el = el.parentElement;
-            }
-            return document.scrollingElement || document.documentElement;
+            return this._scroll;
         }
 
         _scrollToAnchor(id, smooth, deferred) {

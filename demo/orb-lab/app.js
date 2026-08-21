@@ -10,9 +10,11 @@
  *   control panel  — stays INSIDE the view (sliders, toggles, the segmented
  *                    control and the colour well are controls, not navigation),
  *                    beside the viewport in the app's own <sac-split>.
- *   ribbon actions — Pause / Reset view / Help project into the shell's nav
- *                    ribbon through sac.toolbar.
- *   rail           — nothing. The app has no navigation to project.
+ *   nav + toolbar  — the app draws its own <sac-nav>; Pause / Reset view /
+ *                    Help sit in ITS toolbar slot. Hosted, the nav also
+ *                    renders the host's jump (context.host). The same actions
+ *                    register on sac.commands so the palette reaches them.
+ *   rail           — none. The app has no sections.
  *
  * The view fills the stage without scrolling it, pauses its animation loop
  * whenever it is not on screen, and keeps every bit of state (orbs, controls,
@@ -67,16 +69,32 @@
             this._frames = 0;
             this._fps = 0;
             this._lastFpsAt = 0;
-            this._items = null;           // the ribbon items while we own them
             this._helpLoaded = false;
             this._customLogTimer = null;
-            this._unregisterCommand = null;
+            this._unregisterCommands = null;
         }
 
         connectedCallback() {
             if (this.firstElementChild) return;   // a stage swap re-connects
             ensureStyles();
             this.innerHTML = `
+<!-- The app is complete: its own nav carries its own tools. A host adds
+     nothing here — its presence arrives via context.host in mount(). -->
+<sac-nav brand="ORB LAB" brand-icon="globe" brand-href="#/orb-lab">
+    <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
+    <div slot="toolbar" class="toolbar">
+        <button type="button" class="nav-icon-btn ol-act-pause" title="Pause">
+            <sac-icon name="pause"></sac-icon>
+        </button>
+        <button type="button" class="nav-icon-btn ol-act-reset" title="Reset view">
+            <sac-icon name="undo"></sac-icon>
+        </button>
+        <button type="button" class="nav-icon-btn ol-act-help" title="Help">
+            <sac-icon name="info"></sac-icon>
+        </button>
+    </div>
+</sac-nav>
+
 <div class="ol-root">
     <!-- Resizable control panel: one <sac-split> owns both widths. min-start
          keeps the controls usable, min-end protects the canvas. Drag the
@@ -138,6 +156,13 @@
         /** Called once by sac.apps, right after the first insert. */
         mount(context) {
             this._appCtx = context;
+            // The host's injected presence, rendered by OUR nav.
+            const nav = this.querySelector("sac-nav");
+            if (context.host && nav) {
+                nav.setAttribute("host-label", context.host.name || "");
+                nav.setAttribute("host-href",  context.host.href || "#/");
+                if (context.host.icon) nav.setAttribute("host-icon", context.host.icon);
+            }
 
             this._canvas   = this.querySelector(".ol-canvas");
             this._ctx      = this._canvas.getContext("2d");
@@ -149,6 +174,8 @@
             this._resize();
             this._syncCount();
             this._wireControls();
+            this._wireToolbar();
+            this._syncToolbar();
 
             // Pan / zoom (kit helper, shared-transform pattern).
             this._pz = sac.setupPanZoom({
@@ -180,7 +207,6 @@
         /** Called only by sac.apps.remove() — give back everything global. */
         unmount() {
             this._setVisible(false);
-            this._clearToolbar();
             this._io?.disconnect();
             this._io = null;
             this._ro?.disconnect();
@@ -193,8 +219,8 @@
 
         /**
          * On stage / off stage. Owns everything that costs something while
-         * nobody is looking: the animation loop, the ribbon actions and the
-         * palette command.
+         * nobody is looking: the animation loop and the palette commands.
+         * (The toolbar is the app's own markup — it needs no lifecycle.)
          */
         _setVisible(visible) {
             if (visible === this._visible) return;
@@ -202,57 +228,63 @@
 
             if (visible) {
                 this._resize();       // the stage may have resized while hidden
-                this._projectToolbar();
-                this._registerCommand();
+                this._registerCommands();
             } else {
-                this._clearToolbar();
-                this._unregisterCommand?.();
-                this._unregisterCommand = null;
+                this._unregisterCommands?.();
+                this._unregisterCommands = null;
             }
             this._syncLoop();
         }
 
-        /* ------------------------------------------------------ ribbon ---- */
+        /* ----------------------------------------------------- toolbar ---- */
 
-        _toolbarItems() {
+        /** The pause button mirrors the state; the other two are static. */
+        _syncToolbar() {
+            const btn = this.querySelector(".ol-act-pause");
+            if (!btn) return;
             const paused = this.state.paused;
-            return [
-                {
-                    icon:    paused ? "play" : "pause",
-                    title:   paused ? "Resume" : "Pause",
-                    active:  paused,
-                    onClick: () => this._togglePause(),
-                },
-                { icon: "undo", title: "Reset view", onClick: () => this._resetView() },
-                { icon: "info", title: "Help",       onClick: () => this._openHelp() },
+            btn.title = paused ? "Resume" : "Pause";
+            btn.classList.toggle("active", paused);
+            btn.querySelector("sac-icon").setAttribute("name", paused ? "play" : "pause");
+        }
+
+        _wireToolbar() {
+            this.querySelector(".ol-act-pause").addEventListener("click", () => this._togglePause());
+            this.querySelector(".ol-act-reset").addEventListener("click", () => this._resetView());
+            this.querySelector(".ol-act-help").addEventListener("click", () => this._openHelp());
+        }
+
+        _registerCommands() {
+            if (this._unregisterCommands || !window.sac?.commands) return;
+            // The app owns its toolbar, so the palette does not see those
+            // buttons by itself — everything keyboard-worthy registers here.
+            const offs = [
+                sac.commands.register({
+                    id:    "orb-lab-toggle-pause",
+                    label: "Pause / resume",
+                    icon:  "pause",
+                    run:   () => this._togglePause(),
+                }),
+                sac.commands.register({
+                    id:    "orb-lab-reset-view",
+                    label: "Reset view",
+                    icon:  "undo",
+                    run:   () => this._resetView(),
+                }),
+                sac.commands.register({
+                    id:    "orb-lab-help",
+                    label: "Help",
+                    icon:  "info",
+                    run:   () => this._openHelp(),
+                }),
+                sac.commands.register({
+                    id:    "orb-lab-clear-log",
+                    label: "Clear log",
+                    icon:  "trash",
+                    run:   () => this._log && this._log.clear(),
+                }),
             ];
-        }
-
-        _projectToolbar() {
-            if (!this._visible || !window.sac?.toolbar) return;
-            this._items = this._toolbarItems();
-            sac.toolbar.set(this._items);
-        }
-
-        /** Only clear the ribbon while it still shows OUR items: a stage swap
-         *  may already have handed it to the incoming app. */
-        _clearToolbar() {
-            if (window.sac?.toolbar && sac.toolbar._items === this._items) {
-                sac.toolbar.clear();
-            }
-            this._items = null;
-        }
-
-        _registerCommand() {
-            if (this._unregisterCommand || !window.sac?.commands) return;
-            // The palette already lists every ribbon action, so this command
-            // carries something the ribbon does NOT — no duplicate entry.
-            this._unregisterCommand = sac.commands.register({
-                id:    "orb-lab-clear-log",
-                label: "Clear log",
-                icon:  "trash",
-                run:   () => this._log && this._log.clear(),
-            });
+            this._unregisterCommands = () => offs.forEach((off) => off());
         }
 
         /* ---------------------------------------------------- controls ---- */
@@ -319,7 +351,7 @@
             this.state.paused = !this.state.paused;
             this._log.add(this.state.paused ? "Paused" : "Resumed",
                           this.state.paused ? "warn" : "info");
-            this._projectToolbar();   // the icon reflects the state
+            this._syncToolbar();      // the icon reflects the state
             this._syncLoop();
         }
 
