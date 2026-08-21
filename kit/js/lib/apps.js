@@ -799,12 +799,18 @@
             inited = true;
             // Tiles: [data-app="<id>"] opens that app. Delegated, so tiles
             // rendered after init() work too. [data-overlay] is the legacy
-            // spelling — same behavior.
+            // spelling — same behavior. A hand-written tile is a full tile:
+            // its --accent (or data-accent) seeds the app it opens — tile
+            // color = app highlight — and data-route targets a view route.
             document.addEventListener("click", (e) => {
                 const tile = e.target.closest("[data-app], [data-overlay]");
                 if (!tile) return;
                 e.preventDefault();
-                open(tile.dataset.app || tile.dataset.overlay)
+                const accent = tile.dataset.accent
+                    || (tile.style && tile.style.getPropertyValue("--accent").trim())
+                    || undefined;
+                open(tile.dataset.app || tile.dataset.overlay, undefined,
+                     { accent, route: tile.dataset.route })
                     .catch(() => {}); // already logged/toasted by open()
             });
         }
