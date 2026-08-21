@@ -45,7 +45,7 @@ class ToolAbout extends HTMLElement {
                     </div>
                 </div>
                 <div style="margin-top:auto;color:var(--text-dim);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;">
-                    kit 1.4.0 · zero dependencies · zero build
+                    kit 1.5.0 · zero dependencies · zero build
                 </div>
             </div>
         `;
