@@ -26,7 +26,11 @@
  * Property:
  *   host — THE injection point of the app contract. A hosted app assigns
  *          context.host here, one line in mount():  nav.host = context.host
- *          Shape: { name, icon, href,          → the muted "⌂ HOST ·" jump
+ *          Shape: { name, icon, href,          → the "HOST ·" jump-home
+ *                                                segment, rendered with the
+ *                                                brand recipe (one title-bar
+ *                                                style everywhere; the app's
+ *                                                own segment goes accent)
  *                   nav:     [{label, href, icon?}],       → a labeled host
  *                            group at the top of the burger panel (the
  *                            suite's cross-app navigation)
@@ -255,24 +259,11 @@ class SacNav extends HTMLElement {
                 .brand .sep { color: color-mix(in srgb, var(--fg) 30%, transparent); }
                 .brand .app-name { color: var(--accent); }
 
-                /* The host's injected presence: muted, before the brand. */
-                .host-jump {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.4rem;
-                    padding: 4px 8px;
-                    border-radius: var(--radius-m);
-                    color: var(--text-muted);
-                    text-decoration: none;
-                    font-family: 'Outfit', sans-serif;
-                    font-weight: 700;
-                    font-size: 0.8rem;
-                    letter-spacing: 0.06em;
-                }
-                .host-jump:hover { background: var(--hover); color: var(--text); }
-                .host-jump sac-icon { --icon-size: 15px; }
+                /* The host's injected presence renders with the BRAND recipe —
+                   the title bar reads HOST · APP in one style everywhere; the
+                   current segment (the app) is the accent-colored one. */
                 .host-sep {
-                    margin: 0 0.5rem 0 0.25rem;
+                    margin: 0 0.5rem;
                     color: color-mix(in srgb, var(--fg) 30%, transparent);
                 }
                 .spacer { flex: 1; }
@@ -393,15 +384,15 @@ class SacNav extends HTMLElement {
                     <span></span><span></span><span></span>
                 </button>
                 ${hostHref ? `
-                <a class="host-jump" href="${hostHref.replace(/"/g, "&quot;")}"
+                <a class="brand host-jump" href="${hostHref.replace(/"/g, "&quot;")}"
                    title="${(hostLabel || "Home").replace(/"/g, "&quot;")}">
-                    <sac-icon name="${hostIcon}"></sac-icon>
+                    <span class="brand-mark"><sac-icon name="${hostIcon}"></sac-icon></span>
                     ${hostLabel ? `<span>${hostLabel}</span>` : ``}
                 </a>
                 <span class="sep host-sep">·</span>` : ``}
                 <a class="brand" href="${hrefFor(brandHref)}">
                     ${brandIcon ? `<span class="brand-mark"><sac-icon name="${brandIcon}"></sac-icon></span>` : ``}
-                    ${brand ? `<span>${brand}</span>` : ``}
+                    ${brand ? `<span class="${hostHref ? "app-name" : ""}">${brand}</span>` : ``}
                     ${brand && appName ? `<span class="sep">·</span>` : ``}
                     ${appName ? `<span class="app-name">${appName}</span>` : ``}
                 </a>
