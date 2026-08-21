@@ -339,8 +339,20 @@
             sac.apps.init({
                 viewHost: "#app-stage",
                 home:     "#app-home",
-                // Injected into every app's own chrome as context.host.
-                host:     { name: "SACRVM APPKIT", icon: "cube", href: "#/" },
+                // The host package, injected into every app's own chrome as
+                // context.host: jump home, the suite's navigation (rendered
+                // in the app's burger panel) and the host's toolbar controls
+                // (rendered at the right end of the app's ribbon).
+                host: {
+                    name: "SACRVM APPKIT", icon: "cube", href: "#/",
+                    nav: sac.router.routes()
+                        .filter((r) => r.hash !== "#/")
+                        .map((r) => ({ label: r.label, href: r.hash, icon: r.icon })),
+                    toolbar: [
+                        { icon: "github", title: "Source on GitHub",
+                          href: "https://github.com/SACRVM/sacrvm-appkit" },
+                    ],
+                },
             });
         }
 

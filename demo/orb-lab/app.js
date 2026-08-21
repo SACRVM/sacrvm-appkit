@@ -156,13 +156,10 @@
         /** Called once by sac.apps, right after the first insert. */
         mount(context) {
             this._appCtx = context;
-            // The host's injected presence, rendered by OUR nav.
+            // The host's injection (jump, suite nav, toolbar controls),
+            // rendered by OUR nav. Null standalone — the nav shows nothing.
             const nav = this.querySelector("sac-nav");
-            if (context.host && nav) {
-                nav.setAttribute("host-label", context.host.name || "");
-                nav.setAttribute("host-href",  context.host.href || "#/");
-                if (context.host.icon) nav.setAttribute("host-icon", context.host.icon);
-            }
+            if (nav) nav.host = context.host;
 
             this._canvas   = this.querySelector(".ol-canvas");
             this._ctx      = this._canvas.getContext("2d");

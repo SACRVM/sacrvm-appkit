@@ -146,7 +146,7 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
         ["<code>route</code><br><code>onRoute(cb)</code>", "Your sub-route — the part after <code>#/&lt;id&gt;/</code> — now, and on every change. Rail clicks, the back button and pasted links all arrive here."],
         ["<code>href(route)</code>", "Builds a link into your own app. Never hand-assemble <code>#/id/route</code>: the host owns the address space, and standalone there is no id at all."],
         ["<code>deepLink.set(route)</code>", "Makes the current state linkable (<code>replaceState</code> — switching sections is not a new page in the history)."],
-        ["<code>host</code>", "The host's presence, or <code>null</code> standalone: <code>{ name, icon, href }</code>. Your app is COMPLETE — it draws its own <code>&lt;sac-nav&gt;</code>, toolbar and rail (<code>&lt;sac-sidebar&gt;</code> with the <code>items</code> property). The one thing a host adds is this jump home: copy it onto your nav's <code>host-label</code>/<code>host-href</code>/<code>host-icon</code> attributes and you are done. Nothing is ever projected out of the app."],
+        ["<code>host</code>", "The host's package, or <code>null</code> standalone: <code>{ name, icon, href, nav, toolbar }</code>. Your app is COMPLETE — it draws its own <code>&lt;sac-nav&gt;</code>, toolbar and rail (<code>&lt;sac-sidebar&gt;</code> with the <code>items</code> property). The host hands you its presence and you render it: one line, <code>this._nav.host = context.host</code>. Your nav then shows the ⌂ jump before your brand, the suite's <code>nav</code> entries as a host group in your burger panel, and the host's <code>toolbar</code> controls (a signed-in user, a suite action) at the right end of your ribbon. Nothing is ever projected out of the app."],
         ["<code>params</code>", "The query parameters the host was opened with."],
         ["<code>appId</code>", "Your id, as the host registered it."],
         ["<code>fs</code>", "Storage scoped to your app — see below. <code>null</code> if the host granted none, so check before you reach for it."],
@@ -310,11 +310,7 @@ build() {
 onMount(context) {
     this._ctx = context;
     this._nav.setAttribute("brand-href", context.href(""));
-    if (context.host) {              // the host's presence, in YOUR nav
-        this._nav.setAttribute("host-label", context.host.name);
-        this._nav.setAttribute("host-href",  context.host.href);
-        this._nav.setAttribute("host-icon",  context.host.icon || "home");
-    }
+    this._nav.host = context.host;   // the host's package, in YOUR nav
     this._show(context.route || "first");
     this._offRoute = context.onRoute((r) => this._show(r || "first"));
 }
@@ -405,12 +401,9 @@ sac.apps.add(manifest);      // registers it — the script is injected on
 
         onMount(context) {
             this._ctx = context;
-            // The host's injected presence, rendered by OUR nav.
-            if (context.host) {
-                this._nav.setAttribute("host-label", context.host.name || "");
-                this._nav.setAttribute("host-href",  context.host.href || "#/");
-                if (context.host.icon) this._nav.setAttribute("host-icon", context.host.icon);
-            }
+            // The host's injection (jump, suite nav, toolbar controls),
+            // rendered by OUR nav. Null standalone — the nav shows nothing.
+            this._nav.host = context.host;
 
             // Sections come from the headings, so adding one needs no second
             // edit here — same trick the roadmap app uses.

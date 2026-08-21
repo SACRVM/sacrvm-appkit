@@ -297,7 +297,10 @@
                     ["brand-icon", "Icon name rendered before the brand text."],
                     ["brand-href", "Brand link target (default <code>#/</code>, scope-aware)."],
                     ["app-name", "Accent-colored text after “BRAND ·”."],
-                    ["host-href / host-label / host-icon", "The HOST'S injected presence (the “⌂ SACRVM APPKIT ·” at the top of this page): a muted jump before the brand. Observed — a hosted app copies <code>context.host</code> onto these in <code>mount()</code>; standalone they are absent and nothing renders. Icon default <code>home</code>."],
+                    ["host-href / host-label / host-icon", "Attribute form of the host jump alone, for static pages. A hosted app sets the <code>host</code> property instead. Icon default <code>home</code>."],
+                ])}
+                ${table("Property", [
+                    ["host", "THE injection point of the app contract — one line in <code>mount()</code>: <code>nav.host = context.host</code>. Shape <code>{ name, icon, href, nav, toolbar }</code>: name/icon/href render the muted “⌂ SACRVM APPKIT ·” jump before the brand (visible at the top of this page); <code>nav</code> entries (<code>{label, href, icon?}</code>) become a labeled host group at the top of the burger panel — the suite's cross-app navigation (open the burger: “SACRVM APPKIT” is that group); <code>toolbar</code> entries (<code>{icon, label?, title?, href?|onClick?}</code>) render as controls at the right end of the ribbon — a signed-in user, a suite-wide action (the GitHub button up right is one). Routes already listed in the host group are dropped from the app's own group, so a shared-page suite lists nothing twice. <code>null</code> = standalone, none of it renders."],
                 ])}
                 ${table("Slot", [
                     ["context", "For persistent controls (the theme switcher above lives here)."],
@@ -2300,9 +2303,13 @@ pz.reset();                               // e.g. when a new image loads`)}
                    a view that has actions draws its own toolbar row (the <code>.toolbar</code>
                    recipe) inside its own markup — see Orb Lab for the shape — and registers the
                    actions it wants keyboard-reachable on <code>sac.commands</code>, which the
-                   command palette lists. A host injects context <em>into</em> an app (identity,
-                   theme, routes); it does not offer the app its hull. (The projection global was
-                   removed 2026-08-20; the roadmap's “apps own their chrome” tracks the rest.)</p>
+                   command palette lists. The direction is inverted, not the capability: a host
+                   still puts suite-wide controls into every app — a signed-in user, a suite
+                   action — but as <em>data</em>, through <code>context.host.toolbar</code>, and
+                   the app's own nav renders them at the right end of its ribbon
+                   (<code>nav.host = context.host</code>). Cross-app navigation travels the same
+                   way: <code>context.host.nav</code> becomes a host group in the app's burger
+                   panel. The host never paints into the app's chrome.</p>
 
                 <h2>Rails — the app's own, like everything else</h2>
                 <p>There is no <code>sac.sidebar</code> global and no rail projection: an app puts
@@ -2312,8 +2319,8 @@ pz.reset();                               // e.g. when a new image loads`)}
                    <b>navigation</b> — links built with <code>context.href(route)</code>; sliders
                    and colour fields belong in the content area. What a host contributes to an
                    app's chrome arrives as <code>context.host</code> and is rendered by the app's
-                   own <code>&lt;sac-nav&gt;</code> (<code>host-label</code> /
-                   <code>host-href</code> / <code>host-icon</code>).</p>
+                   own <code>&lt;sac-nav&gt;</code> (<code>nav.host = context.host</code> — jump,
+                   suite nav in the burger, toolbar controls in the ribbon).</p>
                 ${code(`this._rail.items = [
     { section: "Reference" },                                  // a heading
     { label: "Tokens",  icon: "star",  href: ctx.href("tokens"), active: true },
@@ -2369,14 +2376,27 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                 <h3>Hosting view apps</h3>
                 <p>A shell that wants full-stage apps hands <code>init()</code> two elements — the
                    stage view apps are appended into, and the home screen to hide while one is up —
-                   plus its <code>host</code> identity, injected into every app as
-                   <code>context.host</code>. From there <code>#/&lt;id&gt;</code> shows an app and
+                   plus its <code>host</code> package, injected into every app as
+                   <code>context.host</code>: the jump home, the suite's navigation (rendered as a
+                   host group in each app's burger panel) and the host's toolbar controls (rendered
+                   at the right end of each app's ribbon — entries take <code>href</code> or
+                   <code>onClick</code>, so a signed-in user chip lives here). From there
+                   <code>#/&lt;id&gt;</code> shows an app and
                    <code>#/&lt;id&gt;/&lt;route&gt;</code> reaches into it; the back button, pasted
                    links and rail clicks all go through the same path.</p>
                 ${code(`sac.apps.init({
     viewHost: "#app-stage",
     home:     "#app-home",
-    host:     { name: "MY SUITE", icon: "cube", href: "#/" },
+    host: {
+        name: "MY SUITE", icon: "cube", href: "#/",
+        nav: [                             // the suite, in every app's burger
+            { label: "Notes",  href: "#/notes",  icon: "document" },
+            { label: "Bucket", href: "#/bucket", icon: "palette"  },
+        ],
+        toolbar: [                         // suite controls, in every ribbon
+            { icon: "user", label: "chloe", onClick: () => openAccount() },
+        ],
+    },
 });
 
 // #/notes          → mounts <app-notes> on the stage, hides the home screen
@@ -2868,12 +2888,9 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
         /** App contract: called once by sac.apps, right after the first insert. */
         mount(context) {
             this._ctx = context;
-            // The host's injected presence, rendered by OUR nav.
-            if (context.host) {
-                this._nav.setAttribute("host-label", context.host.name || "");
-                this._nav.setAttribute("host-href",  context.host.href || "#/");
-                if (context.host.icon) this._nav.setAttribute("host-icon", context.host.icon);
-            }
+            // The host's injection (jump, suite nav, toolbar controls),
+            // rendered by OUR nav. Null standalone — the nav shows nothing.
+            this._nav.host = context.host;
             const target = splitRoute(context.route);
             this._go(target.id, target.anchor, false);
 

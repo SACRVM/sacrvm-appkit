@@ -344,12 +344,13 @@
                 (<code>&lt;sac-sidebar&gt;</code> with the <code>items</code> property).
                 Standing alone it is its own host — no fake harness hull. Inside a desktop the
                 host <em>injects into the app</em> (the way <code>identity</code> already works):
-                <code>context.host</code> carries the host's name and jump-home address, and the
-                app renders that jump in its own nav (<code>host-*</code> attributes on
-                <code>sac-nav</code>). The projection globals (<code>sac.toolbar</code>,
-                <code>sac.sidebar</code>) are gone; palette-worthy actions register on
-                <code>sac.commands</code>. This shell, all its apps and the templates run the
-                model.</td>
+                <code>context.host</code> is the package — name and jump-home address, the
+                suite's navigation, the host's toolbar controls — and the app renders all of it
+                in its own nav (<code>nav.host = context.host</code>: ⌂ jump before the brand,
+                host group in the burger panel, controls at the right end of the ribbon). The
+                projection globals (<code>sac.toolbar</code>, <code>sac.sidebar</code>) are gone;
+                palette-worthy actions register on <code>sac.commands</code>. This shell, all its
+                apps and the templates run the model.</td>
             <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
     </table>
@@ -423,12 +424,9 @@
         /** App contract: called once by sac.apps, right after the first insert. */
         mount(context) {
             this._ctx = context;
-            // The host's injected presence, rendered by OUR nav.
-            if (context.host) {
-                this._nav.setAttribute("host-label", context.host.name || "");
-                this._nav.setAttribute("host-href",  context.host.href || "#/");
-                if (context.host.icon) this._nav.setAttribute("host-icon", context.host.icon);
-            }
+            // The host's injection (jump, suite nav, toolbar controls),
+            // rendered by OUR nav. Null standalone — the nav shows nothing.
+            this._nav.host = context.host;
 
             // Every section becomes a rail entry and an address. Derived from
             // the content, so adding a section needs no second edit here.
