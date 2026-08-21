@@ -346,7 +346,7 @@
                 host <em>injects into the app</em> (the way <code>identity</code> already works):
                 <code>context.host</code> is the package — name and jump-home address, the
                 suite's navigation, the host's toolbar controls — and the app renders all of it
-                in its own nav (<code>nav.host = context.host</code>: ⌂ jump before the brand,
+                in its own nav (<code>nav.host = context.host</code>: the HOST · APP title segment,
                 host group in the burger panel, controls at the right end of the ribbon). The
                 projection globals (<code>sac.toolbar</code>, <code>sac.sidebar</code>) are gone;
                 palette-worthy actions register on <code>sac.commands</code>. This shell, all its

@@ -144,8 +144,12 @@
                         <main class="grid">
                             <!-- View apps are addressed by hash, so a plain link
                                  opens them: no click handler in the way, and
-                                 middle-click and "copy link" do the right thing. -->
-                            <a class="tile" href="#/styleguide">
+                                 middle-click and "copy link" do the right thing.
+                                 Each tile carries its own accent seed; where the
+                                 color differs from the app's natural look,
+                                 data-app makes it ride into the app on click
+                                 (tile color = app highlight). -->
+                            <a class="tile" href="#/styleguide" style="--accent:#3b82f6;">
                                 <sac-icon name="star"></sac-icon>
                                 <div>
                                     <h2>Style Guide</h2>
@@ -153,7 +157,7 @@
                                     <p class="tile-meta">App · start here</p>
                                 </div>
                             </a>
-                            <a class="tile" href="#/orb-lab">
+                            <a class="tile" href="#/orb-lab" style="--accent:#10b981;">
                                 <sac-icon name="globe"></sac-icon>
                                 <div>
                                     <h2>Orb Lab</h2>
@@ -164,7 +168,7 @@
                             </a>
                             <!-- A window app: the click injects its script and
                                  mounts it into a floating sac-window. -->
-                            <a class="tile" href="?app=about" data-app="about">
+                            <a class="tile" href="?app=about" data-app="about" style="--accent:#ec4899;">
                                 <sac-icon name="info"></sac-icon>
                                 <div>
                                     <h2>About This Kit</h2>
@@ -173,7 +177,7 @@
                                     <p class="tile-meta">App · opens in a window</p>
                                 </div>
                             </a>
-                            <a class="tile" href="#/build">
+                            <a class="tile" href="#/build" data-app="build" style="--accent:#f97316;">
                                 <sac-icon name="plus"></sac-icon>
                                 <div>
                                     <h2>Build an App</h2>
@@ -182,7 +186,7 @@
                                     <p class="tile-meta">App · write your own</p>
                                 </div>
                             </a>
-                            <a class="tile" href="#/roadmap">
+                            <a class="tile" href="#/roadmap" data-app="roadmap" style="--accent:#a855f7;">
                                 <sac-icon name="document"></sac-icon>
                                 <div>
                                     <h2>Roadmap</h2>
@@ -190,7 +194,8 @@
                                     <p class="tile-meta">App · incl. non-goals</p>
                                 </div>
                             </a>
-                            <a class="tile" id="download-tile" href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.7.0/sacrvm-appkit-1.7.0.zip">
+                            <a class="tile" id="download-tile" style="--accent:#06b6d4;"
+                               href="https://github.com/SACRVM/sacrvm-appkit/releases/download/v1.7.0/sacrvm-appkit-1.7.0.zip">
                                 <sac-icon name="download"></sac-icon>
                                 <div>
                                     <h2>Download</h2>
@@ -198,7 +203,7 @@
                                     <p class="tile-meta">v1.7.0 · 428 KB ZIP</p>
                                 </div>
                             </a>
-                            <a class="tile" href="https://github.com/SACRVM/sacrvm-appkit">
+                            <a class="tile" href="https://github.com/SACRVM/sacrvm-appkit" style="--accent:#64748b;">
                                 <sac-icon name="github"></sac-icon>
                                 <div>
                                     <h2>Source</h2>
