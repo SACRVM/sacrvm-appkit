@@ -549,6 +549,17 @@ kbd {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+a.nav-icon-btn { text-decoration: none; }
+/* The labeled variant: same height, a pill instead of a circle. A host's
+   signed-in user chip renders with it (sac-nav host tools), and an app can
+   use it for its own labeled ribbon buttons just the same. */
+.nav-icon-btn.labeled {
+    width: auto;
+    padding: 0 12px;
+    gap: 0.4rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+}
 
 /* --------------------------------------------------------------------------
    9. Panels, cards, menus, logs (CSS patterns — documented in the style guide)

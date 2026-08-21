@@ -32,7 +32,10 @@
  *                            suite's cross-app navigation)
  *                   toolbar: [{icon, label?, title?, href? | onClick?}] }
  *                            → host controls at the right end of the ribbon
- *                            (a signed-in user, a suite-wide action, …)
+ *                            (a signed-in user, a suite-wide action, …).
+ *                            Rendered as light-DOM .nav-icon-btn elements —
+ *                            the same ui.css recipe as the app's own ribbon
+ *                            buttons, so the two always look alike.
  *          Everything is rendered by the APP'S OWN nav — the host supplies
  *          data, it never paints. null/absent = standalone, nothing renders.
  *
@@ -82,7 +85,42 @@ class SacNav extends HTMLElement {
     get host() { return this._host; }
     set host(v) {
         this._host = v || null;
+        this._syncHostTools();
         if (this.shadowRoot.firstChild) this.render();
+    }
+
+    /**
+     * The host's toolbar controls are rendered as LIGHT-DOM .nav-icon-btn
+     * elements slotted into "host-tools" — the exact same ui.css recipe as
+     * the app's own ribbon buttons, so the two can never look different.
+     * Owned and replaced wholesale by the nav (marked data-sac-host-tool).
+     */
+    _syncHostTools() {
+        this.querySelectorAll("[data-sac-host-tool]").forEach((el) => el.remove());
+        const tools = (this._host && Array.isArray(this._host.toolbar)) ? this._host.toolbar : [];
+        tools.forEach((tb) => {
+            const el = document.createElement(tb.href ? "a" : "button");
+            el.className = "nav-icon-btn" + (tb.label ? " labeled" : "");
+            el.slot = "host-tools";
+            el.dataset.sacHostTool = "";
+            el.title = tb.title || tb.label || "";
+            if (tb.href) el.href = tb.href;
+            else el.type = "button";
+            if (tb.icon) {
+                const ic = document.createElement("sac-icon");
+                ic.setAttribute("name", tb.icon);
+                el.appendChild(ic);
+            }
+            if (tb.label) {
+                const sp = document.createElement("span");
+                sp.textContent = tb.label;
+                el.appendChild(sp);
+            }
+            if (!tb.href && typeof tb.onClick === "function") {
+                el.addEventListener("click", () => tb.onClick(tb));
+            }
+            this.appendChild(el);
+        });
     }
 
     /** The app's own sub-navigation (see header). Optional. */
@@ -323,32 +361,17 @@ class SacNav extends HTMLElement {
                 .sub-list .nav-item sac-icon { --icon-size: 15px; }
 
                 /* Host toolbar controls (injected via the host property) —
-                   right end of the ribbon, after the app's own toolbar. */
+                   right end of the ribbon, after the app's own toolbar.
+                   Only LAYOUT lives here: the buttons themselves are
+                   light-DOM .nav-icon-btn elements (see _syncHostTools),
+                   styled by the one recipe in ui.css — the exact same class
+                   as the app's own ribbon buttons, so they cannot drift. */
                 .host-tools {
                     display: flex;
                     gap: 0.25rem;
                     align-items: center;
                     margin-left: 0.5rem;
                 }
-                .host-tool {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.4rem;
-                    height: 32px;
-                    min-width: 32px;
-                    padding: 0 7px;
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    border-radius: var(--radius-m);
-                    color: var(--text-muted);
-                    text-decoration: none;
-                    font-family: inherit;
-                    font-size: 0.8rem;
-                }
-                .host-tool:hover { background: var(--hover); color: var(--text); }
-                .host-tool sac-icon { --icon-size: 17px; }
 
                 /* Scrollbar theme — duplicated because the global rule in
                    ui.css doesn't pierce Shadow DOM. */
@@ -386,16 +409,7 @@ class SacNav extends HTMLElement {
                 <div class="context"><slot name="context"></slot></div>
                 <div class="toolbar-slot"><slot name="toolbar"></slot></div>
                 ${hostTools.length ? `
-                <div class="host-tools">
-                    ${hostTools.map((tb, i) => {
-                        const icon  = tb.icon ? `<sac-icon name="${esc(tb.icon)}"></sac-icon>` : "";
-                        const label = tb.label ? `<span>${escText(tb.label)}</span>` : "";
-                        const title = esc(tb.title || tb.label || "");
-                        return tb.href
-                            ? `<a class="host-tool" href="${esc(tb.href)}" title="${title}">${icon}${label}</a>`
-                            : `<button class="host-tool" data-host-tool="${i}" title="${title}">${icon}${label}</button>`;
-                    }).join("")}
-                </div>` : ``}
+                <div class="host-tools"><slot name="host-tools"></slot></div>` : ``}
             </nav>
             <div class="backdrop"></div>
             <aside class="panel">
@@ -478,14 +492,6 @@ class SacNav extends HTMLElement {
         // Clicking a panel nav-item also closes the panel.
         this.shadowRoot.querySelectorAll(".nav-item").forEach(el => {
             el.addEventListener("click", () => setOpen(false));
-        });
-
-        // Host toolbar controls: entries with onClick are buttons.
-        this.shadowRoot.querySelectorAll("[data-host-tool]").forEach(el => {
-            el.addEventListener("click", () => {
-                const entry = (this._host && this._host.toolbar || [])[Number(el.dataset.hostTool)];
-                if (entry && typeof entry.onClick === "function") entry.onClick(entry);
-            });
         });
 
         // Restore panel state after a re-render (routes changed while open).
