@@ -36,6 +36,14 @@
  *          Everything is rendered by the APP'S OWN nav — the host supplies
  *          data, it never paints. null/absent = standalone, nothing renders.
  *
+ *   sections — the app's OWN sub-navigation, OPTIONAL: [{label, href, icon?}].
+ *          Entirely the app's choice — a simple app sets nothing and its
+ *          suite entry stays a plain point. When set AND a host group is
+ *          present, the entries nest indented under the app's own entry in
+ *          the burger panel (found by address match) — one tree: the suite,
+ *          with the running app unfolded. Standalone the same entries render
+ *          as the panel's flat list.
+ *
  * Slots:
  *   context — persistent controls (e.g. a scope switcher).
  *   toolbar — right-aligned content inside the ribbon. This is the OWNER'S
@@ -67,12 +75,20 @@ class SacNav extends HTMLElement {
         this.attachShadow({ mode: "open" });
         this.isOpen = false;
         this._host = null;
+        this._sections = [];
     }
 
     /** The host's injection (see header). Assign context.host in mount(). */
     get host() { return this._host; }
     set host(v) {
         this._host = v || null;
+        if (this.shadowRoot.firstChild) this.render();
+    }
+
+    /** The app's own sub-navigation (see header). Optional. */
+    get sections() { return this._sections; }
+    set sections(v) {
+        this._sections = Array.isArray(v) ? v : [];
         if (this.shadowRoot.firstChild) this.render();
     }
 
@@ -107,6 +123,7 @@ class SacNav extends HTMLElement {
         const hostIcon  = injected.icon || this.getAttribute("host-icon") || "home";
         const hostNav   = Array.isArray(injected.nav) ? injected.nav : [];
         const hostTools = Array.isArray(injected.toolbar) ? injected.toolbar : [];
+        const sections  = this._sections;
 
         const routes = (window.sac?.router?.routes() || []).filter(r => r.hash !== "#/")
             // On a shared page (launcher pattern) the router carries the
@@ -297,6 +314,13 @@ class SacNav extends HTMLElement {
                     border-top: 1px solid var(--border);
                     margin: 0.9rem 1.5rem;
                 }
+                /* The app's own sections, nested under its suite entry. */
+                .sub-list { list-style: none; padding: 0; margin: 0; }
+                .sub-list .nav-item {
+                    padding: 0.45rem 1.5rem 0.45rem 3.1rem;
+                    font-size: 0.85rem;
+                }
+                .sub-list .nav-item sac-icon { --icon-size: 15px; }
 
                 /* Host toolbar controls (injected via the host property) —
                    right end of the ribbon, after the app's own toolbar. */
@@ -378,19 +402,34 @@ class SacNav extends HTMLElement {
                 ${hostNav.length ? `
                 <div class="panel-label">${escText(hostLabel || t("nav.host", "Host"))}</div>
                 <ul class="nav-list">
-                    ${hostNav.map(e => `
+                    ${hostNav.map(e => {
+                        // The entry addressing the running app carries the
+                        // app's own sections as an indented subtree.
+                        const self = isActiveHref(e.href);
+                        return `
                         <li>
-                            <a class="nav-item ${isActiveHref(e.href) ? "active" : ""}" href="${esc(hrefFor(e.href))}">
+                            <a class="nav-item ${self ? "active" : ""}" href="${esc(hrefFor(e.href))}">
                                 ${e.icon ? `<sac-icon name="${esc(e.icon)}"></sac-icon>` : ""}
                                 <span>${escText(e.label)}</span>
                             </a>
-                        </li>
-                    `).join("")}
+                            ${self && sections.length ? `
+                            <ul class="sub-list">
+                                ${sections.map(s => `
+                                    <li>
+                                        <a class="nav-item ${isActiveHref(s.href) ? "active" : ""}" href="${esc(hrefFor(s.href))}">
+                                            ${s.icon ? `<sac-icon name="${esc(s.icon)}"></sac-icon>` : ""}
+                                            <span>${escText(s.label)}</span>
+                                        </a>
+                                    </li>
+                                `).join("")}
+                            </ul>` : ``}
+                        </li>`;
+                    }).join("")}
                 </ul>
                 ${routes.length ? `<hr class="panel-sep">${(appName || brand)
                     ? `<div class="panel-label">${escText(appName || brand)}</div>` : ``}` : ``}` : ``}
                 ${routes.length === 0
-                    ? (hostNav.length ? `` : `<div class="panel-empty">${L.noSections}</div>`)
+                    ? ((hostNav.length || sections.length) ? `` : `<div class="panel-empty">${L.noSections}</div>`)
                     : `<ul class="nav-list">
                          ${routes.map(r => `
                              <li>
@@ -401,6 +440,17 @@ class SacNav extends HTMLElement {
                              </li>
                          `).join("")}
                        </ul>`}
+                ${!hostNav.length && sections.length ? `
+                <ul class="nav-list">
+                    ${sections.map(s => `
+                        <li>
+                            <a class="nav-item ${isActiveHref(s.href) ? "active" : ""}" href="${esc(hrefFor(s.href))}">
+                                ${s.icon ? `<sac-icon name="${esc(s.icon)}"></sac-icon>` : ""}
+                                <span>${escText(s.label)}</span>
+                            </a>
+                        </li>
+                    `).join("")}
+                </ul>` : ``}
             </aside>
         `;
 
