@@ -146,7 +146,7 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
         ["<code>route</code><br><code>onRoute(cb)</code>", "Your sub-route — the part after <code>#/&lt;id&gt;/</code> — now, and on every change. Rail clicks, the back button and pasted links all arrive here."],
         ["<code>href(route)</code>", "Builds a link into your own app. Never hand-assemble <code>#/id/route</code>: the host owns the address space, and standalone there is no id at all."],
         ["<code>deepLink.set(route)</code>", "Makes the current state linkable (<code>replaceState</code> — switching sections is not a new page in the history)."],
-        ["<code>host</code>", "The host's package, or <code>null</code> standalone: <code>{ name, icon, href, nav, toolbar }</code>. Your app is COMPLETE — it draws its own <code>&lt;sac-nav&gt;</code>, toolbar and rail (<code>&lt;sac-sidebar&gt;</code> with the <code>items</code> property). The host hands you its presence and you render it: one line, <code>this._nav.host = context.host</code>. Your nav then shows the ⌂ jump before your brand, the suite's <code>nav</code> entries as a host group in your burger panel, and the host's <code>toolbar</code> controls (a signed-in user, a suite action) at the right end of your ribbon. Nothing is ever projected out of the app."],
+        ["<code>host</code>", "The host's package, or <code>null</code> standalone: <code>{ name, icon, href, nav, toolbar }</code>. Your app is COMPLETE — it draws its own <code>&lt;sac-nav&gt;</code>, toolbar and rail (<code>&lt;sac-sidebar&gt;</code> with the <code>items</code> property). The host hands you its presence and you render it: one line, <code>this._nav.host = context.host</code>. Your nav then shows the ⌂ jump before your brand, the suite's <code>nav</code> entries as a host group in your burger panel, and the host's <code>toolbar</code> controls (a signed-in user, a suite action) at the right end of your ribbon. Optional, your choice: hand your nav your own sections too (<code>this._nav.sections = [{label, href, icon?}]</code>) and they nest indented under your suite entry in the burger — hosted a tree, standalone the flat list. Nothing is ever projected out of the app."],
         ["<code>params</code>", "The query parameters the host was opened with."],
         ["<code>appId</code>", "Your id, as the host registered it."],
         ["<code>fs</code>", "Storage scoped to your app — see below. <code>null</code> if the host granted none, so check before you reach for it."],
@@ -385,7 +385,10 @@ sac.apps.add(manifest);      // registers it — the script is injected on
             the rail cleared.</li>
         <li><b>No build step.</b> If it needs compiling, it is not this kind of app.</li>
         <li><b>It runs standalone</b> (<code>npx serve .</code>, no desktop) and
-            <b>installed</b> — check both, they fail differently.</li>
+            <b>installed</b> — check both, they fail differently. Unless you decide
+            hosting is not this app's shape: not every appkit app must work in every
+            desktop. Standalone-only is legitimate, and an app can even be a launcher
+            itself — a tile dashboard with sub-apps via <code>sac.apps</code>.</li>
         <li><b>Both themes</b>, and a narrow window.</li>
     </ul>
 
@@ -412,6 +415,10 @@ sac.apps.add(manifest);      // registers it — the script is injected on
                 h.id = id;
                 return { id, label: h.textContent, el: h };
             });
+            // Offered to the burger too: hosted they nest under this app's
+            // suite entry, standalone they are the list.
+            this._nav.sections = this._sections.map((s) =>
+                ({ label: s.label, href: context.href(s.id) }));
 
             this._project(context.route);
             if (context.route) this._scrollTo(context.route);

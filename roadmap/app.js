@@ -435,6 +435,10 @@
                 h.id = id;
                 return { id, label: h.textContent.replace(/^\d+\s*·\s*/, ""), el: h };
             });
+            // Offered to the burger too: hosted they nest under this app's
+            // suite entry, standalone they are the list.
+            this._nav.sections = this._sections.map((s) =>
+                ({ label: s.label, href: context.href(s.id) }));
 
             this._project(context.route);
             if (context.route) this._scrollTo(context.route);

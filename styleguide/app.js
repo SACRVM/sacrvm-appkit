@@ -301,6 +301,7 @@
                 ])}
                 ${table("Property", [
                     ["host", "THE injection point of the app contract — one line in <code>mount()</code>: <code>nav.host = context.host</code>. Shape <code>{ name, icon, href, nav, toolbar }</code>: name/icon/href render the muted “⌂ SACRVM APPKIT ·” jump before the brand (visible at the top of this page); <code>nav</code> entries (<code>{label, href, icon?}</code>) become a labeled host group at the top of the burger panel — the suite's cross-app navigation (open the burger: “SACRVM APPKIT” is that group); <code>toolbar</code> entries (<code>{icon, label?, title?, href?|onClick?}</code>) render as controls at the right end of the ribbon — a signed-in user, a suite-wide action (the GitHub button up right is one). Routes already listed in the host group are dropped from the app's own group, so a shared-page suite lists nothing twice. <code>null</code> = standalone, none of it renders."],
+                    ["sections", "The app's OWN sub-navigation, <b>optional</b>: <code>[{label, href, icon?}]</code>. Entirely the app's choice — a simple app sets nothing and its suite entry stays a plain point. When set and a host group is present, the entries nest indented under the app's own entry in the burger — one tree, the suite with the running app unfolded (open the burger on this page: the Style Guide's five sections hang under its entry). Standalone the same entries are the panel's flat list. This app sets it from the same data as its rail: <code>nav.sections = SECTIONS.map(s =&gt; ({ label, href: ctx.href(s.id), icon }))</code>."],
                 ])}
                 ${table("Slot", [
                     ["context", "For persistent controls (the theme switcher above lives here)."],
@@ -2891,6 +2892,10 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             // The host's injection (jump, suite nav, toolbar controls),
             // rendered by OUR nav. Null standalone — the nav shows nothing.
             this._nav.host = context.host;
+            // Our own sections, offered to the burger: hosted they nest
+            // under this app's suite entry, standalone they are the list.
+            this._nav.sections = SECTIONS.map((s) =>
+                ({ label: s.label, href: context.href(s.id), icon: s.icon }));
             const target = splitRoute(context.route);
             this._go(target.id, target.anchor, false);
 
