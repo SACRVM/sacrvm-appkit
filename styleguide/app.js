@@ -69,10 +69,10 @@
         "<circle%20cx='32'%20cy='25'%20r='11'%20fill='%23cbd5e1'/>" +
         "<path%20d='M9%2064c0-13%2010-21%2023-21s23%208%2023%2021z'%20fill='%23cbd5e1'/></svg>";
 
-    // Page-lifetime guards. The demo window lives in <body> and outlives every
-    // render; the demo hotkey is torn down before it is registered again.
+    // Page-lifetime guard: the demo window lives in <body> and outlives every
+    // render. (The demo commands + hotkey are scoped to the app's visibility
+    // inside AppStyleguide, not registered here.)
     let windowStateWired = false;
-    let demoHotkeyOff = null;
 
     /* ---------------------------------------------------------- tokens --- */
 
@@ -502,6 +502,17 @@ await sac.dialog.info({
     message: ["One paragraph per array entry.", "Licence text lives well here."],
     label:   "Got it",          // default "OK"
 });   // announce, not ask — the resolution carries no information`)}
+                <p>The wrapper above is the everyday path. The element underneath it is public too —
+                   reach for it when you need slotted interactive content (a form, links) in the body,
+                   as <code>&lt;sac-launcher&gt;</code>'s add-app dialog does:</p>
+                ${table("Element API", [
+                    ["title", "Attribute — the heading; the panel is <code>aria-labelledby</code> it when set."],
+                    [".buttons", "Property — array of button specs (same shape as above)."],
+                    ["open()", "Show it: renders, traps focus, remembers the trigger."],
+                    ["close(action)", "Hide it and fire <code>sac:action</code> with that action; also restores focus to the trigger."],
+                    ["sac:open", "Fired on open (bubbles + composed)."],
+                    ["sac:action", "Fired on close; <code>detail { action }</code> (bubbles + composed). Escape / backdrop close with <code>null</code>."],
+                ])}
 
                 <h2 id="sac-status-banner">&lt;sac-status-banner&gt;</h2>
                 <p>Inline, non-modal status strip: sits where you put it, hidden until something
@@ -1774,27 +1785,12 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
             menuResult.textContent = `selected: ${e.detail.action}`;
         });
 
-        // Command palette — a live button plus two demo commands. register()
-        // upserts by id, so re-entering this view never duplicates them; the
-        // hotkey is torn down first so it doesn't stack.
+        // Command palette — just the live opener here. The two demo commands
+        // and the mod+shift+x hotkey are GLOBAL registrations, so they belong
+        // to the app's visibility, not this section's render: registering them
+        // here leaked them into every other app on the shell. They are now
+        // scoped to the styleguide being on screen (see AppStyleguide).
         root.querySelector("#palette-open").addEventListener("click", () => sac.palette.open());
-
-        sac.commands.register({
-            id: "sg-say-hello", label: "Say hello", icon: "info",
-            group: "Style guide",
-            run: () => sac.toast("Hello from the command palette.", { kind: "info" }),
-        });
-        sac.commands.register({
-            id: "sg-toast-demo", label: "Toast a success message", icon: "success",
-            group: "Style guide", hotkey: "mod+shift+x",
-            run: () => sac.toast("Ran from the palette.", { kind: "success" }),
-        });
-        if (demoHotkeyOff) demoHotkeyOff();
-        demoHotkeyOff = sac.hotkeys.register(
-            "mod+shift+x",
-            () => sac.toast("Ran from the keyboard.", { kind: "success" }),
-            { description: "Toast a success message" }
-        );
 
         // Toast
         const toastMessages = {
@@ -2296,6 +2292,16 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                 <p>Or load everything with one tag — <code>kit/js/all.js</code> injects the libs and every
                    component in order. Cherry-picking stays the recommended production path.</p>
                 ${code(`<script src="kit/js/all.js"><\/script>`)}
+                <p class="sg-note"><b>Booting with <code>all.js</code>:</b> it <em>injects</em> its scripts, and
+                   injected scripts do <strong>not</strong> hold up <code>DOMContentLoaded</code> — so page
+                   code that calls <code>sac.*</code> must not boot from that event. Wait for
+                   <code>sac:ready</code> on <code>document</code> (fired once, after the last file settles),
+                   and check the <code>window.sacReady</code> flag in case you missed it. Cherry-picked
+                   <code>&lt;script defer&gt;</code> tags have no such caveat — the parser holds
+                   <code>DOMContentLoaded</code> for them.</p>
+                ${code(`function boot() { sac.apps.register(/* … */); sac.apps.init(); }
+if (window.sacReady) boot();
+else document.addEventListener("sac:ready", boot, { once: true });`)}
 
                 <h2>sac.setupPanZoom — synchronized pan &amp; zoom</h2>
                 <p>Cursor-anchored wheel zoom + drag pan, driving <em>multiple panes from ONE shared
@@ -2934,10 +2940,49 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                 const next = splitRoute(route);
                 this._go(next.id, next.anchor, true);
             });
+
+            // The two demo commands + the mod+shift+x hotkey are GLOBAL. Bind
+            // them to this app being ON STAGE — sac.apps keeps swapped-out views
+            // in the DOM, so without this they would fire from inside other
+            // apps. The stage emits sac:apps-changed ("view"/"home"), a
+            // deterministic signal (an IntersectionObserver would be throttled
+            // in a background tab). We mount only when shown, so register now.
+            this._demoCmdsOn();
+            this._onApps = (e) => {
+                const d = e.detail || {};
+                if (d.type === "view") (d.id === context.appId ? this._demoCmdsOn() : this._demoCmdsOff());
+                else if (d.type === "home") this._demoCmdsOff();
+            };
+            document.addEventListener("sac:apps-changed", this._onApps);
+        }
+
+        _demoCmdsOn() {
+            if (this._demoOff) return;   // already registered
+            const offs = [
+                sac.commands.register({
+                    id: "sg-say-hello", label: "Say hello", icon: "info", group: "Style guide",
+                    run: () => sac.toast("Hello from the command palette.", { kind: "info" }),
+                }),
+                sac.commands.register({
+                    id: "sg-toast-demo", label: "Toast a success message", icon: "success",
+                    group: "Style guide", hotkey: "mod+shift+x",
+                    run: () => sac.toast("Ran from the palette.", { kind: "success" }),
+                }),
+                sac.hotkeys.register("mod+shift+x",
+                    () => sac.toast("Ran from the keyboard.", { kind: "success" }),
+                    { description: "Toast a success message" }),
+            ];
+            this._demoOff = () => offs.forEach((f) => typeof f === "function" && f());
+        }
+
+        _demoCmdsOff() {
+            if (this._demoOff) { this._demoOff(); this._demoOff = null; }
         }
 
         unmount() {
             if (this._offRoute) { this._offRoute(); this._offRoute = null; }
+            if (this._onApps) { document.removeEventListener("sac:apps-changed", this._onApps); this._onApps = null; }
+            this._demoCmdsOff();
         }
 
         /** Render, address, rail — in that order; everything else derives. */

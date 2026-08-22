@@ -32,15 +32,6 @@
     // loadHelp() addresses its target by id — one element, one app, one id.
     const HELP_TARGET = "orb-lab-help-content";
 
-    /** One <link> per document, however often the app is created. */
-    function ensureStyles() {
-        if (document.getElementById(CSS_ID)) return;
-        const link = document.createElement("link");
-        link.id = CSS_ID;
-        link.rel = "stylesheet";
-        link.href = BASE + "style.css";
-        document.head.appendChild(link);
-    }
 
     // The kit's 10-slot data palette — orbs pick a slot NAME, so a re-theme
     // recolours them without touching a single orb.
@@ -76,7 +67,7 @@
 
         connectedCallback() {
             if (this.firstElementChild) return;   // a stage swap re-connects
-            ensureStyles();
+            sac.app.styles(BASE + "style.css", CSS_ID);
             this.innerHTML = `
 <!-- The app is complete: its own nav carries its own tools. A host adds
      nothing here — its presence arrives via context.host in mount(). -->

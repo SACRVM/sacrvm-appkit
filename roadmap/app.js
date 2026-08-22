@@ -13,15 +13,6 @@
     const BASE = document.currentScript.src.replace(/[^/]+$/, "");
     const CSS_ID = "sac-app-roadmap-css";
 
-    /** One <link> per document, however often the app is created. */
-    function ensureStyles() {
-        if (document.getElementById(CSS_ID)) return;
-        const link = document.createElement("link");
-        link.id = CSS_ID;
-        link.rel = "stylesheet";
-        link.href = BASE + "roadmap.css";
-        document.head.appendChild(link);
-    }
 
     // Trim AFTER the cut too, or a slug can end on the dash the cut created.
     const slug = (text) => text.toLowerCase()
@@ -32,7 +23,7 @@
     class AppRoadmap extends HTMLElement {
         connectedCallback() {
             if (this.firstElementChild) return;   // a stage swap re-connects
-            ensureStyles();
+            sac.app.styles(BASE + "roadmap.css", CSS_ID);
 
             // The app is complete: its own nav, its own rail, its own
             // scrolling body. A host adds nothing but context.host.
@@ -379,7 +370,6 @@
     <table class="rm">
         <tr><th>Item</th><th>Why not</th><th>Status</th></tr>
         <tr><td>Charts / data-viz</td><td>Separate concern; apps bring their own.</td><td><sac-chip label="decided against" color="red"></sac-chip></td></tr>
-        <tr><td>i18n / localization layer</td><td>Single-language apps for now; revisit if a consumer needs it.</td><td><sac-chip label="decided against" color="red"></sac-chip></td></tr>
         <tr><td>Framework wrappers (React/Vue)</td><td>Against the whole point. Custom elements already work everywhere.</td><td><sac-chip label="decided against" color="red"></sac-chip></td></tr>
         <tr><td>CDN delivery (jsDelivr etc.)</td><td>The kit is self-hosted and offline by value — no foreign infrastructure in consumers.</td><td><sac-chip label="decided against" color="red"></sac-chip></td></tr>
         <tr><td>NuGet</td><td>.NET's package manager — wrong ecosystem for an HTML/JS kit.</td><td><sac-chip label="decided against" color="red"></sac-chip></td></tr>

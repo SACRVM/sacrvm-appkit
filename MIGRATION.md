@@ -58,10 +58,21 @@ what makes the app rethemeable for free.
 
 ## 4. Behavior changes to expect
 
-- **Events are `sac:`-prefixed** (`sac:tab-show`, `sac:menu-select`,
-  `sac:files`, …), `CustomEvent` with `bubbles` + `composed`. Exception:
-  `sac-window` keeps its legacy unprefixed `open`/`close` events for
-  launcher compatibility.
+- **Every event is `sac:`-prefixed, and the name never repeats the component**
+  (`e.target` already says which element fired). One convention:
+  - A **data-value control** (toggle, slider, stepper, segmented-control,
+    color-picker/-field, calendar, date-field, chip-input, swatch-grid,
+    theme-toggle) fires `sac:change` on user commit — plus `sac:input` for live
+    updates (slider) — with `detail: { value }`. These BUBBLE but are NOT
+    composed (native change/input semantics), and a **programmatic set is
+    silent**. So a legacy `change`/`sac:color-change`/`sac:date-change`
+    listener becomes `sac:change`, and `e.detail` becomes `e.detail.value`.
+  - An **action / lifecycle event** keeps a descriptive `sac:` verb, bubbling
+    and composed: e.g. `sac:tab-show`, `sac:select` (menu, scene-graph),
+    `sac:copy`, `sac:files`, `sac:remove` (chip), `sac:open`/`sac:close`/
+    `sac:minimize`/`sac:maximize`/`sac:restore` (window — now prefixed and
+    bubbling, no legacy exception), `sac:resize` (split), `sac:toggle`
+    (collapsible), `sac:layout` (launcher).
 - **`sac-nav` is configurable** — the legacy nav hardcoded its tool list and
   path logic; nav entries now come from attributes/registration
   (`sac.router.register`). Port the app's nav data instead of patching the
