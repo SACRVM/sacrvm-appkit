@@ -304,39 +304,39 @@
             const state = this.state;
             const log = this._log;
 
-            this._on(".ol-count", "input", (e) => {
-                state.count = parseInt(e.detail, 10);
+            this._on(".ol-count", "sac:input", (e) => {
+                state.count = parseInt(e.detail.value, 10);
                 this._syncCount();
                 this._updateHud();
             });
-            this._on(".ol-count", "change", (e) => log.add(`Orb count → ${e.detail}`));
-            this._on(".ol-speed", "input",  (e) => { state.speed = parseFloat(e.detail); });
-            this._on(".ol-speed", "change", (e) => log.add(`Speed → ${e.detail}×`));
-            this._on(".ol-size",  "input",  (e) => { state.size = parseInt(e.detail, 10); });
-            this._on(".ol-size",  "change", (e) => log.add(`Size → ${e.detail}px`));
+            this._on(".ol-count", "sac:change", (e) => log.add(`Orb count → ${e.detail.value}`));
+            this._on(".ol-speed", "sac:input",  (e) => { state.speed = parseFloat(e.detail.value); });
+            this._on(".ol-speed", "sac:change", (e) => log.add(`Speed → ${e.detail.value}×`));
+            this._on(".ol-size",  "sac:input",  (e) => { state.size = parseInt(e.detail.value, 10); });
+            this._on(".ol-size",  "sac:change", (e) => log.add(`Size → ${e.detail.value}px`));
 
-            this._on(".ol-trails", "change", (e) => {
-                state.trails = e.detail;
-                log.add(`Trails ${e.detail ? "on" : "off"}`);
+            this._on(".ol-trails", "sac:change", (e) => {
+                state.trails = e.detail.value;
+                log.add(`Trails ${e.detail.value ? "on" : "off"}`);
             });
-            this._on(".ol-links", "change", (e) => {
-                state.links = e.detail;
-                log.add(`Connect lines ${e.detail ? "on" : "off"}`, e.detail ? "warn" : "info");
+            this._on(".ol-links", "sac:change", (e) => {
+                state.links = e.detail.value;
+                log.add(`Connect lines ${e.detail.value ? "on" : "off"}`, e.detail.value ? "warn" : "info");
             });
 
             // The custom well only means anything in "custom" mode, so the
             // mode owns its [disabled] — one line, and the row dims itself.
             const customColor = this.querySelector(".ol-custom");
-            this._on(".ol-colors", "change", (e) => {
-                if (typeof e.detail !== "string") return;
-                state.colorMode = e.detail;
-                customColor.toggleAttribute("disabled", e.detail !== "custom");
-                log.add(`Color mode → ${e.detail}`);
+            this._on(".ol-colors", "sac:change", (e) => {
+                if (typeof e.detail.value !== "string") return;
+                state.colorMode = e.detail.value;
+                customColor.toggleAttribute("disabled", e.detail.value !== "custom");
+                log.add(`Color mode → ${e.detail.value}`);
             });
 
             // Live: the next frame already paints the new color. The log is
-            // debounced, because sac:color-change fires on every drag step.
-            this._on(".ol-custom", "sac:color-change", (e) => {
+            // debounced, because sac:change fires on every drag step.
+            this._on(".ol-custom", "sac:change", (e) => {
                 state.customColor = e.detail.value;
                 clearTimeout(this._customLogTimer);
                 this._customLogTimer = setTimeout(

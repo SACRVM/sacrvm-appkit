@@ -33,8 +33,8 @@ class ToolAbout extends HTMLElement {
                     <b style="color:var(--text);">mount(context)</b> received:
                     app id <code id="about-app-id">—</code> ·
                     theme <code id="about-theme">—</code> (live — flip the toggle) ·
-                    <code>fs</code>/<code>identity</code> are reserved slots
-                    (<code>null</code> until the shell grows them).
+                    <code>fs</code> <code id="about-fs">—</code> ·
+                    <code>identity</code> <code id="about-identity">—</code>
                 </div>
                 <div style="display:flex;align-items:center;gap:1.25rem;margin-top:0.25rem;">
                     <sac-icon name="cube" id="about-cube"
@@ -45,7 +45,7 @@ class ToolAbout extends HTMLElement {
                     </div>
                 </div>
                 <div style="margin-top:auto;color:var(--text-dim);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;">
-                    kit 1.8.0 · zero dependencies · zero build
+                    zero dependencies · zero build
                 </div>
             </div>
         `;
@@ -57,8 +57,8 @@ class ToolAbout extends HTMLElement {
             cube.style.transform = `rotate(${t * 360}deg) scale(${1 + t * 0.35})`;
             cube.style.filter = `drop-shadow(0 0 ${Math.round(t * 18)}px var(--accent-glow))`;
         };
-        this.querySelector("#about-magic").addEventListener("input", (e) => {
-            if (e.detail != null) apply(e.detail);
+        this.querySelector("#about-magic").addEventListener("sac:input", (e) => {
+            if (e.detail) apply(e.detail.value);
         });
         apply(25);
     }
@@ -80,6 +80,15 @@ class ToolAbout extends HTMLElement {
         this._offTheme = context.theme.onChange((resolved) => {
             themeOut.textContent = resolved;
         });
+
+        // fs and identity are real capabilities, granted or not by the HOST —
+        // this shell loads both libs, so they arrive live (not the null a
+        // capability-less host would pass). Report what actually came in.
+        this.querySelector("#about-fs").textContent =
+            context.fs ? "ready" : "null";
+        const who = context.identity && context.identity.get();
+        this.querySelector("#about-identity").textContent =
+            context.identity ? (who ? who.name : "ready (nobody signed in)") : "null";
     }
 
     /** App contract: called only by sac.apps.remove(). */

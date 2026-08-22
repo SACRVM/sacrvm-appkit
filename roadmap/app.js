@@ -346,7 +346,7 @@
                 host <em>injects into the app</em> (the way <code>identity</code> already works):
                 <code>context.host</code> is the package — name and jump-home address, the
                 suite's navigation, the host's toolbar controls — and the app renders all of it
-                in its own nav (<code>nav.host = context.host</code>: the HOST · APP title segment,
+                in its own nav (<code>nav.host = context.host</code>: the host + app title segments,
                 host group in the burger panel, controls at the right end of the ribbon). The
                 projection globals (<code>sac.toolbar</code>, <code>sac.sidebar</code>) are gone;
                 palette-worthy actions register on <code>sac.commands</code>. This shell, all its
@@ -365,7 +365,7 @@
         <tr><th>Item</th><th>What</th><th>Status</th></tr>
         <tr data-item="release-zip">
             <td>Semver tag + release ZIP</td>
-            <td>Semver tags; the release action attaches a ZIP of <code>kit/</code> with a VERSION stamp. v1.0.0 through v1.8.0 are released on GitHub.</td>
+            <td>Semver tags; the release action attaches a ZIP of <code>kit/</code> with a VERSION stamp. See the <a href="https://github.com/SACRVM/sacrvm-appkit/releases">GitHub releases</a> for the current list.</td>
             <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
         <tr data-item="npm-channel">

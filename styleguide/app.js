@@ -269,7 +269,7 @@
             <div class="sg-page">
                 <h1>Components</h1>
                 <p class="lead">
-                    36 component files, 40 custom elements — Shadow DOM (<code>mode: 'open'</code>)
+                    37 component files, 41 custom elements — Shadow DOM (<code>mode: 'open'</code>)
                     except the one documented light-DOM case, <code>&lt;sac-launcher&gt;</code>.
                     All are classic deferred scripts self-registering via
                     <code>customElements.define()</code>, usable from classic and module scripts alike.
@@ -293,14 +293,14 @@
                    <code>sac:scope-changed</code>. Content below needs <code>padding-top: 50px</code>
                    (<code>#app-root</code> / <code>.main-layout</code> handle this).</p>
                 ${table("Attribute", [
-                    ["brand", "Brand text left of the separator."],
+                    ["brand", "Brand text — the first title-bar segment."],
                     ["brand-icon", "Icon name rendered before the brand text."],
                     ["brand-href", "Brand link target (default <code>#/</code>, scope-aware)."],
-                    ["app-name", "Accent-colored text after “BRAND ·”."],
+                    ["app-name", "Accent-colored text after the brand — spacing alone separates the segments."],
                     ["host-href / host-label / host-icon", "Attribute form of the host jump alone, for static pages. A hosted app sets the <code>host</code> property instead. Icon default <code>home</code>."],
                 ])}
                 ${table("Property", [
-                    ["host", "THE injection point of the app contract — one line in <code>mount()</code>: <code>nav.host = context.host</code>. Shape <code>{ name, icon, href, nav, toolbar }</code>: name/icon/href render the “SACRVM APPKIT ·” jump-home segment before the brand, in the SAME brand recipe — one title-bar style everywhere, HOST · APP with the app's segment in accent (visible at the top of this page); <code>nav</code> entries (<code>{label, href, icon?}</code>) become a labeled host group at the top of the burger panel — the suite's cross-app navigation (open the burger: “SACRVM APPKIT” is that group); <code>toolbar</code> entries (<code>{icon, label?, title?, href?|onClick?}</code>) render as controls at the right end of the ribbon — a signed-in user, a suite-wide action (the GitHub button up right is one). They are real <code>.nav-icon-btn</code> elements in the light DOM — the exact same recipe as the app's own ribbon buttons (labeled entries get the <code>.labeled</code> pill variant), so host controls and app controls always look alike. Routes already listed in the host group are dropped from the app's own group, so a shared-page suite lists nothing twice. <code>null</code> = standalone, none of it renders."],
+                    ["host", "THE injection point of the app contract — one line in <code>mount()</code>: <code>nav.host = context.host</code>. Shape <code>{ name, icon, href, nav, toolbar }</code>: name/icon/href render the “SACRVM APPKIT” jump-home segment before the brand, in the SAME brand recipe — one title-bar style everywhere, host then app with the app's segment in accent, spacing as the only divider (visible at the top of this page); <code>nav</code> entries (<code>{label, href, icon?}</code>) become a labeled host group at the top of the burger panel — the suite's cross-app navigation (open the burger: “SACRVM APPKIT” is that group); <code>toolbar</code> entries (<code>{icon, label?, title?, href?|onClick?}</code>) render as controls at the right end of the ribbon — a signed-in user, a suite-wide action (the GitHub button up right is one). They are real <code>.nav-icon-btn</code> elements in the light DOM — the exact same recipe as the app's own ribbon buttons (labeled entries get the <code>.labeled</code> pill variant), so host controls and app controls always look alike. Routes already listed in the host group are dropped from the app's own group, so a shared-page suite lists nothing twice. <code>null</code> = standalone, none of it renders."],
                     ["sections", "The app's OWN sub-navigation, <b>optional</b>: <code>[{label, href, icon?}]</code>. Entirely the app's choice — a simple app sets nothing and its suite entry stays a plain point. When set and a host group is present, the entries nest indented under the app's own entry in the burger — one tree, the suite with the running app unfolded (open the burger on this page: the Style Guide's five sections hang under its entry). Standalone the same entries are the panel's flat list. This app sets it from the same data as its rail: <code>nav.sections = SECTIONS.map(s =&gt; ({ label, href: ctx.href(s.id), icon }))</code>."],
                 ])}
                 ${table("Slot", [
@@ -353,7 +353,7 @@
                     ["refresh()", "Re-read <code>sac.apps.list()</code> and re-sync the grid in place. The component re-syncs itself on every <code>sac:apps-changed</code> the runtime emits, so late registration just works — call this only after mutating state outside <code>sac.apps</code>."],
                 ])}
                 ${table("Event", [
-                    ["sac:launcher-change", "detail { order, hidden, customCount } after every user change (move / hide / show / add / remove). Bubbles + composed."],
+                    ["sac:layout", "detail { order, hidden, customCount } after every user change (move / hide / show / add / remove). Bubbles + composed."],
                 ])}
                 ${code(`<sac-launcher storage="demo-hub"></sac-launcher>
 
@@ -397,8 +397,8 @@
                     ["restore()", "Back to the saved rect from either state, clamped in case the viewport shrank meanwhile."],
                 ])}
                 ${table("Event", [
-                    ["open / close", "detail.window = the element."],
-                    ["sac:window-minimize / -maximize / -restore", "Bubbles + composed, <code>detail.window</code> = the element. The restore event covers the return from either state."],
+                    ["sac:open / sac:close", "Bubbles + composed, <code>detail.window</code> = the element."],
+                    ["sac:minimize / sac:maximize / sac:restore", "Bubbles + composed, <code>detail.window</code> = the element. The restore event covers the return from either state."],
                 ])}
 
                 <h2 id="sac-split">&lt;sac-split&gt;</h2>
@@ -436,14 +436,14 @@
                     ["aria-label", "Names the divider for screen readers (it is a focusable <code>role=\"separator\"</code> with aria-valuenow/min/max in percent). Defaults to “Resize panels”."],
                 ])}
                 ${table("Property", [
-                    ["position", "get/set, normalized to one decimal (<code>\"34.2%\"</code>). Setting it does NOT fire sac:split-change (the caller already knows); user interaction does."],
+                    ["position", "get/set, normalized to one decimal (<code>\"34.2%\"</code>). Setting it does NOT fire sac:resize (the caller already knows); user interaction does."],
                 ])}
                 ${table("Slot", [
                     ["start", "Left (horizontal) / top (vertical) panel. Scrolls its own overflow."],
                     ["end", "Right / bottom panel. Same."],
                 ])}
                 ${table("Event", [
-                    ["sac:split-change", "detail { position } — the percent string. Fired live during a drag, on keyboard moves, on the double-click reset, and when a container resize forces a clamp; never when the app sets it itself."],
+                    ["sac:resize", "detail { position } — the percent string. Fired live during a drag, on keyboard moves, on the double-click reset, and when a container resize forces a clamp; never when the app sets it itself."],
                 ])}
                 ${table("CSS custom property", [
                     ["--split-divider", "Thickness of the divider's grab zone (default 9px). The hairline inside stays 1px."],
@@ -466,7 +466,7 @@
     </sac-split>
 </div>`)}
                 ${code(`// The attribute is already the truth — persist it as it comes:
-split.addEventListener("sac:split-change", (e) => localStorage.setItem("sidebar", e.detail.position));
+split.addEventListener("sac:resize", (e) => localStorage.setItem("sidebar", e.detail.position));
 split.position = localStorage.getItem("sidebar") || "20%";   // programmatic move, no event`)}
 
                 <h2 id="sac-dialog">&lt;sac-dialog&gt;</h2>
@@ -541,7 +541,7 @@ await sac.dialog.info({
                     <span id="demo-toggle-state" style="color:var(--text-muted);font-size:0.85rem;">state: true</span>
                 </div>
                 ${table("Attribute", [["label", "Text left of the switch."], ["checked", "Presence = on. Property <code>.checked</code> mirrors it."]])}
-                ${table("Event", [["change", "detail = boolean (bubbles, composed)."]])}
+                ${table("Event", [["sac:change", "detail { value: boolean }. Bubbles, not composed (native change semantics). Programmatic .checked is silent."]])}
 
                 <h2 id="sac-slider">&lt;sac-slider&gt;</h2>
                 <p>Range slider with live value readout. <strong>All seven attributes are observed</strong>,
@@ -555,7 +555,7 @@ await sac.dialog.info({
                     ["label / min / max / step / value / suffix", "The usual suspects. Property <code>.value</code> mirrors the attribute."],
                     ["labels", "Comma-separated texts mapped by integer value — turns the readout into discrete steps."],
                 ])}
-                ${table("Event", [["input", "On drag; detail = string value."], ["change", "On release; detail = string value."]])}
+                ${table("Event", [["sac:input", "On drag; detail { value } (string)."], ["sac:change", "On release; detail { value } (string). Both bubble, not composed."]])}
 
                 <h2 id="sac-stepper">&lt;sac-stepper&gt;</h2>
                 <p>Discrete −/value/+ pill for small numeric quantities — part counts, brush sizes.
@@ -611,7 +611,7 @@ await sac.dialog.info({
                     <span id="demo-seg-state" style="color:var(--text-muted);font-size:0.85rem;">value: week</span>
                 </div>
                 ${table("Attribute", [["value", "Active data-value. Property <code>.value</code> mirrors it; setting fires change."]])}
-                ${table("Event", [["change", "detail = new value (string)."]])}
+                ${table("Event", [["sac:change", "detail { value } (string), on user click/keypress only. Bubbles, not composed; a programmatic set is silent."]])}
 
                 <h2 id="sac-color-picker">&lt;sac-color-picker&gt;</h2>
                 <p>The whole color surface in one element: a saturation/value field, a hue strip, an
@@ -647,7 +647,7 @@ await sac.dialog.info({
                     ["focus(options)", "Focuses the SV thumb — the picker's primary control."],
                 ])}
                 ${table("Event", [
-                    ["sac:color-change", "detail { value } — the hex string. Fired on USER changes only (drag, arrow key, valid typing) and only when the resulting hex actually differs from the last one, so a drag that wanders two pixels inside the same color stays quiet."],
+                    ["sac:change", "detail { value } — the hex string. Fired on USER changes only (drag, arrow key, valid typing) and only when the resulting hex actually differs from the last one, so a drag that wanders two pixels inside the same color stays quiet."],
                 ])}
                 ${table("CSS custom property", [
                     ["--picker-width", "Width of the whole stack. Default <code>240px</code>; the layout holds from 200px to 360px."],
@@ -660,7 +660,7 @@ await sac.dialog.info({
                 ])}
                 ${code(`<sac-color-picker value="#3b82f6"></sac-color-picker>
 <sac-color-picker value="#f9731699" alpha style="--picker-width:200px;"></sac-color-picker>`)}
-                ${code(`picker.addEventListener("sac:color-change", (e) => {
+                ${code(`picker.addEventListener("sac:change", (e) => {
     brush.color = e.detail.value;        // "#3b82f6" — or "#3b82f699" with [alpha]
 });
 picker.value = "#10b981";                // updates in place, fires nothing`)}
@@ -710,7 +710,7 @@ if (rgba) {
                     ["value", "get/set, normalized lowercase hex. Setting updates the well, the input and an open popover in place and fires <em>nothing</em> — events mean “the user did this”."],
                 ])}
                 ${table("Event", [
-                    ["sac:color-change", "detail { value } — the normalized hex. Fired on USER changes only: a committed hex entry, or any picker interaction. The inner picker's identically named event is stopped at the boundary, so apps see exactly one."],
+                    ["sac:change", "detail { value } — the normalized hex. Fired on USER changes only: a committed hex entry, or any picker interaction. The inner picker's identically named event is stopped at the boundary, so apps see exactly one."],
                 ])}
                 ${table("CSS custom property", [
                     ["--picker-width", "Set on the field, forwarded to the popover's <code>&lt;sac-color-picker&gt;</code>. Default <code>240px</code>."],
@@ -722,7 +722,7 @@ if (rgba) {
                 ${code(`<sac-color-field label="Accent" value="#3b82f6"></sac-color-field>
 <sac-color-field label="Glow" value="#f9731688" alpha></sac-color-field>
 
-field.addEventListener("sac:color-change", (e) => paint(e.detail.value));
+field.addEventListener("sac:change", (e) => paint(e.detail.value));
 field.value = "#22c55e";   // programmatic — updates the UI, fires nothing`)}
 
                 <h2 id="sac-swatch-grid">&lt;sac-swatch-grid&gt; + &lt;sac-swatch&gt;</h2>
@@ -784,7 +784,7 @@ field.value = "#22c55e";   // programmatic — updates the UI, fires nothing`)}
                     ["sac-swatch-grid.colors", "get/set <code>[{ value, label?, count?, caption?, selected?, disabled? }]</code>. The setter rebuilds the light-DOM <code>&lt;sac-swatch&gt;</code> children from scratch — the one sanctioned bulk rebuild, for JS-driven palettes (a computed ramp sets <code>caption</code> per step). Getter and setter carry the same shape, so <code>grid.colors = grid.colors</code> is a lossless round-trip."],
                 ])}
                 ${table("Event", [
-                    ["sac:swatch-select", "detail { value, swatch }. Fires only on a user click or keyboard activation that selects a different, non-disabled swatch — never for programmatic <code>selected</code> writes or the <code>.colors</code> setter."],
+                    ["sac:change", "detail { value, swatch }. Fires only on a user click or keyboard activation that selects a different, non-disabled swatch — never for programmatic <code>selected</code> writes or the <code>.colors</code> setter."],
                 ])}
                 ${table("Keyboard", [
                     ["Grid", "Always on, with or without <code>selectable</code>: arrow keys walk the grid in 2D, <kbd>Home</kbd>/<kbd>End</kbd> jump to the ends, and a roving tabindex keeps exactly one swatch in the page's tab order — <kbd>Tab</kbd> resumes where you left off."],
@@ -795,7 +795,7 @@ field.value = "#22c55e";   // programmatic — updates the UI, fires nothing`)}
     <sac-swatch value="transparent" label="No color"></sac-swatch>
 </sac-swatch-grid>
 
-grid.addEventListener("sac:swatch-select", (e) => setBrush(e.detail.value));
+grid.addEventListener("sac:change", (e) => setBrush(e.detail.value));
 grid.colors = [{ value: "#ef4444", label: "Red" }];   // bulk rebuild, no event`)}
 
                 <h2 id="sac-calendar">&lt;sac-calendar&gt;</h2>
@@ -827,7 +827,7 @@ grid.colors = [{ value: "#ef4444", label: "Red" }];   // bulk rebuild, no event`
                     ["focus(options)", "Focuses the tabbable day cell (roving tabindex — exactly one day is in the tab order)."],
                 ])}
                 ${table("Event", [
-                    ["sac:date-change", "detail { value } — the ISO string. Fired on USER selection only (click, <kbd>Enter</kbd>/<kbd>Space</kbd>) and only when the date actually changes — re-selecting the selected day stays quiet."],
+                    ["sac:change", "detail { value } — the ISO string. Fired on USER selection only (click, <kbd>Enter</kbd>/<kbd>Space</kbd>) and only when the date actually changes — re-selecting the selected day stays quiet."],
                 ])}
                 ${table("CSS custom property", [
                     ["--calendar-width", "Width of the whole calendar. Default <code>280px</code>."],
@@ -844,7 +844,7 @@ grid.colors = [{ value: "#ef4444", label: "Red" }];   // bulk rebuild, no event`
                 ])}
                 ${code(`<sac-calendar value="2026-08-15"></sac-calendar>
 <sac-calendar value="2026-08-15" min="2026-08-04" max="2026-08-27" week-start="0"></sac-calendar>`)}
-                ${code(`cal.addEventListener("sac:date-change", (e) => {
+                ${code(`cal.addEventListener("sac:change", (e) => {
     load(e.detail.value);        // "2026-08-15"
 });
 cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
@@ -877,7 +877,7 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                     ["value", "get/set, normalized ISO or <code>\"\"</code>. Setting updates the input and an open popover in place and fires <em>nothing</em> — events mean “the user did this”. Never overwrites text mid-typing."],
                 ])}
                 ${table("Event", [
-                    ["sac:date-change", "detail { value } — the normalized ISO, or <code>\"\"</code> when the user cleared the input. Fired on USER changes only: a committed typed date or a picked day. The inner calendar's identically named event is stopped at the boundary, so apps see exactly one."],
+                    ["sac:change", "detail { value } — the normalized ISO, or <code>\"\"</code> when the user cleared the input. Fired on USER changes only: a committed typed date or a picked day. The inner calendar's identically named event is stopped at the boundary, so apps see exactly one."],
                 ])}
                 ${table("CSS custom property", [
                     ["--calendar-width", "Set on the field, forwarded to the popover's <code>&lt;sac-calendar&gt;</code>. Default <code>280px</code>."],
@@ -889,7 +889,7 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                 ${code(`<sac-date-field label="Due" value="2026-08-15"></sac-date-field>
 <sac-date-field label="This year" value="2026-08-15" min="2026-01-01" max="2026-12-31"></sac-date-field>
 
-field.addEventListener("sac:date-change", (e) => plan(e.detail.value));
+field.addEventListener("sac:change", (e) => plan(e.detail.value));
 field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`)}
 
                 <h2 id="sac-collapsible">&lt;sac-collapsible&gt;</h2>
@@ -912,7 +912,7 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["more-label / less-label", "Tab texts (default \"more\"/\"less\")."],
                     ["expanded", "Presence = expanded. Property <code>.expanded</code> mirrors it."],
                 ])}
-                ${table("Event", [["sac:collapse-toggle", "detail { expanded }."]])}
+                ${table("Event", [["sac:toggle", "detail { expanded }."]])}
                 ${table("Method", [["measure()", "Re-run overflow detection (escape hatch)."]])}
 
                 <h2 id="sac-chip">&lt;sac-chip&gt;</h2>
@@ -930,12 +930,12 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["color", "Palette slot (blue, orange, red, green, purple, pink, yellow, teal, gray, indigo). Unknown → gray."],
                     ["removable / selected / clickable", "× button / active ring / hover affordance."],
                 ])}
-                ${table("Event", [["chip-remove", "detail { label } (only with [removable])."]])}
+                ${table("Event", [["sac:remove", "detail { label } (only with [removable])."]])}
 
                 <h2 id="sac-chip-input">&lt;sac-chip-input&gt;</h2>
                 <p>Combobox for a list of named chips — chips + input + filtered dropdown. Decoupled
                    from any backend: you supply <code>.suggestions</code>, you persist on
-                   <code>change</code> / <code>chip-create</code>.</p>
+                   <code>change</code> / <code>sac:create</code>.</p>
                 <div class="sg-demo sg-col">
                     <sac-chip-input id="demo-chips" add-label="Add tag" allow-create></sac-chip-input>
                     <span id="demo-chips-state" style="color:var(--text-muted);font-size:0.85rem;">value: []</span>
@@ -949,8 +949,8 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["suggestions", "[{ name, color, count? }] — color is a palette slot."],
                 ])}
                 ${table("Event", [
-                    ["change", "detail = string[] (new list)."],
-                    ["chip-create", "detail { name, color } — persist it, then refresh .suggestions."],
+                    ["sac:change", "detail { value: string[] } (new list). Bubbles, not composed."],
+                    ["sac:create", "detail { name, color } — persist it, then refresh .suggestions."],
                 ])}
                 ${table("Keyboard", [
                     ["Input", "<kbd>Tab</kbd> / <kbd>Enter</kbd> / comma commit the highlighted (or top) entry · <kbd>Esc</kbd> closes the dropdown without committing · <kbd>↓</kbd>/<kbd>↑</kbd> move the highlight · <kbd>Backspace</kbd> on an empty input removes the last chip."],
@@ -1076,9 +1076,9 @@ zone.addEventListener("sac:rejected", (e) => {
                     ["expandable", "Keeps the chevron on rows whose children are built lazily."],
                 ])}
                 ${table("Event (all bubble + composed, detail.id = element id)", [
-                    ["select", "detail also carries additive (ctrl/cmd) and range (shift) for multi-selection."],
-                    ["toggle-visibility", "detail.visible = requested new state (host applies it)."],
-                    ["toggle-expand / delete / change-color", "detail.expanded / — / detail.color."],
+                    ["sac:select", "detail also carries additive (ctrl/cmd) and range (shift) for multi-selection."],
+                    ["sac:visibility", "detail.visible = requested new state (host applies it)."],
+                    ["sac:expand / sac:delete / sac:recolor", "detail.expanded / — / detail.color."],
                 ])}
 
                 <h2 id="sac-log">&lt;sac-log&gt;</h2>
@@ -1251,7 +1251,7 @@ group.active = "two";   // programmatic switch — no event`)}
                     ["open", "Presence = panel visible. Reflected by the methods; settable directly (it positions itself either way)."],
                     ["open() / close() / toggle()", "Show, hide, flip. <code>open()</code> anchors the panel to the trigger's viewport rect and shows it in the <strong>top layer</strong> (<code>popover</code>), so neither a clipping ancestor nor a transformed one can reach it — a menu works inside a <code>.tile</code>, which is both. It flips above the trigger when there is no room below, and re-anchors on scroll/resize."],
                 ])}
-                ${table("Event", [["sac:menu-select", "detail { action }."]])}
+                ${table("Event", [["sac:select", "detail { action }."]])}
                 ${table("Keyboard", [
                     ["Open panel", "An outside pointerdown or <kbd>Esc</kbd> closes it (<kbd>Esc</kbd> also returns focus to the trigger) · <kbd>↓</kbd>/<kbd>↑</kbd> walk the items · <kbd>Enter</kbd> activates natively · <kbd>Tab</kbd> closes."],
                 ])}
@@ -1263,7 +1263,7 @@ group.active = "two";   // programmatic switch — no event`)}
     <button data-action="delete" data-danger><sac-icon name="trash"></sac-icon> Delete</button>
 </sac-menu>
 
-menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
+menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
 
                 <h2 id="sac-command-palette">&lt;sac-command-palette&gt;</h2>
                 <p>Ctrl-K palette — one line of markup per app
@@ -1414,7 +1414,7 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
                     <span id="demo-theme-toggle-state" style="color:var(--text-muted);font-size:0.85rem;">theme: dark</span>
                 </div>
                 ${table("Property", [["theme", "get/set \"dark\" | \"light\" | \"auto\". Setting applies + persists + re-highlights the pill (no event — that's reserved for user clicks)."]])}
-                ${table("Event", [["sac:theme-changed", "Fired on click; detail { theme } (bubbles, composed)."]])}
+                ${table("Event", [["sac:change", "Fired on user click only (never on a programmatic .theme set); detail { value: theme }. Bubbles, not composed."]])}
             </div>
             `;
     }
@@ -1520,11 +1520,11 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
         // visit.
         if (!windowStateWired) {
                 windowStateWired = true;
-            ["sac:window-minimize", "sac:window-maximize", "sac:window-restore"].forEach(type => {
+            ["sac:minimize", "sac:maximize", "sac:restore"].forEach(type => {
                 document.addEventListener(type, (e) => {
                     if (e.detail.window.id !== "sg-demo-window") return;
                     const out = document.getElementById("demo-window-state");
-                    if (out) out.textContent = `${type.replace("sac:window-", "")}d`;
+                    if (out) out.textContent = `${type.replace("sac:", "")}d`;
                 });
             });
         }
@@ -1532,7 +1532,7 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
         // Split — the event bubbles, so the outer host also hears the nested one.
         const splitOut = root.querySelector("#demo-split-out");
         const splitOuter = root.querySelector("#demo-split");
-        splitOuter.addEventListener("sac:split-change", (e) => {
+        splitOuter.addEventListener("sac:resize", (e) => {
             const which = e.target === splitOuter ? "outer" : "nested";
             splitOut.textContent = `${which} → ${e.detail.position}`;
         });
@@ -1581,14 +1581,14 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
 
         // Toggle
         const toggleState = root.querySelector("#demo-toggle-state");
-        root.querySelector("#demo-toggle").addEventListener("change", (e) => {
-            toggleState.textContent = `state: ${e.detail}`;
+        root.querySelector("#demo-toggle").addEventListener("sac:change", (e) => {
+            toggleState.textContent = `state: ${e.detail.value}`;
         });
 
         // Slider
         const sliderState = root.querySelector("#demo-slider-state");
-        root.querySelector("#demo-slider").addEventListener("input", (e) => {
-            if (e.detail != null) sliderState.textContent = `value: ${e.detail}`;
+        root.querySelector("#demo-slider").addEventListener("sac:input", (e) => {
+            if (e.detail) sliderState.textContent = `value: ${e.detail.value}`;
         });
 
         // Stepper — sac:change carries a number, and fires once per
@@ -1602,8 +1602,8 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
 
         // Segmented
         const segState = root.querySelector("#demo-seg-state");
-        root.querySelector("#demo-seg").addEventListener("change", (e) => {
-            if (typeof e.detail === "string") segState.textContent = `value: ${e.detail}`;
+        root.querySelector("#demo-seg").addEventListener("sac:change", (e) => {
+            if (typeof e.detail.value === "string") segState.textContent = `value: ${e.detail.value}`;
         });
 
         // Color picker — both instances report into one readout line.
@@ -1613,15 +1613,15 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
             pickOut.textContent = `${label} → ${value}`;
             pickDot.style.background = value;
         };
-        root.querySelector("#demo-picker").addEventListener("sac:color-change",
+        root.querySelector("#demo-picker").addEventListener("sac:change",
             (e) => showColor("opaque", e.detail.value));
-        root.querySelector("#demo-picker-alpha").addEventListener("sac:color-change",
+        root.querySelector("#demo-picker-alpha").addEventListener("sac:change",
             (e) => showColor("alpha", e.detail.value));
 
         // Color field — newest line on top, six lines kept.
         const cfOut = root.querySelector("#demo-color-field-out");
         [["Accent", "#demo-color-field"], ["Glow", "#demo-color-field-alpha"]].forEach(([name, sel]) => {
-            root.querySelector(sel).addEventListener("sac:color-change", (e) => {
+            root.querySelector(sel).addEventListener("sac:change", (e) => {
                 const row = document.createElement("div");
                 row.textContent = `${name} → ${e.detail.value}`;
                 cfOut.prepend(row);
@@ -1632,7 +1632,7 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
         // Swatch grid — selection readout plus the .colors bulk rebuild.
         const swatches = root.querySelector("#demo-swatches");
         const swatchState = root.querySelector("#demo-swatches-state");
-        swatches.addEventListener("sac:swatch-select", (e) => {
+        swatches.addEventListener("sac:change", (e) => {
             swatchState.textContent = `selected: ${e.detail.value}`;
         });
         // Two clearly different palettes, so the .colors bulk setter reads
@@ -1677,15 +1677,15 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
         const showDate = (label, value) => {
             calOut.textContent = `${label} → ${value}`;
         };
-        root.querySelector("#demo-cal").addEventListener("sac:date-change",
+        root.querySelector("#demo-cal").addEventListener("sac:change",
             (e) => showDate("free", e.detail.value));
-        root.querySelector("#demo-cal-bounded").addEventListener("sac:date-change",
+        root.querySelector("#demo-cal-bounded").addEventListener("sac:change",
             (e) => showDate("bounded", e.detail.value));
 
         // Date field — newest line on top, six lines kept.
         const dfOut = root.querySelector("#demo-date-field-out");
         [["Due", "#demo-date-field"], ["This year", "#demo-date-field-bounded"]].forEach(([name, sel]) => {
-            root.querySelector(sel).addEventListener("sac:date-change", (e) => {
+            root.querySelector(sel).addEventListener("sac:change", (e) => {
                 const row = document.createElement("div");
                 row.textContent = `${name} → ${e.detail.value === "" ? "(cleared)" : e.detail.value}`;
                 dfOut.prepend(row);
@@ -1702,10 +1702,10 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
             { name: "urgent",   color: "red",    count: 2 },
             { name: "idea",     color: "yellow" },
         ];
-        chips.addEventListener("change", (e) => {
-            chipsState.textContent = `value: ${JSON.stringify(e.detail)}`;
+        chips.addEventListener("sac:change", (e) => {
+            chipsState.textContent = `value: ${JSON.stringify(e.detail.value)}`;
         });
-        chips.addEventListener("chip-create", (e) => {
+        chips.addEventListener("sac:create", (e) => {
             chipsState.textContent = `created: ${JSON.stringify(e.detail)} (host would persist this)`;
         });
 
@@ -1738,11 +1738,11 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
         // Scene graph
         const sceneLog = root.querySelector("#demo-scene-log");
         const scene = root.querySelector("#demo-scene");
-        ["select", "toggle-visibility", "toggle-expand", "delete", "change-color"].forEach(type => {
+        ["sac:select", "sac:visibility", "sac:expand", "sac:delete", "sac:recolor"].forEach(type => {
             scene.addEventListener(type, (e) => {
                 sceneLog.textContent = `${type}: ${JSON.stringify(e.detail)}`;
                 // Demo-only: actually apply visibility so the eye toggles.
-                if (type === "toggle-visibility") {
+                if (type === "sac:visibility") {
                     const item = scene.querySelector(`#${e.detail.id}`);
                     if (item) item.visible = e.detail.visible;
                 }
@@ -1770,7 +1770,7 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
 
         // Menu
         const menuResult = root.querySelector("#demo-menu-result");
-        root.querySelector("#demo-menu").addEventListener("sac:menu-select", (e) => {
+        root.querySelector("#demo-menu").addEventListener("sac:select", (e) => {
             menuResult.textContent = `selected: ${e.detail.action}`;
         });
 
@@ -1831,8 +1831,8 @@ menu.addEventListener("sac:menu-select", e => console.log(e.detail.action));`)}
 
         // Theme toggle
         const themeState = root.querySelector("#demo-theme-toggle-state");
-        root.querySelector("#demo-theme-toggle").addEventListener("sac:theme-changed", (e) => {
-            themeState.textContent = `theme: ${e.detail.theme}`;
+        root.querySelector("#demo-theme-toggle").addEventListener("sac:change", (e) => {
+            themeState.textContent = `theme: ${e.detail.value}`;
         });
     }
 
@@ -2013,21 +2013,24 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                     <div><label>Project name</label><input type="text" placeholder="Type here…"></div>
                     <div><label>Amount</label><input type="number" value="42"></div>
                     <div><label>Mode</label>
-                        <select>
-                            <option>Precision</option>
-                            <option>Balanced</option>
-                            <option>Fast</option>
-                        </select>
+                        <span class="select">
+                            <select>
+                                <option>Precision</option>
+                                <option>Balanced</option>
+                                <option>Fast</option>
+                            </select>
+                        </span>
                     </div>
                     <div class="sg-row" style="gap:1.25rem;">
                         <label style="display:flex;align-items:center;gap:6px;margin:0;text-transform:none;font-size:0.85rem;color:var(--text);font-weight:400;"><input type="checkbox" checked> Checkbox</label>
                         <label style="display:flex;align-items:center;gap:6px;margin:0;text-transform:none;font-size:0.85rem;color:var(--text);font-weight:400;"><input type="radio" name="r" checked> Radio</label>
                     </div>
                 </div>
-                <p class="sg-note"><b>The select trap:</b> the chevron is a background-<em>image</em>.
-                   Sizing classes may add padding/width but must <strong>never re-declare the
-                   <code>background</code> shorthand</strong> — that wipes the chevron. Set
-                   <code>background-color</code> if you need a different fill.</p>
+                <p class="sg-note"><b>Wrap the select:</b> a <code>&lt;select&gt;</code> is a replaced
+                   element — it can hold no inline SVG and no <code>::after</code>, so the chevron
+                   lives on a thin wrapper: <code>&lt;span class="select"&gt;&lt;select&gt;…&lt;/select&gt;&lt;/span&gt;</code>.
+                   A bare <code>&lt;select&gt;</code> shows no arrow. The chevron is an SVG mask filled with
+                   <code>var(--text-muted)</code>, so it follows the theme with no colour literal.</p>
 
                 <h2>Surfaces painted from data — the onColor rule</h2>
                 <p>Sometimes a surface's background IS the app's output: the colour a picker just
@@ -2461,7 +2464,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>route</code> <b>(view)</b></td><td>The sub-route the app was opened at — everything after <code>#/&lt;id&gt;/</code>, <code>""</code> at the app's root.</td></tr>
                     <tr><td><code>onRoute(cb)</code> <b>(view)</b></td><td><code>cb(route)</code> on every change: rail clicks, the back button and pasted links all arrive here. Returns an unsubscribe.</td></tr>
                     <tr><td><code>href(route)</code> <b>(view)</b></td><td>Builds <code>#/&lt;id&gt;/&lt;route&gt;</code>. Apps must never assemble that string themselves — the host owns the address space, and standalone there is no id.</td></tr>
-                    <tr><td><code>host</code> <b>(view)</b></td><td><code>{ name, icon, href, nav, toolbar }</code> — the host's package, from <code>init({ host })</code>; <code>null</code> when the host declared none and always <code>null</code> standalone. One line in <code>mount()</code>: <code>this._nav.host = context.host</code> — the app's own nav renders the HOST · APP title segment, the suite nav in its burger and the host controls in its ribbon. The host supplies data; it never paints into the app's chrome.</td></tr>
+                    <tr><td><code>host</code> <b>(view)</b></td><td><code>{ name, icon, href, nav, toolbar }</code> — the host's package, from <code>init({ host })</code>; <code>null</code> when the host declared none and always <code>null</code> standalone. One line in <code>mount()</code>: <code>this._nav.host = context.host</code> — the app's own nav renders the host + app title segments, the suite nav in its burger and the host controls in its ribbon. The host supplies data; it never paints into the app's chrome.</td></tr>
                     <tr><td><code>deepLink.set(…)</code></td><td>view: <code>set(route)</code> writes <code>#/&lt;id&gt;/&lt;route&gt;</code> (replaceState — switching sections is not a new history entry). window/page: <code>set(obj)</code> writes <code>?app=&lt;id&gt;&amp;&lt;obj entries&gt;</code>; <code>set(null)</code> cleans back to the bare path (hash preserved).</td></tr>
                     <tr><td><code>theme.get()</code></td><td>The flag: <code>"dark"</code> | <code>"light"</code> | <code>"auto"</code>.</td></tr>
                     <tr><td><code>theme.set(mode)</code></td><td>Same values; routes through <code>&lt;sac-theme-toggle&gt;</code> when present (one source of truth: <code>data-theme</code> on <code>&lt;html&gt;</code> + the <code>sac-theme</code> localStorage key).</td></tr>
@@ -2782,6 +2785,7 @@ sac.identity.clear();`)}
                     <tr><td><code>log.copy</code></td><td><code>Copy</code></td><td>sac-log</td></tr>
                     <tr><td><code>log.clear</code></td><td><code>Clear</code></td><td>sac-log</td></tr>
                     <tr><td><code>log.copied</code></td><td><code>Copied!</code></td><td>sac-log</td></tr>
+                    <tr><td><code>nav.host</code></td><td><code>Host</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.menu</code></td><td><code>Menu</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.no-sections</code></td><td><code>No sections yet.</code></td><td>sac-nav</td></tr>
                     <tr><td><code>palette.title</code></td><td><code>Command palette</code></td><td>sac-command-palette</td></tr>
@@ -2789,9 +2793,13 @@ sac.identity.clear();`)}
                     <tr><td><code>palette.search</code></td><td><code>Search commands</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.commands</code></td><td><code>Commands</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.group-views</code></td><td><code>Views</code></td><td>sac-command-palette</td></tr>
-                    <tr><td><code>palette.group-actions</code></td><td><code>Actions</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.empty</code></td><td><code>No matching commands</code></td><td>sac-command-palette</td></tr>
+                    <tr><td><code>scene.color</code></td><td><code>Color</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.delete</code></td><td><code>Delete</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.expand</code></td><td><code>Expand / collapse</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>scene.unnamed</code></td><td><code>Unnamed</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.visibility</code></td><td><code>Toggle visibility</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>sidebar.label</code></td><td><code>Sections</code></td><td>sac-sidebar</td></tr>
                     <tr><td><code>spinner.loading</code></td><td><code>Loading</code></td><td>sac-spinner</td></tr>
                     <tr><td><code>split.resize-panels</code></td><td><code>Resize panels</code></td><td>sac-split</td></tr>
                     <tr><td><code>stepper.decrease</code></td><td><code>Decrease</code></td><td>sac-stepper</td></tr>
