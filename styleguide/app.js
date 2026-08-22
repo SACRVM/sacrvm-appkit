@@ -2426,7 +2426,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
             { label: "Bucket", href: "#/bucket", icon: "palette"  },
         ],
         toolbar: [                         // suite controls, in every ribbon
-            { icon: "user", label: "chloe", onClick: () => openAccount() },
+            { icon: "user", label: "Ada Lovelace", onClick: () => openAccount() },
         ],
     },
 });
