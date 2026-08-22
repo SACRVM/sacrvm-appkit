@@ -16,7 +16,8 @@
  *   brand      — brand text left of the separator (optional).
  *   brand-icon — sac.icons name rendered before the brand text (optional).
  *   brand-href — where the brand links to (default "#/", scope-aware).
- *   app-name   — accent-colored text after "BRAND ·".
+ *   app-name   — accent-colored text after the brand (spacing separates the
+ *                segments; no divider glyph — two icons plus a dot was noise).
  *   host-href  — the HOST'S jump-home address. Attribute form of the jump
  *   host-label   only; a hosted app normally sets the `host` PROPERTY instead
  *   host-icon    (see below), which carries the whole injection. Observed, so
@@ -26,7 +27,7 @@
  * Property:
  *   host — THE injection point of the app contract. A hosted app assigns
  *          context.host here, one line in mount():  nav.host = context.host
- *          Shape: { name, icon, href,          → the "HOST ·" jump-home
+ *          Shape: { name, icon, href,          → the HOST jump-home
  *                                                segment, rendered with the
  *                                                brand recipe (one title-bar
  *                                                style everywhere; the app's
@@ -256,16 +257,13 @@ class SacNav extends HTMLElement {
                     display: flex; align-items: center; gap: 0.5rem;
                     text-decoration: none;
                 }
-                .brand .sep { color: color-mix(in srgb, var(--fg) 30%, transparent); }
                 .brand .app-name { color: var(--accent); }
 
                 /* The host's injected presence renders with the BRAND recipe —
-                   the title bar reads HOST · APP in one style everywhere; the
-                   current segment (the app) is the accent-colored one. */
-                .host-sep {
-                    margin: 0 0.5rem;
-                    color: color-mix(in srgb, var(--fg) 30%, transparent);
-                }
+                   one title-bar style everywhere: host, then the app's segment
+                   in accent. Spacing alone separates the segments — a divider
+                   glyph on top of two icon+name pairs reads restless. */
+                .host-jump { margin-right: 0.9rem; }
                 .spacer { flex: 1; }
                 .toolbar-slot { display: flex; gap: 0.25rem; align-items: center; }
                 .context { display: flex; align-items: center; margin-right: 0.6rem; }
@@ -388,12 +386,10 @@ class SacNav extends HTMLElement {
                    title="${(hostLabel || "Home").replace(/"/g, "&quot;")}">
                     <span class="brand-mark"><sac-icon name="${hostIcon}"></sac-icon></span>
                     ${hostLabel ? `<span>${hostLabel}</span>` : ``}
-                </a>
-                <span class="sep host-sep">·</span>` : ``}
+                </a>` : ``}
                 <a class="brand" href="${hrefFor(brandHref)}">
                     ${brandIcon ? `<span class="brand-mark"><sac-icon name="${brandIcon}"></sac-icon></span>` : ``}
                     ${brand ? `<span class="${hostHref ? "app-name" : ""}">${brand}</span>` : ``}
-                    ${brand && appName ? `<span class="sep">·</span>` : ``}
                     ${appName ? `<span class="app-name">${appName}</span>` : ``}
                 </a>
                 <div class="spacer"></div>
@@ -438,9 +434,9 @@ class SacNav extends HTMLElement {
                     : `<ul class="nav-list">
                          ${routes.map(r => `
                              <li>
-                                 <a class="nav-item ${isActive(r) ? "active" : ""}" href="${hrefFor(r.hash)}">
-                                     ${r.icon ? `<sac-icon name="${r.icon}"></sac-icon>` : ""}
-                                     <span>${r.label}</span>
+                                 <a class="nav-item ${isActive(r) ? "active" : ""}" href="${esc(hrefFor(r.hash))}">
+                                     ${r.icon ? `<sac-icon name="${esc(r.icon)}"></sac-icon>` : ""}
+                                     <span>${escText(r.label)}</span>
                                  </a>
                              </li>
                          `).join("")}
@@ -480,8 +476,9 @@ class SacNav extends HTMLElement {
         menuBtn.addEventListener("click",  () => setOpen(!this.isOpen));
         backdrop.addEventListener("click", () => setOpen(false));
 
-        // Clicking a panel nav-item also closes the panel.
-        this.shadowRoot.querySelectorAll(".nav-item").forEach(el => {
+        // Clicking a panel nav-item closes the panel — and so do the ribbon's
+        // brand/host links: they navigate too, just from outside the panel.
+        this.shadowRoot.querySelectorAll(".nav-item, .brand").forEach(el => {
             el.addEventListener("click", () => setOpen(false));
         });
 
@@ -495,7 +492,11 @@ class SacNav extends HTMLElement {
         };
         document.addEventListener("keydown", this._escHandler);
 
-        this._hashHandler = () => this.render();
+        // Navigation closes the panel. Without this, leaving through a ribbon
+        // link or back/forward parks the panel open behind a hidden view
+        // (sac.apps keeps swapped-out views in the DOM), and it greets the
+        // user already open on their return.
+        this._hashHandler = () => { this.isOpen = false; this.render(); };
         window.addEventListener("hashchange", this._hashHandler);
 
         // Re-render when a new route registers so the panel fills in even if

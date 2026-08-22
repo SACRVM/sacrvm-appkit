@@ -39,7 +39,7 @@
  *               that mutate state outside sac.apps.
  *
  * Events:
- *   sac:launcher-change — detail { order, hidden, customCount } after every
+ *   sac:layout — detail { order, hidden, customCount } after every
  *                         user change (move / hide / show / add / remove).
  *                         Bubbles + composed.
  *
@@ -221,9 +221,12 @@ class SacLauncher extends HTMLElement {
     _persist() {
         const key = this._storageKey();
         if (!key) return;
-        // Stale ids (apps no longer registered) drop out here — on a user
-        // change, never proactively on load.
-        const known = new Set(this._apps().map(m => m.id));
+        // Stale keys (apps/tiles no longer registered) drop out here — on a
+        // user change, never proactively on load. Filter against the ENTRY
+        // keys, not app ids: a multi-tile app stores composite "appId::tileId"
+        // keys, and matching those against ids alone discards every multi-tile
+        // customization on save.
+        const known = new Set(this._entries(this._apps()).map(e => e.key));
         this._state.order = this._order.filter(id => known.has(id));
         this._state.hidden = this._state.hidden.filter(id => known.has(id));
         try {
@@ -523,7 +526,7 @@ class SacLauncher extends HTMLElement {
     _afterChange() {
         this._sync();
         this._persist();
-        this.dispatchEvent(new CustomEvent("sac:launcher-change", {
+        this.dispatchEvent(new CustomEvent("sac:layout", {
             bubbles: true,
             composed: true,
             detail: {
@@ -616,7 +619,7 @@ class SacLauncher extends HTMLElement {
 
         dlg.appendChild(form);
         document.body.appendChild(dlg);
-        dlg.addEventListener("sac-dialog:action", (e) => this._onDialogAction(e.detail.action));
+        dlg.addEventListener("sac:action", (e) => this._onDialogAction(e.detail.action));
         this._dialog = dlg;
         this._formEl = form;
     }
