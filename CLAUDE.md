@@ -60,6 +60,7 @@ The kit must be **easily themable** — light, dark, AND custom themes:
 - **Merge plan: the §7 table as printed.** Core = Fishbowl's tokens/shell/router/nav/toolbar/form layer; plus dream-tools' scene-graph, pan-zoom, launcher-overlay pattern with deep links, and the per-app `--accent` retheme mechanism.
 - **`fb-md-editor` stays out of the core kit** — optional add-on module later (guide §2 recommendation).
 - **Light-theme seed values: signed off 2026-08-15.** The proposal shipped in `ui.css` is final — deliberately bright by design; apps wanting a softer light theme override the seeds per the custom-theme recipe in the style guide.
+- **Consuming apps are autark: signed off 2026-08-22.** Every app that uses the kit vendors its own copy — the release ZIP's `kit/` dropped in verbatim (incl. `kit/VERSION`) and linked locally, never the github.io CDN. A host (the desktop) still provides the *live* kit at runtime, since `sac.apps` injects an app's `app.js` into the host page — so an app's own copy governs only standalone/F5 dev, and the two must be kept on the same version. The full recipe and this two-kit model live in `CONSUMING.md`; each repo owns its own migration (routed as a per-repo TODO, not fixed from here).
 
 ## Open decisions (TODO — ask, don't assume)
 
