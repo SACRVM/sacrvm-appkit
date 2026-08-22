@@ -492,10 +492,18 @@ class SacNav extends HTMLElement {
         };
         document.addEventListener("keydown", this._escHandler);
 
-        // Navigation closes the panel. Without this, leaving through a ribbon
-        // link or back/forward parks the panel open behind a hidden view
-        // (sac.apps keeps swapped-out views in the DOM), and it greets the
-        // user already open on their return.
+        // These three handlers re-render the whole panel, deliberately: unlike
+        // the form components (which update in place to protect a live drag),
+        // nothing the nav holds is lost by a rebuild, and its content is
+        // genuinely structural — the app's own sections nest UNDER the active
+        // host entry, so switching app or scope RELOCATES that subtree, not
+        // just an .active class. A full render is the simple, correct model
+        // here; an in-place diff would be more code and more risk for no gain.
+        //
+        // Navigation also closes the panel. Without this, leaving through a
+        // ribbon link or back/forward parks the panel open behind a hidden view
+        // (sac.apps keeps swapped-out views in the DOM), and it greets the user
+        // already open on their return.
         this._hashHandler = () => { this.isOpen = false; this.render(); };
         window.addEventListener("hashchange", this._hashHandler);
 

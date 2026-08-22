@@ -173,9 +173,11 @@
  *   }
  *
  * Events:
- *   sac:apps-changed (on document, bubbles) — detail { id, type } with type
- *   "register" | "remove"; lets registry-driven UI (e.g. <sac-launcher>)
- *   refresh when apps register after it connected.
+ *   sac:apps-changed (on document, bubbles) — detail { id, type }. The registry
+ *   types are "register" and "remove" (what registry-driven UI like
+ *   <sac-launcher> refreshes on). The stage also emits "view" (id = the app now
+ *   on stage) and "home" (id = null, back at "#/"), so a host can track which
+ *   view is showing.
  */
 (function () {
     if (!window.sac) { console.warn("[sac.apps] globals.js must load first — app runtime unavailable."); return; }
@@ -857,8 +859,13 @@
                 const accent = tile.dataset.accent
                     || (tile.style && tile.style.getPropertyValue("--accent").trim())
                     || undefined;
+                // A tile is an entry point: with no data-route it opens the app
+                // at its ROOT (route ""), matching the href it advertises —
+                // never the sub-route the view happened to be left on. (A
+                // programmatic open(id) with no route still resumes; only this
+                // explicit tile click is pinned to the root.)
                 open(tile.dataset.app || tile.dataset.overlay, undefined,
-                     { accent, route: tile.dataset.route })
+                     { accent, route: tile.dataset.route || "" })
                     .catch(() => {}); // already logged/toasted by open()
             });
         }

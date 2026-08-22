@@ -39,6 +39,10 @@
     const t = (key, fallback) =>
         (window.sac && window.sac.t) ? window.sac.t(key, fallback) : fallback;
 
+    // Shared by render() and the in-place visibility toggle.
+    const EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+    const EYE_CLOSED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+
 class SacSceneGraph extends HTMLElement {
     constructor() {
         super();
@@ -85,7 +89,35 @@ class SacSceneItem extends HTMLElement {
         this.render();
     }
 
-    attributeChangedCallback() {
+    attributeChangedCallback(name) {
+        const row = this.shadowRoot.firstChild && this.shadowRoot.querySelector('.item-row');
+        // The interaction-driven attributes update IN PLACE — a full re-render
+        // on every eye/select/expand click would rebuild the row, drop the
+        // colour input's transient state and re-bind handlers for nothing.
+        // Structural attributes (label, colour, can-delete, expandable) still
+        // re-render, and the first paint happens in connectedCallback.
+        if (!row) return;
+        if (name === 'active') {
+            row.classList.toggle('active', this.active);
+            row.setAttribute('aria-selected', this.active ? 'true' : 'false');
+            return;
+        }
+        if (name === 'expanded') {
+            row.classList.toggle('expanded', this.expanded);
+            if (row.hasAttribute('aria-expanded'))
+                row.setAttribute('aria-expanded', this.expanded ? 'true' : 'false');
+            const kids = this.shadowRoot.querySelector('.children');
+            if (kids) kids.style.display = this.expanded ? 'block' : 'none';
+            return;
+        }
+        if (name === 'visible') {
+            const btn = this.shadowRoot.querySelector('#btn-visibility');
+            if (btn) {
+                btn.setAttribute('aria-pressed', this.visible ? 'true' : 'false');
+                btn.innerHTML = this.visible ? EYE_OPEN : EYE_CLOSED;
+            }
+            return;
+        }
         this.render();
     }
 
@@ -216,10 +248,7 @@ class SacSceneItem extends HTMLElement {
                 ` : '<div style="width: 12px;"></div>'}
 
                 <button type="button" class="icon" id="btn-visibility" aria-label="${escText(L.visible)}" aria-pressed="${this.visible ? 'true' : 'false'}">
-                    ${this.visible ?
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' :
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>'
-            }
+                    ${this.visible ? EYE_OPEN : EYE_CLOSED}
                 </button>
 
                 <div class="label" id="item-label">${escText(label)}</div>

@@ -121,7 +121,19 @@ class SacWindow extends HTMLElement {
             return;
         }
 
-        if (this.shadowRoot.innerHTML !== '') this.applyAttributes();
+        if (this.shadowRoot.innerHTML === '') return;
+
+        // Geometry attributes are LIVE, not write-once: applyAttributes() only
+        // FILLS an empty inline style (so it never fights a drag/resize), which
+        // means it silently ignores a later setAttribute('left', …). An explicit
+        // attribute change is a reposition request — apply it straight to the
+        // inline style, but only in the normal state (min/max own the geometry).
+        if (name === 'width' || name === 'height' || name === 'top' || name === 'left') {
+            if (this._windowState === 'normal') this.style[name] = newValue || '';
+            return;
+        }
+
+        this.applyAttributes();   // title
     }
 
     open() {
