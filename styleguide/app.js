@@ -2087,7 +2087,8 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
 
                 <h2>Tiles — .grid + .tile</h2>
                 <p>Variants: <code>.tile.large</code> (2 columns), <code>.tile.disabled</code>
-                   (grayscale — but prefer the no-dead-tiles rule: don't show what doesn't work),
+                   (grayscale — for a tile that exists but is unavailable right now: no permission,
+                   offline, wrong account),
                    <code>.tile-badge</code> (+<code>.accent</code>). One tile look for every kind —
                    what a click does (page, view, window) is not encoded in the border. A tile can
                    carry its own <code>--accent</code> seed: icon, hover ring and glow follow, and
