@@ -178,7 +178,8 @@
  *   refresh when apps register after it connected.
  */
 (function () {
-    if (!window.sac || sac.apps) return;
+    if (!window.sac) { console.warn("[sac.apps] globals.js must load first — app runtime unavailable."); return; }
+    if (sac.apps) return;   // idempotent
 
     const registry = new Map();   // id  → manifest (internal copy)
     const windows  = new Map();   // id  → { win, el }
@@ -208,9 +209,22 @@
             window.location.pathname + window.location.search + hash);
     }
 
-    /** "#/styleguide/components" → { id: "styleguide", route: "components" } */
+    /** Scope composition (same rule as sac.router). When scope.js is loaded,
+     *  a root-scope hash the runtime builds (`#/<id>/…`) is rewritten into the
+     *  active workspace before it is WRITTEN, and a workspace prefix is stripped
+     *  before an id is READ — so a view app is reachable, and stays, inside a
+     *  scoped workspace. Without scope.js both pass through unchanged. */
+    function scopedHash(hash) {
+        return (window.sac && sac.scope && sac.scope.hashFor) ? sac.scope.hashFor(hash) : hash;
+    }
+    function rootHash(hash) {
+        return (window.sac && sac.scope && sac.scope.stripPrefix) ? sac.scope.stripPrefix(hash) : hash;
+    }
+
+    /** "#/styleguide/components" → { id: "styleguide", route: "components" }.
+     *  A "#/scope/SLUG/…" workspace prefix is stripped first. */
     function parseHash() {
-        const m = /^#\/([^/?]+)(?:\/([^?]*))?/.exec(window.location.hash || "");
+        const m = /^#\/([^/?]+)(?:\/([^?]*))?/.exec(rootHash(window.location.hash || ""));
         if (!m) return null;
         return {
             id:    decodeURIComponent(m[1]),
@@ -348,7 +362,7 @@
         // Rail links and anchors go through this.
         ctx.href = (route) => {
             const clean = route == null ? "" : String(route).replace(/^\/+|\/+$/g, "");
-            return `#/${id}${clean ? "/" + clean : ""}`;
+            return scopedHash(`#/${id}${clean ? "/" + clean : ""}`);
         };
 
         ctx.deepLink = {
@@ -413,6 +427,27 @@
         return manifest.name || manifest.title || manifest.id;
     }
 
+    /** whenDefined that gives up: a script that loads fine but defines a
+     *  DIFFERENT tag than the manifest names would otherwise hang open()
+     *  forever — no toast, and the cached pending promise poisons every later
+     *  open of that app. Reject instead, and clear the load cache so a
+     *  corrected manifest can retry. */
+    function whenDefinedTimeout(tag, src, ms = 8000) {
+        return new Promise((resolve, reject) => {
+            let settled = false;
+            customElements.whenDefined(tag).then(() => {
+                if (settled) return;
+                settled = true; resolve();
+            });
+            setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                injected.delete(src);
+                reject(new Error(`"${tag}" was never defined after loading ${src} — does the script define this exact tag?`));
+            }, ms);
+        });
+    }
+
     function ensureDefined(manifest) {
         if (customElements.get(manifest.tag)) return Promise.resolve();
         if (!injected.has(manifest.src)) {
@@ -428,7 +463,7 @@
             }));
         }
         return injected.get(manifest.src)
-            .then(() => customElements.whenDefined(manifest.tag));
+            .then(() => whenDefinedTimeout(manifest.tag, manifest.src));
     }
 
     /* ------------------------------------------------------------ views -- */
@@ -487,8 +522,12 @@
     function openView(manifest, route, params, accent) {
         const id = manifest.id;
         if (views.has(id)) {
-            // A tile-supplied accent re-seeds the existing element.
-            if (accent) views.get(id).el.style.setProperty("--accent", accent);
+            // Re-seed on every reopen, not only when a tile passed one — else
+            // a tile accent latches forever and an accent-less reopen keeps the
+            // stale colour instead of the app's own default.
+            const seed = accent || manifest.accent;
+            if (seed) views.get(id).el.style.setProperty("--accent", seed);
+            else      views.get(id).el.style.removeProperty("--accent");
             showView(id, route);
             return Promise.resolve(views.get(id).el);
         }
@@ -579,7 +618,7 @@
             // A tile's route (opts.route) targets a spot inside the app.
             const known = views.get(id);
             const route = o.route != null ? String(o.route) : (known ? known.route : "");
-            const target = `#/${id}${route ? "/" + route : ""}`;
+            const target = scopedHash(`#/${id}${route ? "/" + route : ""}`);
             if (window.location.hash !== target) {
                 window.history.pushState({}, document.title,
                     window.location.pathname + window.location.search + target);
@@ -592,7 +631,11 @@
         if (existing && existing.win.isConnected) {
             // Re-opening an app the user minimized must show the app, not the
             // collapsed title bar. A maximized window keeps its state.
-            if (o.accent) existing.win.style.setProperty("--accent", o.accent);
+            // Re-seed on every reopen (see openView) so a tile accent does not
+            // latch past the open that carried it.
+            const seed = o.accent || manifest.accent;
+            if (seed) existing.win.style.setProperty("--accent", seed);
+            else      existing.win.style.removeProperty("--accent");
             if (existing.win.hasAttribute("minimized")) existing.win.restore?.();
             existing.win.open();
             return existing.el;
@@ -666,7 +709,7 @@
     function close(id) {
         const manifest = registry.get(id);
         if (manifest && manifest.kind === "view") {
-            if (activeId === id) { replaceHash("#/"); goHome(); }
+            if (activeId === id) { replaceHash(scopedHash("#/")); goHome(); }
             return;
         }
         const rec = windows.get(id);
@@ -692,7 +735,7 @@
             unmountEl(id, view.el);
             view.el.remove();
             views.delete(id);
-            if (activeId === id) { replaceHash("#/"); goHome(); }
+            if (activeId === id) { replaceHash(scopedHash("#/")); goHome(); }
         }
         emitChanged(id, "remove");
     }
@@ -805,6 +848,11 @@
             document.addEventListener("click", (e) => {
                 const tile = e.target.closest("[data-app], [data-overlay]");
                 if (!tile) return;
+                // A modified click on an anchor tile is the user asking for a
+                // new tab / window / download — let the browser honor it
+                // instead of hijacking it into same-tab navigation.
+                if (e.defaultPrevented || e.button !== 0 ||
+                    e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
                 e.preventDefault();
                 const accent = tile.dataset.accent
                     || (tile.style && tile.style.getPropertyValue("--accent").trim())
