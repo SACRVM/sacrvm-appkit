@@ -300,7 +300,7 @@
                     ["host-href / host-label / host-icon", "Attribute form of the host jump alone, for static pages. A hosted app sets the <code>host</code> property instead. Icon default <code>home</code>."],
                 ])}
                 ${table("Property", [
-                    ["host", "THE injection point of the app contract — one line in <code>mount()</code>: <code>nav.host = context.host</code>. Shape <code>{ name, icon, href, nav, toolbar }</code>: name/icon/href render the “SACRVM APPKIT” jump-home segment before the brand, in the SAME brand recipe — one title-bar style everywhere, host then app with the app's segment in accent, spacing as the only divider (visible at the top of this page); <code>nav</code> entries (<code>{label, href, icon?}</code>) become a labeled host group at the top of the burger panel — the suite's cross-app navigation (open the burger: “SACRVM APPKIT” is that group); <code>toolbar</code> entries (<code>{icon | avatar:{name,src?}, label?, title?, href?|onClick?}</code>) render as controls at the right end of the ribbon — a suite-wide action (the GitHub button up right is one), or a signed-in user: give an entry <code>avatar</code> instead of <code>icon</code> and it materializes a real <code>&lt;sac-avatar&gt;</code> (accent-independent, name-hashed color), so the who-am-I control looks the part on every host. They are real <code>.nav-icon-btn</code> elements in the light DOM — the exact same recipe as the app's own ribbon buttons (labeled entries get the <code>.labeled</code> pill variant, avatar entries the <code>.avatar</code> variant), so host controls and app controls always look alike. Routes already listed in the host group are dropped from the app's own group, so a shared-page suite lists nothing twice. A host may re-declare later (the signed-in user was renamed, say): assign <code>context.host</code> to the nav once — the kit refreshes the injected chrome in place (<code>sac:host-changed</code>), no app cooperation. <code>null</code> = standalone, none of it renders."],
+                    ["host", "THE injection point of the app contract — one line in <code>mount()</code>: <code>nav.host = context.host</code>. Shape <code>{ name, icon, href, nav, toolbar }</code>: name/icon/href render the “SACRVM APPKIT” jump-home segment before the brand, in the SAME brand recipe — one title-bar style everywhere, host then app with the app's segment in accent, spacing as the only divider (visible at the top of this page); <code>nav</code> entries (<code>{label, href, icon?}</code>) become a labeled host group at the top of the burger panel; the group opens with a <b>Home</b> entry (the host's ⌂ jump — so the way back to the host lives in the menu, not only the ribbon breadcrumb), then the suite's cross-app navigation (open the burger: “SACRVM APPKIT” is that group, Home first); <code>toolbar</code> entries (<code>{icon | avatar:{name,src?}, label?, title?, href?|onClick?}</code>) render as controls at the right end of the ribbon — a suite-wide action (the GitHub button up right is one), or a signed-in user: give an entry <code>avatar</code> instead of <code>icon</code> and it materializes a real <code>&lt;sac-avatar&gt;</code> (accent-independent, name-hashed color), so the who-am-I control looks the part on every host. They are real <code>.nav-icon-btn</code> elements in the light DOM — the exact same recipe as the app's own ribbon buttons (labeled entries get the <code>.labeled</code> pill variant, avatar entries the <code>.avatar</code> variant), so host controls and app controls always look alike. Routes already listed in the host group are dropped from the app's own group, so a shared-page suite lists nothing twice. A host may re-declare later (the signed-in user was renamed, say): assign <code>context.host</code> to the nav once — the kit refreshes the injected chrome in place (<code>sac:host-changed</code>), no app cooperation. <code>null</code> = standalone, none of it renders."],
                     ["sections", "The app's OWN sub-navigation, <b>optional</b>: <code>[{label, href, icon?}]</code>. Entirely the app's choice — a simple app sets nothing and its suite entry stays a plain point. When set and a host group is present, the entries nest indented under the app's own entry in the burger — one tree, the suite with the running app unfolded (open the burger on this page: the Style Guide's five sections hang under its entry). Standalone the same entries are the panel's flat list. This app sets it from the same data as its rail: <code>nav.sections = SECTIONS.map(s =&gt; ({ label, href: ctx.href(s.id), icon }))</code>."],
                 ])}
                 ${table("Slot", [
@@ -513,6 +513,29 @@ await sac.dialog.info({
                     ["sac:open", "Fired on open (bubbles + composed)."],
                     ["sac:action", "Fired on close; <code>detail { action }</code> (bubbles + composed). Escape / backdrop close with <code>null</code>."],
                 ])}
+
+                <h3 id="sac-about"><code>sac.about.open(data)</code></h3>
+                <p>The shared About surface — a <code>&lt;sac-window&gt;</code>, not a dialog, because credits and
+                   licences are read (and left open), not answered; <code>sac.dialog.info</code> would collapse them
+                   into one block. Rendered from data, so a host and an app open the same shape and look related by
+                   construction — the reason it ships in the kit rather than each app reinventing it. A hosted app
+                   passes <code>context.manifest</code>; standalone, pass a literal. Notice text is set via
+                   <code>textContent</code> (third-party, untrusted as markup). Re-opening the same subject (by name)
+                   resurfaces the window instead of stacking a duplicate.</p>
+                ${code(`sac.about.open(context.manifest);         // hosted: zero duplication
+
+sac.about.open({                          // or an explicit object (standalone)
+    name: 'Color Bucket', icon: 'palette', version: '1.0.0',
+    description: 'Mix colors like paint…',
+    notices: [
+        { title: 'spectral.js', text: 'MIT © 2025 Ronald van Wijnen…' },
+        { title: 'RAL',         text: '"RAL" is a registered trademark…' },
+    ],
+});`)}
+                <p>Only <code>notices</code> is a new manifest field (see <code>sac.apps</code>); <code>name · icon ·
+                   description · version</code> are already there. In a hosted ribbon the host's controls sit behind a
+                   hairline divider from the app's own, so an app About and a host About read as two scopes, not one row.
+                   There is a <code>copyright</code> icon for the button that opens it.</p>
 
                 <h2 id="sac-status-banner">&lt;sac-status-banner&gt;</h2>
                 <p>Inline, non-modal status strip: sits where you put it, hidden until something
@@ -2804,6 +2827,7 @@ sac.identity.clear();`)}
                     <tr><td><code>log.copy</code></td><td><code>Copy</code></td><td>sac-log</td></tr>
                     <tr><td><code>log.clear</code></td><td><code>Clear</code></td><td>sac-log</td></tr>
                     <tr><td><code>log.copied</code></td><td><code>Copied!</code></td><td>sac-log</td></tr>
+                    <tr><td><code>nav.home</code></td><td><code>Home</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.host</code></td><td><code>Host</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.menu</code></td><td><code>Menu</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.no-sections</code></td><td><code>No sections yet.</code></td><td>sac-nav</td></tr>
