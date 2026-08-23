@@ -75,6 +75,25 @@ change unless you want to use it.
 Native DOM events on your **own** plain elements (`<input>`, `<button>`, …) are
 unaffected — this is only about events the kit dispatches.
 
+## Credits and licences: use `sac.about`, not a hand-rolled dialog
+
+If your app credits a third-party library, or ships a licence or trademark
+notice, expose it through the manifest — not a bespoke About dialog. Put the text
+in the optional `notices` field:
+
+```jsonc
+"notices": [
+    { "title": "spectral.js", "text": "MIT © 2025 Ronald van Wijnen…" },
+    { "title": "RAL",         "text": "\"RAL\" is a registered trademark…" }
+]
+```
+
+…and open the standard About with `sac.about.open(context.manifest)` (or a plain
+object standalone). The kit renders name · icon · description · version plus your
+notices into one shared `<sac-window>`, so your About and a host's About look
+related instead of every app inventing its own surface — copied conventions
+drift, shipped components can't. There is a `copyright` icon for the button.
+
 ## Verify
 
 - **Standalone (F5):** the app renders, the console is clean, value events fire.
