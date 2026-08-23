@@ -493,6 +493,10 @@ kbd {
    to the 32px ribbon recipe — no repeated inline styles anywhere.
    -------------------------------------------------------------------------- */
 .btn {
+    /* A glyph at ~56% of the control box — the kit's icon-to-button ratio.
+       Set on the button (not on a dead `.btn svg` rule) so it crosses into
+       <sac-icon>'s shadow root; 18/32. */
+    --icon-size: 18px;
     background: color-mix(in srgb, var(--fg) 5%, transparent);
     border: 1px solid var(--border);
     color: var(--text);
@@ -569,6 +573,10 @@ kbd {
     border-radius: 50%;
     transition: all 0.2s var(--ease-smooth);
     padding: 0;
+    /* 20/36 = the same ~56% ratio. A custom property crosses into
+       <sac-icon>'s shadow root, which the `.nav-icon-btn svg` rule below
+       cannot — the host tools hold a <sac-icon>, not an inline <svg>. */
+    --icon-size: 20px;
 }
 .nav-icon-btn:hover {
     background: var(--hover);
@@ -579,9 +587,11 @@ kbd {
     transform: translateY(0);
     background: var(--hover-strong);
 }
+/* A light-DOM inline <svg> (rare now — host tools use <sac-icon>) follows the
+   same --icon-size, so both icon forms come out the same size. */
 .nav-icon-btn svg {
-    width: 20px;
-    height: 20px;
+    width: var(--icon-size);
+    height: var(--icon-size);
     stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
