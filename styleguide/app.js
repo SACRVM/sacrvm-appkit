@@ -544,7 +544,8 @@ await sac.dialog.info({
                         <button class="btn">Export</button>
                     </sac-section>
                 </div>
-                ${table("Attribute", [["title", "Uppercase heading text."]])}
+                ${table("Attribute", [["title", "Uppercase heading text — rendered at <code>--text-muted</code> (real secondary information, AA on every plane), not the tertiary <code>--text-dim</code>."]])}
+                <p><b>CSS parts:</b> <code>title</code> (the heading) and <code>body</code> (the slotted content wrapper) — reach them from the light DOM, e.g. <code>sac-section::part(title) { … }</code>.</p>
 
                 <h2 id="sac-toggle">&lt;sac-toggle&gt;</h2>
                 <div class="sg-demo sg-col">
