@@ -544,8 +544,19 @@ await sac.dialog.info({
                         <button class="btn">Export</button>
                     </sac-section>
                 </div>
-                ${table("Attribute", [["title", "Uppercase heading text — rendered at <code>--text-muted</code> (real secondary information, AA on every plane), not the tertiary <code>--text-dim</code>."]])}
+                ${table("Attribute", [["title", "Uppercase heading text — rendered at <code>--text</code> so a group heading stands out from the labels it heads (AA with room to spare; never the tertiary <code>--text-dim</code>, which failed AA at this size)."]])}
                 <p><b>CSS parts:</b> <code>title</code> (the heading) and <code>body</code> (the slotted content wrapper) — reach them from the light DOM, e.g. <code>sac-section::part(title) { … }</code>.</p>
+
+                <h3 id="sac-caption"><code>.sac-caption</code></h3>
+                <p>The section-title's type as a light-DOM utility — for a lone caption where a whole
+                   <code>&lt;sac-section&gt;</code> (body slot, margins, underline) is too much. It reads the
+                   same <code>--caption-*</code> tokens the section title does, so the two never drift.
+                   Quiet by default (<code>--text-muted</code>); set <code>color</code> to lift it to a heading.</p>
+                <div class="sg-demo sg-col" style="max-width:280px;background:var(--panel);">
+                    <span class="sac-caption">Recipe</span>
+                    <span class="sac-caption" style="color:var(--text);">Recipe · lifted</span>
+                </div>
+                ${code(`<span class="sac-caption">Recipe</span>`)}
 
                 <h2 id="sac-toggle">&lt;sac-toggle&gt;</h2>
                 <div class="sg-demo sg-col">
