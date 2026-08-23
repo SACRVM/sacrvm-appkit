@@ -41,6 +41,14 @@ A major means a breaking change. Re-vendor (above), then reconcile your own code
 against `MIGRATION.md` in the appkit. For **2.0.0** the breakers that reach app
 code:
 
+**Chrome ownership moved to the app.** A view now draws its own nav, toolbar and
+rail; the 1.x `sac.toolbar` / `sac.sidebar` projection into shared chrome is gone.
+Put ribbon actions in your own `<sac-nav>` (its `toolbar` slot) and your rail in
+your own `<sac-sidebar>`; the host injects into your nav via `context.host`
+(`nav.host = context.host`), it never paints into your chrome. This reaches app
+code as hard as the event renames — an app built on the 1.x projection model must
+move its chrome inward.
+
 **Events are unified.** Kit components now emit `sac:change` / `sac:input` for
 value changes (`detail: { value }`) or a descriptive verb — native `change` /
 `input` on a kit component is gone. Rename in your listeners:
