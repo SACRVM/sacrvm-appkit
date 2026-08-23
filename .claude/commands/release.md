@@ -1,5 +1,5 @@
 ---
-description: Cut a versioned release — bump, commit, tag, push (the GitHub Action builds the ZIP)
+description: Cut a versioned release — bump, commit, tag, push, notify consumers (the GitHub Action builds the ZIP)
 argument-hint: <version, e.g. 2.1.0>
 ---
 Cut release **$ARGUMENTS** of SACRVM APPKIT.
@@ -31,8 +31,9 @@ Follow these steps exactly:
 
 3. **Commit** on `master`: subject `Stamp $ARGUMENTS`, then a one-paragraph body naming
    the headline changes (say "breaking" plainly when the MAJOR moved, and point at
-   `MIGRATION.md` if consumers must change). End with the repo's trailer:
-   `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
+   `MIGRATION.md` if consumers must change). End with the repo's `Co-Authored-By:`
+   trailer naming the model that made the commit (e.g.
+   `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`).
 
 4. **Push, then tag.** `git push origin master`, then
    `git tag -a v$ARGUMENTS -m "v$ARGUMENTS — <one-line summary>"` and
@@ -42,6 +43,21 @@ Follow these steps exactly:
 5. **Verify.** Poll `gh run list --workflow=release.yml` until the `v$ARGUMENTS` run is
    `completed / success`, then `gh release view v$ARGUMENTS` and confirm the
    `sacrvm-appkit-$ARGUMENTS.zip` asset is attached. Report the release URL.
+
+6. **Notify every consumer app repo — standing policy, do this on EVERY release (patch
+   included).** A kit release does not reach a consumer until it re-vendors: until the
+   Tier-4 self-contained embed exists, a hosted app runs against the HOST's kit, so a
+   new version only lands once each repo pulls it. After the release verifies, send a
+   re-vendor "update now" message to every consumer via `firepit_send_to`; each repo
+   decides whether to act. Current consumers (keep this list current as they appear or
+   retire):
+   - `sacrvm-desktop` — the host; call out anything that changes hosted-app behavior.
+   - `sacrvm-calculator`, `sacrvm-notes`, `color-bucket` — apps.
+   - `sacrvm-app-template` — so new apps start on the current kit.
+   Each message carries: the version + release URL, the one-line re-vendor step (delete
+   `kit/`, unzip the new ZIP), the headline changes that touch that repo, and the
+   version-skew caveat (a new-version feature is unusable on a host still on an older
+   kit until the host re-vendors too).
 
 Note: the hub's Download tile links to the `vX.Y.Z` release, so it 404s until this
 Action finishes — cut the release as part of shipping, never long before.
