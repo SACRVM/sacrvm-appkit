@@ -54,6 +54,8 @@ Follow these steps exactly:
    - `sacrvm-desktop` — the host; call out anything that changes hosted-app behavior.
    - `sacrvm-calculator`, `sacrvm-notes`, `color-bucket` — apps.
    - `sacrvm-app-template` — so new apps start on the current kit.
+   - `sacrvm-newskit` — the editorial sister kit; vendors appkit like an app and
+     re-vendors on every release (the two-kit model).
    Each message carries: the version + release URL, the one-line re-vendor step (delete
    `kit/`, unzip the new ZIP), the headline changes that touch that repo, and the
    version-skew caveat (a new-version feature is unusable on a host still on an older
