@@ -338,7 +338,11 @@ sac-window {
 /* --------------------------------------------------------------------------
    6. Base
    -------------------------------------------------------------------------- */
-* { box-sizing: border-box; }
+/* `*` alone does NOT match pseudo-elements and box-sizing is not inherited, so
+   a bordered ::before/::after would otherwise size as content-box and mis-centre
+   (e.g. a dot on a connector line). Include the pseudo-elements — the standard
+   modern reset. */
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body {
     margin: 0;
