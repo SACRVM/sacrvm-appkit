@@ -158,6 +158,8 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
         ["<code>appId</code>", "Your id, as the host registered it."],
         ["<code>fs</code>", "Storage scoped to your app — see below. <code>null</code> if the host granted none, so check before you reach for it."],
         ["<code>identity</code>", "Who is at this desktop: <code>get()</code> → <code>{ id, name, avatar }</code> or <code>null</code>, plus <code>onChange</code>. Read-only, and <b>not</b> authentication — see below."],
+        ["<code>files</code>", "The <b>user's</b> files: <code>open()</code> and <code>save()</code> — Open… / Save as… wherever the host keeps them. See below."],
+        ["<code>setDirty(flag)</code>", "Tell the host you hold unsaved work; leaving the page then asks first. Clear it after a successful save."],
     ])}
 
     <h3>Storing things</h3>
@@ -176,15 +178,16 @@ const paths = await this.store.list("notes/");     // app-relative, sorted
 await this.store.remove("notes/2026-08");`)}
     ${table(["Method", "Description"], [
         ["<code>read(path, fallback)</code>", "The value, or <code>fallback</code> when nothing is stored there."],
-        ["<code>write(path, value)</code>", "Any JSON value. <b>Rejects</b> when storage is full — catch it and tell the user; a note that was not saved must not look saved."],
+        ["<code>write(path, value)</code>", "Any JSON value — or a Blob, stored as bytes and read back as a File. <b>Rejects</b> when storage is full — catch it and tell the user; a note that was not saved must not look saved."],
         ["<code>remove(path)</code> · <code>clear()</code>", "Delete one path, or everything of yours."],
         ["<code>list(prefix)</code>", "Enumerate a collection: <code>list(\"notes/\")</code>."],
+        ["<code>stat(path)</code>", "<code>{ name, type, size, modified, binary }</code> without reading the bytes."],
         ["<code>usage()</code>", "<code>{ bytes, count }</code> — what you are keeping."],
         ["<code>watch(cb)</code>", "Changes as they happen, <b>including from another tab</b>. Returns an unsubscribe for <code>onUnmount</code>."],
     ])}
     <p class="bd-note">Async on purpose. Today it is this browser's storage; a
        host is free to back it with IndexedDB, the File System Access API or a
-       server, and an app written against these seven methods does not change a
+       server, and an app written against these eight methods does not change a
        line. That is also why you never call <code>localStorage</code> directly:
        you would be opting out of every host that offers something better.</p>
 
@@ -203,6 +206,36 @@ const rows = await fetch("/api/things", { headers: auth() }).then((r) => r.json(
        websocket, a sync engine — all yours, none of the kit's business. The two
        mix freely: server data from your API, per-device preferences in
        <code>context.fs</code>.</p>
+
+    <h3>Opening and saving the user's files</h3>
+    <p><code>context.fs</code> is your app's private drawer. An editor also needs
+       <b>Open…</b> and <b>Save as…</b> on files that belong to the person — and
+       where those live is the host's decision, not yours: standalone it is the
+       device, on a desktop it may be the desktop's own file space.
+       <code>context.files</code> is the same two calls in every case.</p>
+    ${code(`async open() {
+    const picked = await this.ctx.files.open({ accept: ".png,image/*" });
+    if (!picked) return;                           // cancelled
+    this.doc = picked;                             // { name, file, handle }
+    this.load(picked.file);
+}
+
+async save(asNew) {
+    const blob = await this.exportPng();
+    const saved = await this.ctx.files.save(blob, {
+        name: this.doc ? this.doc.name : "untitled.png",
+        handle: asNew ? null : this.doc && this.doc.handle,   // handle = no dialog
+    });
+    if (!saved) return;                            // cancelled
+    this.doc = saved;
+    this.ctx.setDirty(false);
+}`)}
+    <p>Keep the <code>handle</code> and pass it back: that is “Save”, straight to
+       the same file. Without it you get “Save as…”. A handle can be
+       <code>null</code> — a browser that could only download — and then
+       <code>save()</code> just asks again. Call <code>context.setDirty(true)</code>
+       on the first edit and <code>false</code> after a save, and nobody loses work
+       to a closed tab.</p>
 
     <h3>Knowing who is there</h3>
     <p><code>context.identity</code> is a name and a face, read-only, and

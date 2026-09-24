@@ -46,9 +46,10 @@ kit/                    the library — copy or link this folder into your app
   css/ui.css            tokens (seed→derived theming) + global styles
   fonts/                self-hosted Inter + Outfit (woff2)
   js/lib/               sac namespace: router, icons, scope, dialog,
-                        pan-zoom, help-loader, apps, hotkeys, color
+                        pan-zoom, help-loader, apps, hotkeys, color,
+                        fs, identity, files
   js/vendor/            marked + DOMPurify (for the help loader)
-  js/components/        37 files registering 41 sac-* Custom Elements
+  js/components/        43 files registering 47 sac-* Custom Elements
   templates/            copy-out skeletons: app shell, launcher, tool page,
                         list/detail, SPA shell, and two app skeletons
                         (dialog, fullscreen)

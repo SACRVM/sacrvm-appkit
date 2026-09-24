@@ -14,6 +14,8 @@
  *   <sac-layer-list>    layers                  ellipse/fill/pick/marquee
  *   <sac-filmstrip>     frames      playback  a timer over frame indices
  *   <sac-shortcut-sheet> keys       export    canvas → PNG
+ *   context.files       open/save   the sheet PNG ⇄ frames (Save = 1×
+ *                                     strip, back through the handle)
  *
  * Phone: the side panel becomes the nav's drawer (sac-split rail-start, as in
  * Orb Lab); the canvas and the filmstrip keep the screen. One finger draws,
@@ -233,6 +235,8 @@
 <sac-nav brand="PIXEL LAB" brand-icon="grid" brand-href="#/pixel-lab" host-nav="wide">
     <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
     <div slot="toolbar" class="toolbar">
+        <button type="button" class="nav-icon-btn pl-open" title="Open…"><sac-icon name="folder"></sac-icon></button>
+        <button type="button" class="nav-icon-btn pl-save" title="Save"><sac-icon name="save"></sac-icon></button>
         <button type="button" class="nav-icon-btn pl-undo" title="Undo"><sac-icon name="undo"></sac-icon></button>
         <button type="button" class="nav-icon-btn pl-redo" title="Redo"><sac-icon name="redo"></sac-icon></button>
         <button type="button" class="nav-icon-btn pl-zout" title="Zoom out"><sac-icon name="zoom-out"></sac-icon></button>
@@ -285,6 +289,8 @@
         /* ------------------------------------------------- app contract --- */
 
         mount(context) {
+            this._ctx = context;
+            this._file = null;        // the FileRef we opened / last saved
             const $ = (s) => this.querySelector(s);
             const nav = $("sac-nav");
             if (nav) nav.host = context.host;
@@ -351,6 +357,9 @@
             k("right", () => this._setFrame(this.frame + 1), "Next frame", "Frames");
             k("o", () => this._toggleOnion(), "Onion skin", "Frames");
             k("enter", () => this._togglePlay(), "Play / stop", "Frames");
+            k("mod+o", () => this._open(), "Open…", "File");
+            k("mod+s", () => this._save(false), "Save", "File");
+            k("mod+shift+s", () => this._save(true), "Save as…", "File");
             k("mod+e", () => this._export(), "Export PNG", "File");
             this._offs.push(sac.shortcuts.bind());
             this._offs.push(sac.shortcuts.add([
@@ -372,6 +381,8 @@
             on(".pl-zout", "click", () => this.$canvas.zoomOut());
             on(".pl-fit", "click", () => this.$canvas.fit());
             on(".pl-export", "click", () => this._export());
+            on(".pl-open", "click", () => this._open());
+            on(".pl-save", "click", () => this._save(false));
             on(".pl-keys", "click", () => sac.shortcuts.show({ title: "Pixel Lab shortcuts" }));
             on(".pl-play", "click", () => this._togglePlay());
             on(".pl-onion", "click", () => this._toggleOnion());
@@ -529,7 +540,14 @@
 
         /* ----------------------------------------------------- history ---- */
 
-        _push() { this.undo.push(this.doc.snapshot()); if (this.undo.length > UNDO_LIMIT) this.undo.shift(); this.redo = []; }
+        _push() {
+            this.undo.push(this.doc.snapshot());
+            if (this.undo.length > UNDO_LIMIT) this.undo.shift();
+            this.redo = [];
+            // Every edit goes through here first: the one place to say
+            // "unsaved work" — leaving the page now asks.
+            this._ctx?.setDirty?.(true);
+        }
         _undo() { if (!this.undo.length) return; this.redo.push(this.doc.snapshot()); this._restore(this.undo.pop()); }
         _redo() { if (!this.redo.length) return; this.undo.push(this.doc.snapshot()); this._restore(this.redo.pop()); }
         _restore(s) {
@@ -596,6 +614,67 @@
         }
         _toast(msg) { if (window.sac && sac.toast) sac.toast(msg); }
 
+        /* ------------------------------------------------- open / save ---- */
+
+        /** The document's file: a 1× strip, one 16×16 cell per frame. */
+        _sheet() {
+            const n = this.doc.frames.length;
+            const c = document.createElement("canvas");
+            c.width = W * n; c.height = H;
+            this.doc.frames.forEach((_, f) => c.getContext("2d").putImageData(this.doc.composite(f), f * W, 0));
+            return new Promise((resolve) => c.toBlob(resolve, "image/png"));
+        }
+
+        /** Save = back through the handle; Save as (or no handle yet) asks. */
+        async _save(asNew) {
+            const files = this._ctx && this._ctx.files;
+            if (!files) { this._toast("This host offers no file saving."); return; }
+            const saved = await files.save(await this._sheet(), {
+                name: this._file ? this._file.name : "sprite.png",
+                handle: asNew || !this._file ? null : this._file.handle,
+                accept: ".png",
+            });
+            if (!saved) return;
+            this._file = saved;
+            this._ctx.setDirty?.(false);
+            this._toast(files.kind === "browser" && !saved.handle ? `Downloaded ${saved.name}` : `Saved ${saved.name}`);
+        }
+
+        /** Open a 16×16 sprite or a 16-px-high strip: one frame per cell. */
+        async _open() {
+            const files = this._ctx && this._ctx.files;
+            if (!files) return;
+            const picked = await files.open({ accept: ".png,image/png" });
+            if (!picked) return;
+            let bmp;
+            try { bmp = await createImageBitmap(picked.file); }
+            catch (err) { this._toast(`${picked.name} is not an image.`); return; }
+            if (bmp.height !== H || bmp.width % W !== 0) {
+                this._toast(`Pixel Lab opens ${W}×${H} sprites or ${H}-px-high strips — ${picked.name} is ${bmp.width}×${bmp.height}.`);
+                return;
+            }
+            const c = document.createElement("canvas");
+            c.width = bmp.width; c.height = bmp.height;
+            const g = c.getContext("2d", { willReadFrequently: true });
+            g.drawImage(bmp, 0, 0);
+            const doc = new PixelDoc(W, H);
+            const id = doc.addLayer("Layer 1");
+            for (let f = 0; f < bmp.width / W; f++) {
+                doc.frames.push({ [id]: new Uint8ClampedArray(g.getImageData(f * W, 0, W, H).data) });
+            }
+            this._stopPlay();
+            this.doc = doc;
+            this.layer = id;
+            this.frame = 0;
+            this.sel = null;
+            this.undo = []; this.redo = [];
+            this._file = picked;
+            this._ctx.setDirty?.(false);
+            this._refreshAll();
+            this.$canvas.fit();
+            this._toast(`Opened ${picked.name}`);
+        }
+
         /* ------------------------------------------------------ export ---- */
 
         async _export() {
@@ -603,7 +682,7 @@
             dlg.setAttribute("title", "Export PNG");
             dlg.buttons = [
                 { action: "cancel", label: "Cancel", kind: "default" },
-                { action: "export", label: "Download", kind: "primary" },
+                { action: "export", label: "Export…", kind: "primary" },
             ];
             dlg.innerHTML = `
                 <div class="pl-export-form">
@@ -641,13 +720,11 @@
             const ctx = out.getContext("2d");
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(src, 0, 0, out.width, out.height);
-            out.toBlob((blob) => {
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = what === "sheet" ? "pixel-lab-sheet.png" : `pixel-lab-frame-${this.frame + 1}.png`;
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-            });
+            // An export is a copy, never the document: no handle, and the
+            // document's own file stays the one Save writes to.
+            const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
+            const name = what === "sheet" ? "pixel-lab-sheet.png" : `pixel-lab-frame-${this.frame + 1}.png`;
+            if (this._ctx && this._ctx.files) await this._ctx.files.save(blob, { name, accept: ".png" });
         }
     }
 

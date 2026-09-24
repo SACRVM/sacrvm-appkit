@@ -91,7 +91,7 @@
             <p class="who">The design-tokens favorite: a CSS-custom-property system for color ramps,
                spacing, radii, typography, shadows, easings. Loved for being adoptable piecemeal.</p>
             <p class="steal"><b>Steal:</b> the idea of <em>scale tokens</em> — we derive colors
-               beautifully but still hardcode spacing/radius/font sizes per component.</p>
+               beautifully and have a radius scale, but still hardcode spacing and font sizes per component.</p>
         </div>
         <div class="card rm-card">
             <div class="rm-card-head"><sac-icon name="shapes"></sac-icon><h3>daisyUI</h3></div>
@@ -303,7 +303,7 @@
         </tr>
         <tr data-item="scales">
             <td>Scale tokens</td>
-            <td><code>--space-*</code> / <code>--radius-*</code> / <code>--text-*</code> — big consistency win, big churn, no demand yet.</td>
+            <td><code>--space-*</code> / <code>--text-*</code> — big consistency win, big churn, no demand yet. (<code>--radius-s/m/l</code> already ships.)</td>
             <td><sac-chip label="open" color="gray"></sac-chip></td>
         </tr>
         <tr data-item="virtual">
@@ -333,6 +333,16 @@
             <td><code>context.identity</code> ships: the host answers who is here, apps only read it and stay
                 auth-free and portable. A desktop's answer is a local profile (explicitly not authentication);
                 a host with a real account system installs its own through <code>sac.identity.use()</code>.</td>
+            <td><sac-chip label="done" color="green"></sac-chip></td>
+        </tr>
+        <tr data-item="user-files">
+            <td>User files · open / save</td>
+            <td><code>context.files</code> ships: Open… / Save as… on the <em>user's</em> files, wherever
+                the host keeps them — the device by default (File System Access API, else input +
+                download), the desktop's own space through <code>sac.files.virtual()</code> (a kit
+                dialog on <code>&lt;sac-file-browser&gt;</code> over <code>sac.fs.shared("files")</code>),
+                or a host's own provider. <code>context.fs</code> stores Blobs (bytes in IndexedDB),
+                and <code>context.setDirty()</code> guards unsaved work. Driven by Atelier.</td>
             <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
         <tr data-item="release-embeds">
@@ -395,7 +405,7 @@
     <table class="rm rm-matrix">
         <tr><th></th><th>SACRVM</th><th>Web Awesome</th><th>Pico</th><th>Open Props</th><th>daisyUI</th></tr>
         <tr><td>Zero build / no npm</td><td>✔</td><td>✔ (CDN)</td><td>✔</td><td>✔ (CDN)</td><td>✘ (Tailwind)</td></tr>
-        <tr><td>Web components</td><td>✔ 46</td><td>✔ ~45</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>Web components</td><td>✔ 47</td><td>✔ ~45</td><td>—</td><td>—</td><td>—</td></tr>
         <tr><td>Token theming</td><td>✔ seeds→derived</td><td>✔ props</td><td>✔ vars</td><td>✔✔ scales</td><td>✔ themes</td></tr>
         <tr><td>Dark + light</td><td>✔ auto</td><td>✔</td><td>✔ auto</td><td>✔</td><td>✔ many</td></tr>
         <tr><td>App shell / router</td><td>✔✔</td><td>✘</td><td>✘</td><td>✘</td><td>✘</td></tr>
@@ -410,15 +420,15 @@
         <tr><td>Command palette</td><td>✔</td><td>✘</td><td>✘</td><td>✘</td><td>✘</td></tr>
         <tr><td>Tree view</td><td>✔</td><td>✔</td><td>✘</td><td>✘</td><td>✘</td></tr>
         <tr><td>Chips + palette slots</td><td>✔</td><td>✔ tag</td><td>✘</td><td>✘</td><td>✔ badge</td></tr>
-        <tr><td>Color suite</td><td>T3</td><td>✔</td><td>✘</td><td>✘</td><td>✘ (third-party)</td></tr>
+        <tr><td>Color suite</td><td>✔</td><td>✔</td><td>✘</td><td>✘</td><td>✘ (third-party)</td></tr>
         <tr><td>Reduced motion</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td></tr>
     </table>
     </div>
 
     <p class="rm-closing">
-        Net: nobody in the field is a superset of us — but the essentials row (toast, tooltip,
-        tabs, progress, menus) is where every loved kit beats us, and it's all Tier 1.
-        We close those first, then double down on what makes us unique.
+        Net: nobody in the field is a superset of us. Tiers 1–3 are closed — the essentials
+        row no longer loses to anyone. What's left is consumer-driven (the parked rows) and
+        the Tier 4 release embeds.
     </p>
 </div>
 `;

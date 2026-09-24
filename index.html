@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#eef2f7" media="(prefers-color-scheme: light)">
     <title>SACRVM APPKIT</title>
-    <meta name="description" content="A zero-dependency HTML UI kit for tool-style web apps: seed-driven themes, 46 sac-* web components, workspace layouts. No build step — vendor the kit/ folder as plain files.">
+    <meta name="description" content="A zero-dependency HTML UI kit for tool-style web apps: seed-driven themes, 47 sac-* web components, workspace layouts. No build step — vendor the kit/ folder as plain files.">
 
     <meta property="og:title" content="SACRVM APPKIT">
     <meta property="og:description" content="A zero-dependency HTML UI kit for tool-style web apps. No build step — vendor the kit/ folder as plain files.">
@@ -318,6 +318,11 @@
         // all.js injects its scripts, and injected scripts do not hold up
         // DOMContentLoaded — boot on the autoloader's readiness signal.
         function boot() {
+            // This hub is a small desktop: its apps' Open / Save go to one
+            // shared file space (with the device one click away), not
+            // straight to the disk.
+            sac.files.use(sac.files.virtual());
+
             // Every destination in this suite is an app on this one hub.
             // kind:"view" apps live at "#/<id>" and are listed in the nav
             // panel automatically; the window app opens in place.

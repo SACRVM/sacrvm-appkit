@@ -289,7 +289,7 @@
             <div class="sg-page">
                 <h1>Components</h1>
                 <p class="lead">
-                    42 component files, 46 custom elements — Shadow DOM (<code>mode: 'open'</code>)
+                    43 component files, 47 custom elements — Shadow DOM (<code>mode: 'open'</code>)
                     except the one documented light-DOM case, <code>&lt;sac-launcher&gt;</code>.
                     All are classic deferred scripts self-registering via
                     <code>customElements.define()</code>, usable from classic and module scripts alike.
@@ -572,6 +572,7 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
                     ["label", "Button text."],
                     ["kind", "\"default\" | \"primary\" | \"destructive\"."],
                     ["armAfterMs", "Arm delay for the destructive button: it takes focus only after N ms, so a reflexive Enter can't confirm it early — and the timer cancels if the pointer visits another button first."],
+                    ["disabled", "Start the button disabled — e.g. a Save that waits for a name. Toggle it later with <code>setDisabled()</code>."],
                 ])}
                 ${code(`const answer = await sac.dialog.confirm({
     title:   "Delete this item?",
@@ -595,6 +596,10 @@ await sac.dialog.info({
                     [".buttons", "Property — array of button specs (same shape as above)."],
                     ["open()", "Show it: renders, traps focus, remembers the trigger."],
                     ["close(action)", "Hide it and fire <code>sac:action</code> with that action; also restores focus to the trigger."],
+                    [".beforeAction", "Property — <code>(action) =&gt; boolean | Promise&lt;boolean&gt;</code>, asked on every button click; <code>false</code> keeps the dialog open (an empty required field, an “overwrite?” question). Escape and the backdrop always cancel without asking."],
+                    ["trigger(action)", "Run a button's action from code, through <code>beforeAction</code> — Enter in a field of the body."],
+                    ["setDisabled(action, flag)", "Enable / disable one button."],
+                    ["--dialog-width", "CSS custom property on the element — the panel width, default <code>420px</code>. A dialog holding a file list wants more."],
                     ["sac:open", "Fired on open (bubbles + composed)."],
                     ["sac:action", "Fired on close; <code>detail { action }</code> (bubbles + composed). Escape / backdrop close with <code>null</code>."],
                 ])}
@@ -1180,6 +1185,49 @@ zone.addEventListener("sac:rejected", (e) => {
                    <code>pointer: coarse</code>) the zone is a tap target first: the whole surface opens the picker and the
                    <code>touch-label</code> / <code>touch-hint</code> wording replaces “drop / click”. It follows a live
                    switch between touch and mouse; drops still work where the platform supports them.`)}
+
+                <h2 id="sac-file-browser">&lt;sac-file-browser&gt;</h2>
+                <p>A folder view over any <code>sac.fs</code> handle — the user's files, an app's own
+                   drawer, a host's space. <code>sprites/hero.png</code> <em>is</em> the folder
+                   <code>sprites</code>; a folder the user creates empty keeps itself with a hidden marker. It is the list inside the
+                   <code>sac.files.virtual()</code> dialogs, and on its own the body of a Files app.</p>
+                <div class="sg-demo sg-col" style="max-width:640px;height:320px;">
+                    <sac-file-browser id="demo-file-browser" pixelated root-label="Demo files"
+                                      style="flex:1;min-height:0;"></sac-file-browser>
+                    <span id="demo-file-browser-result" style="color:var(--text-muted);font-size:0.85rem;">Double-click a file.</span>
+                </div>
+                ${table("Attribute", [
+                    ["accept", "<code>.png,image/*</code> — the file input's grammar. Files that do not match are left out; folders always show."],
+                    ["multiple", "Presence: Ctrl/⌘-click and Shift-click (Shift+↑/↓) select several."],
+                    ["readonly", "Presence hides New folder, the per-row delete buttons and the Delete key — a view that changes nothing."],
+                    ["pixelated", "Presence draws image thumbnails with hard pixel edges. Default smooth — most images are not pixel art."],
+                    ["root-label", "The first breadcrumb. Default <code>Files</code>."],
+                ])}
+                ${table("Property / method", [
+                    ["store", "The <code>sac.fs</code> handle to browse (<code>list</code>, <code>stat</code>, <code>read</code>, <code>remove</code>). Setting it resets to the root."],
+                    ["path", "The current folder, <code>\"\"</code> = root. Setting navigates."],
+                    ["selected", "The selected file paths (folders are never selected)."],
+                    ["refresh()", "Re-read the current folder — after writing into the store from outside."],
+                    ["up()", "One folder up."],
+                    ["newFolder()", "An inline name field; Enter creates the folder and goes into it. An empty folder keeps itself alive with a hidden <code>&lt;folder&gt;/.folder</code> marker entry — never listed, removed with the folder."],
+                    ["select(path)", "Select one file by path."],
+                ])}
+                ${table("Event", [
+                    ["sac:select", "detail { paths } — the selection changed (user action)."],
+                    ["sac:choose", "detail { paths } — a file was double-clicked or Enter'd. Folders open on a single click and never choose."],
+                    ["sac:navigate", "detail { path } — the folder changed."],
+                    ["sac:remove", "detail { path, folder } — a file, or a folder with everything in it, was deleted after an armed confirm that says how many files go with it."],
+                ])}
+                ${code(`<sac-file-browser accept=".png,image/*" pixelated></sac-file-browser>
+
+browser.store = sac.fs.shared("files");
+browser.addEventListener("sac:choose", (e) => open(e.detail.paths[0]));`)}
+                <p>Keyboard: ↑/↓ Home/End move · Enter opens the folder or chooses the file ·
+                   Backspace goes up · Delete removes the file or folder (asks first). Rows: folders first, then files by
+                   name — an image file shows itself as its thumbnail, on the token checker.</p>
+                ${compact(`under a 480px <em>container</em> the size and date columns drop out, so it fits a
+                   narrow window or a bottom-sheet dialog. Rows are 44px on touch and the delete button is
+                   always visible there — no hover to reveal it.`)}
 
                 <h2 id="sac-avatar">&lt;sac-avatar&gt;</h2>
                 <p>Round identity badge — initials by default, photo when <code>src</code> is set. The
@@ -1893,6 +1941,42 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
             `;
     }
 
+    /* The demo file space for <sac-file-browser> and sac.files: a shared
+       space of its own (never the user's real "files"), seeded once with a
+       few generated sprites so there is something to browse. */
+    let demoSpace = null;
+    function demoFiles() {
+        if (demoSpace) return demoSpace;
+        const store = sac.fs.shared("styleguide-demo");
+        const sprite = (rows, colors) => new Promise((resolve) => {
+            const c = document.createElement("canvas");
+            c.width = rows[0].length; c.height = rows.length;
+            const g = c.getContext("2d");
+            rows.forEach((row, y) => [...row].forEach((ch, x) => {
+                if (ch === ".") return;
+                g.fillStyle = colors[ch];
+                g.fillRect(x, y, 1, 1);
+            }));
+            c.toBlob(resolve, "image/png");
+        });
+        demoSpace = (async () => {
+            if ((await store.list()).length) return store;
+            await store.write("sprites/heart.png", await sprite([
+                ".aa.aa.", "abbabba", "abbbbba", ".abbba.", "..aba..", "...a...",
+            ], { a: "#7f1d1d", b: "#ef4444" }));
+            await store.write("sprites/leaf.png", await sprite([
+                "....aa", "..aabb", ".abbba", "abbba.", "abba..", "aa....",
+            ], { a: "#14532d", b: "#22c55e" }));
+            await store.write("sprites/drop.png", await sprite([
+                "..a..", ".aba.", "abbba", "abbba", ".aaa.",
+            ], { a: "#1e3a8a", b: "#60a5fa" }));
+            await store.write("palettes/sunset.json", { colors: ["#f97316", "#ec4899", "#8b5cf6"] });
+            await store.write("readme.txt", new Blob(["Demo files for the style guide."], { type: "text/plain" }));
+            return store;
+        })();
+        return demoSpace;
+    }
+
     function wireComponents(root) {
         // Icon grid — all registry entries with names.
         const grid = root.querySelector("#icon-grid");
@@ -2202,6 +2286,15 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
             const li = document.createElement("li");
             li.textContent = `Rejected ${e.detail.files.length} file(s) — accept is ".svg,.png,image/*".`;
             dropList.appendChild(li);
+        });
+
+        // File browser — over the style guide's own demo space
+        const fileBrowser = root.querySelector("#demo-file-browser");
+        const fileBrowserOut = root.querySelector("#demo-file-browser-result");
+        demoFiles().then((store) => { fileBrowser.store = store; });
+        fileBrowser.addEventListener("sac:choose", async (e) => {
+            const st = await fileBrowser.store.stat(e.detail.paths[0]);
+            fileBrowserOut.textContent = st ? `chose ${st.path} — ${st.type}, ${st.size} B` : "";
         });
 
         // Copy button
@@ -3454,6 +3547,8 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>theme.onChange(cb)</code></td><td><code>cb(resolved)</code> with <code>"dark"</code>/<code>"light"</code> on every effective change, incl. OS flips in auto. Returns an unsubscribe function.</td></tr>
                     <tr><td><code>fs</code></td><td>Storage scoped to this app — see <code>sac.fs</code> below. <code>null</code> when the host did not load <code>lib/fs.js</code>, so an app checks before reaching for it.</td></tr>
                     <tr><td><code>identity</code></td><td>Who is at this desktop — see <code>sac.identity</code> below. Read-only for apps, and <code>null</code> when the host granted none.</td></tr>
+                    <tr><td><code>files</code></td><td>The <b>user's</b> files — <code>open()</code> / <code>save()</code> / <code>kind</code>, see <code>sac.files</code> below. Where they live is the host's decision; <code>null</code> when the host did not load <code>lib/files.js</code>.</td></tr>
+                    <tr><td><code>setDirty(flag)</code></td><td><code>true</code> while the app holds work that is not saved. Leaving or reloading the page then asks first, <code>sac.apps.isDirty(id)</code> answers for a host that is about to remove the app, and <code>document</code> gets <code>sac:dirty</code> <code>{ id, dirty }</code> (a taskbar dot). Closing a window never asks — the window stays in the DOM and loses nothing. Standalone it arms the same leave-page question.</td></tr>
                 </table>
                 ${code(`mount(context) {
     this._ctx = context;                         // once per element lifetime
@@ -3531,17 +3626,28 @@ await context.fs.remove("notes/2026-08");`)}
                 <table class="sg">
                     <tr><th style="width:260px">Method</th><th>Description</th></tr>
                     <tr><td><code>read(path, fallback = null)</code></td><td>The stored value, or <code>fallback</code> when the path is absent. Unreadable JSON warns and returns the fallback too — corrupt data is not worth crashing an app over.</td></tr>
-                    <tr><td><code>write(path, value)</code></td><td>Stores any JSON-serializable value. <b>Rejects</b> when there is no room left, or when the value is a function, a symbol or <code>undefined</code> — quota is the one failure an app can act on, so it arrives as a rejection rather than a swallowed console line.</td></tr>
+                    <tr><td><code>write(path, value)</code></td><td>Stores any JSON-serializable value — or a <b>Blob</b> (a File is one), see below. <b>Rejects</b> when there is no room left, or when the value is a function, a symbol or <code>undefined</code> — quota is the one failure an app can act on, so it arrives as a rejection rather than a swallowed console line.</td></tr>
                     <tr><td><code>remove(path)</code></td><td>Deletes one path.</td></tr>
                     <tr><td><code>list(prefix = "")</code></td><td>App-relative paths, sorted. <code>list("notes/")</code> is how a collection is enumerated.</td></tr>
+                    <tr><td><code>stat(path)</code></td><td><code>{ path, name, type, size, modified, binary }</code> or <code>null</code> — what a file list shows without reading the bytes. JSON entries carry no timestamp (<code>modified: null</code>).</td></tr>
                     <tr><td><code>clear()</code></td><td>Deletes everything this app stored — and only what this app stored.</td></tr>
                     <tr><td><code>usage()</code></td><td><code>{ bytes, count }</code>. A host uses this to show what an app is keeping, or to offer deleting it.</td></tr>
                     <tr><td><code>watch(cb)</code></td><td><code>cb(path, value)</code> on every change, <code>value === null</code> for a delete — including writes from <b>another tab</b> of the same origin. Returns an unsubscribe.</td></tr>
                 </table>
                 <p>Paths are slash-separated strings; leading, trailing and empty segments are
-                   stripped, and <code>..</code> is not a way out of the app's own root. Values are
-                   JSON — not Blobs: binary needs a backend that can hold it, and that is exactly the
-                   point at which a host supplies its own.</p>
+                   stripped, and <code>..</code> is not a way out of the app's own root.</p>
+                <h3>Binary files</h3>
+                <p>Write a <b>Blob</b> and it is stored as bytes, not as JSON: the entry keeps a small
+                   stub (<code>{ "$sac.blob": { type, size, modified } }</code>) and the bytes live beside
+                   it — in IndexedDB for the default backend. So <code>list()</code>, <code>usage()</code>
+                   and <code>watch()</code> treat a PNG like any other entry, it costs what a PNG costs,
+                   and localStorage's few megabytes are not the ceiling. <code>read()</code> hands it back
+                   as a <b>File</b> — <code>name</code> is the last path segment,
+                   <code>lastModified</code> when it was written. Raw bytes go in a Blob first.</p>
+                ${code(`const png = await new Promise((r) => canvas.toBlob(r, "image/png"));
+await context.fs.write("sprites/hero.png", png);
+const file = await context.fs.read("sprites/hero.png");     // File, type "image/png"
+const img  = await createImageBitmap(file);`)}
                 <p class="sg-note"><b>Not every app needs it.</b> <code>context.fs</code> is for what
                    belongs to an app <em>on this host</em> — settings, drafts, a local collection. An
                    app that needs a database has its own backend and talks to it with
@@ -3558,6 +3664,9 @@ await context.fs.remove("notes/2026-08");`)}
     set(key, value),   // string
     del(key),
     keys(prefix),      // → string[]
+    // optional — where Blobs go. Without them bytes ride inline in the
+    // stub as a data: URL: correct, only larger.
+    getBlob(key), setBlob(key, blob), delBlob(key),
 };`)}
                 <h3>Host side</h3>
                 <p><code>sac.fs.for(id)</code> is also how a <b>host</b> reaches an app's data without
@@ -3571,10 +3680,59 @@ await sac.fs.for("notes").clear();           // on an explicit "delete its data"
                 <p><code>sac.fs.apps()</code> is host-only in spirit: an app only ever sees its own
                    drawer. A host needs the list, or the data of an app somebody uninstalled a year
                    ago is unreachable and unaccountable.</p>
+                <p><code>sac.fs.shared(name)</code> is the same handle over a space that belongs to
+                   <em>no</em> app (<code>sac.shared/&lt;name&gt;/</code>) — which is why
+                   <code>apps()</code> never lists it. The user's files live in
+                   <code>shared("files")</code>; who may reach a space is the host's call.</p>
                 <p class="sg-note">Standalone, the same handle comes from the app's tag with the
                    <code>app-</code> prefix removed (<code>&lt;app-notes&gt;</code> → <code>notes</code>).
                    Follow the template's naming — <code>tag = "app-" + id</code> — and an app keeps
                    its data when it moves from its own page onto a desktop.</p>
+
+                <h2 id="sac-files">sac.files — the user's files</h2>
+                <p><code>context.fs</code> is an app's private drawer. <code>sac.files</code> is the
+                   other thing every editor needs: <b>Open…</b> and <b>Save as…</b> on files that belong
+                   to the person, not to the app. Where they live is the <b>host's</b> decision — the
+                   device, the desktop's own file space, a server — and the app never knows which.</p>
+                <div class="sg-demo sg-row">
+                    <button class="btn" style="width:auto" id="demo-files-open">Open…</button>
+                    <button class="btn primary" style="width:auto" id="demo-files-save">Save as…</button>
+                    <button class="btn" style="width:auto" id="demo-files-resave" disabled>Save</button>
+                    <span id="demo-files-result" style="color:var(--text-muted);font-size:0.85rem;"></span>
+                </div>
+                <p class="sg-note">The demo runs on <code>sac.files.virtual()</code> over a demo space —
+                   the same dialog a desktop shows. Its “this device” link goes to your real disk.</p>
+                ${code(`const picked = await context.files.open({ accept: ".png,image/*" });
+if (picked) this.load(picked.file);                     // a File
+
+let doc = await context.files.save(blob, { name: "hero.png" });   // Save as…
+if (doc) doc = await context.files.save(blob, { handle: doc.handle });   // Save`)}
+                <table class="sg">
+                    <tr><th style="width:260px">Member</th><th>Description</th></tr>
+                    <tr><td><code>open(opts)</code></td><td><code>{ accept, multiple, title }</code> → a FileRef, an array of them with <code>multiple</code>, or <code>null</code> when cancelled. <code>accept</code> is the <code>&lt;input accept&gt;</code> grammar (<code>".png,image/*"</code> or an array).</td></tr>
+                    <tr><td><code>save(data, opts)</code></td><td><code>data</code>: a Blob, a string (<code>text/plain</code>) or any JSON value (<code>application/json</code>). <code>{ name, type, accept, handle, title }</code> → a FileRef or <code>null</code>. With a <code>handle</code> the same file is overwritten <b>without a dialog</b> — that is “Save”; without, it is “Save as…”.</td></tr>
+                    <tr><td><code>kind</code></td><td>Who answers: <code>"browser"</code>, <code>"virtual"</code> or a host's own — for wording (“Downloaded” vs “Saved”), never for branching logic.</td></tr>
+                    <tr><td><code>use(provider)</code> <b>(host)</b></td><td>Install a provider; <code>null</code> restores the browser default.</td></tr>
+                    <tr><td><code>forApp()</code> <b>(host)</b></td><td>The view handed to apps as <code>context.files</code> — <code>open</code>, <code>save</code>, <code>kind</code>; no <code>use()</code>.</td></tr>
+                </table>
+                <p>A <b>FileRef</b> is <code>{ name, file, handle }</code>: <code>file</code> is a
+                   <code>File</code> (type, size, lastModified); <code>handle</code> is opaque — keep it
+                   and pass it back. It can be <code>null</code> (a browser that could only download),
+                   and then <code>save()</code> simply asks again. A handle remembers the provider that
+                   made it and goes back there: a file opened <em>from the device</em> is saved back to
+                   the device even on a desktop whose default is its own space.</p>
+                <h3>Providers</h3>
+                <table class="sg">
+                    <tr><th style="width:260px">Provider</th><th>What the user gets</th></tr>
+                    <tr><td><code>sac.files.browser</code> <b>(default)</b></td><td>The device's own files. The File System Access API where it exists — a real Save that writes back through the handle; elsewhere <code>&lt;input type="file"&gt;</code> to open and a download to save.</td></tr>
+                    <tr><td><code>sac.files.virtual(options)</code></td><td>The desktop's own file space: the kit's open/save dialog (<code>&lt;sac-file-browser&gt;</code> in a <code>&lt;sac-dialog&gt;</code>) over a <code>sac.fs</code> handle — by default <code>sac.fs.shared("files")</code>, one space every app on the desktop shares. Folders, thumbnails, overwrite confirmation, and a link to the device both ways. Options: <code>{ store, label, pixelated }</code>.</td></tr>
+                    <tr><td>your own</td><td><code>{ kind, open(opts), save(blob, opts) }</code> — a server, a cloud drive. <code>save</code> always receives a Blob; return FileRefs whose <code>handle.owner</code> is your provider and re-saves come back to you.</td></tr>
+                </table>
+                ${code(`// a desktop, once at boot — every app's Open/Save now shows the desktop's files
+sac.files.use(sac.files.virtual({ label: "Desktop" }));`)}
+                <p class="sg-note"><b>Pair it with <code>context.setDirty()</code>.</b> An editor
+                   that marks unsaved work and clears the mark after a successful save gets the
+                   leave-page question for free, standalone and hosted alike.</p>
 
                 <h2>sac.identity — who is at this desktop</h2>
                 <p><b>Not authentication.</b> There is no server, no password, no verification and no
@@ -3735,6 +3893,32 @@ sac.identity.clear();`)}
                     <tr><td><code>drop-zone.hint</code></td><td><code>or click to browse</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>drop-zone.label-touch</code></td><td><code>Choose files</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>drop-zone.hint-touch</code></td><td><code>Tap to browse</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>files.accept-description</code></td><td><code>Files</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.cancel</code></td><td><code>Cancel</code></td><td>sac.files, sac-file-browser</td></tr>
+                    <tr><td><code>files.delete</code></td><td><code>Delete</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-message</code></td><td><code>will be permanently deleted.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-title</code></td><td><code>Delete this file?</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-folder-title</code></td><td><code>Delete this folder?</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-folder-message</code></td><td><code>and the {n} file(s) in it will be permanently deleted.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-folder-empty</code></td><td><code>is empty and will be removed.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.empty</code></td><td><code>Nothing here yet.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.empty-folder</code></td><td><code>This folder is empty.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.from-device</code></td><td><code>Open from this device…</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.list</code></td><td><code>Files</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.location</code></td><td><code>Location</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.name</code></td><td><code>Name</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.new-folder</code></td><td><code>New folder</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.new-folder-name</code></td><td><code>Folder name</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.open</code></td><td><code>Open</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.open-title</code></td><td><code>Open</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.replace</code></td><td><code>Replace</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.replace-message</code></td><td><code>already exists. Saving replaces it.</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.replace-title</code></td><td><code>Replace this file?</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.root</code></td><td><code>Files</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.save</code></td><td><code>Save</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.save-title</code></td><td><code>Save as</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.to-device</code></td><td><code>Save to this device instead…</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.up</code></td><td><code>Up one folder</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>footer.link</code></td><td><code>LINK</code></td><td>sac-footer</td></tr>
                     <tr><td><code>help.load-failed</code></td><td><code>Failed to load documentation</code></td><td>help-loader</td></tr>
                     <tr><td><code>help.check-console</code></td><td><code>Check console for details.</code></td><td>help-loader</td></tr>
@@ -3805,7 +3989,7 @@ sac.identity.clear();`)}
                     <tr><td><code>window.restore</code></td><td><code>Restore</code></td><td>sac-window</td></tr>
                     <tr><td><code>window.default-title</code></td><td><code>Window</code></td><td>sac-window</td></tr>
                 </table>
-                <p class="sg-note"><b>Placeholders:</b> <code>{name}</code>, <code>{problems}</code>,
+                <p class="sg-note"><b>Placeholders:</b> <code>{name}</code>, <code>{problems}</code>, <code>{n}</code>,
                    <code>{s}</code>/<code>{v}</code> are substituted by the component at render time —
                    keep them verbatim in a translation. Date and number OUTPUT is never in this table:
                    that is Intl's job, always in the browser's locale.</p>
@@ -3819,6 +4003,41 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
     }
 
     function wireHelpers(root) {
+        // sac.files — the virtual provider over the demo space, so the demo
+        // shows the desktop dialog without touching anybody's real files.
+        const filesOut = root.querySelector("#demo-files-result");
+        const resave = root.querySelector("#demo-files-resave");
+        if (filesOut) {
+            let provider = null;
+            let last = null;
+            const ready = async () => provider || (provider = sac.files.virtual({
+                store: await demoFiles(), label: "Demo files", pixelated: true,
+            }));
+            const sample = () => new Promise((resolve) => {
+                const c = document.createElement("canvas");
+                c.width = c.height = 8;
+                const g = c.getContext("2d");
+                g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#3b82f6";
+                g.fillRect(1, 1, 6, 6);
+                c.toBlob(resolve, "image/png");
+            });
+            root.querySelector("#demo-files-open").addEventListener("click", async () => {
+                const ref = await (await ready()).open({ accept: ".png,image/*" });
+                filesOut.textContent = ref ? `opened ${ref.name} — ${ref.file.size} B` : "cancelled";
+                if (ref) { last = ref; resave.disabled = !ref.handle; }
+            });
+            root.querySelector("#demo-files-save").addEventListener("click", async () => {
+                const ref = await (await ready()).save(await sample(), { name: "square.png" });
+                filesOut.textContent = ref ? `saved ${ref.name}` : "cancelled";
+                if (ref) { last = ref; resave.disabled = !ref.handle; }
+            });
+            resave.addEventListener("click", async () => {
+                if (!last || !last.handle) return;
+                const ref = await sac.files.save(await sample(), { handle: last.handle });
+                filesOut.textContent = ref ? `saved ${ref.name} again — no dialog` : "cancelled";
+            });
+        }
+
         const sortList = root.querySelector("#demo-sortable");
         if (sortList && window.sac && sac.sortable) {
             const state = root.querySelector("#demo-sortable-state");
