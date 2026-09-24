@@ -155,6 +155,17 @@
                     ${sw("--accent-tint", "active-item background")}
                     ${sw("--accent-glow", "glows · focus shadows")}
                 </div>
+                <h3>Pixels — checker + grid</h3>
+                <p>The transparency checker and the pixel grid, for anything that shows raw pixels.
+                   <code>--checker</code> is the translucent square a CSS checkerboard lays over its surface
+                   (the <code>.checker</code> utility class, color wells, swatches); <code>--checker-a</code>/<code>-b</code>
+                   are an opaque pair for canvases, which cannot composite over the page.</p>
+                <div class="sg-swatches">
+                    ${sw("--checker", "checker square over any surface")}
+                    ${sw("--checker-a", "opaque light square (canvas)")}
+                    ${sw("--checker-b", "opaque dark square (canvas)")}
+                    ${sw("--pixel-grid", "hairline between enlarged pixels")}
+                </div>
 
                 <h3>State fills + text — the AA layer</h3>
                 <p>A state color has two jobs at two contrast bars. The seed stays the identity
@@ -278,7 +289,7 @@
             <div class="sg-page">
                 <h1>Components</h1>
                 <p class="lead">
-                    37 component files, 41 custom elements — Shadow DOM (<code>mode: 'open'</code>)
+                    42 component files, 46 custom elements — Shadow DOM (<code>mode: 'open'</code>)
                     except the one documented light-DOM case, <code>&lt;sac-launcher&gt;</code>.
                     All are classic deferred scripts self-registering via
                     <code>customElements.define()</code>, usable from classic and module scripts alike.
@@ -1491,9 +1502,10 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
                     ["register(combo, handler, opts)", "Returns an idempotent unregister function. On match: <code>preventDefault()</code>, then <code>handler(event)</code>. One document listener for the whole app, attached on first use."],
                     ["combo", "<code>ctrl</code> · <code>alt</code> · <code>shift</code> · <code>meta</code> · <code>mod</code> (Ctrl on Windows/Linux, ⌘ on macOS), in any order, then the key: <code>\"mod+k\"</code>, <code>\"ctrl+shift+p\"</code>, <code>\"alt+1\"</code>, <code>\"escape\"</code>. Matching is exact — <code>ctrl+k</code> does not fire while Shift is held."],
                     ["opts.description", "Shown by <code>list()</code> (and any shortcuts help screen)."],
+                    ["opts.group", "Heading the binding is listed under in <code>&lt;sac-shortcut-sheet&gt;</code> (\"Tools\", \"Edit\"). A listing aid only — it changes no matching."],
                     ["opts.allowInInput", "Combos without ctrl/alt/meta are ignored while the user types in an input, textarea, select or contenteditable — including inside Shadow DOM. This opts out."],
                     ["Same combo twice", "A stack: the newest registration wins, unregistering it restores the previous one. That is what makes a modal's temporary binding safe."],
-                    ["list() / format(combo)", "<code>[{ combo, display, description }]</code> for every active binding · a platform-aware display string (<code>\"Ctrl+Shift+X\"</code> / <code>\"⌃⇧X\"</code>)."],
+                    ["list() / format(combo)", "<code>[{ combo, display, description, group }]</code> for every active binding · a platform-aware display string (<code>\"Ctrl+Shift+X\"</code> / <code>\"⌃⇧X\"</code>)."],
                 ])}
                 ${code(`<!-- once, in the app shell -->
 <sac-command-palette></sac-command-palette>
@@ -1629,6 +1641,254 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
                    dark → light → auto; its icon shows the current theme, its label says it (“Theme: Dark”, key
                    <code>theme-toggle.label</code>). The ribbon of this page shows it on a phone. The pill itself gets a
                    44px-tall hit halo per button under <code>pointer: coarse</code>; no hover tint sticks after a tap.`)}
+
+                <h2 id="sac-pixel-canvas">&lt;sac-pixel-canvas&gt;</h2>
+                <p>The pixel editor's viewport — a <em>view</em>, not an editor. It shows an image at an
+                   integer zoom and reports which pixel the pointer is on; the document, the tools and undo
+                   stay in the app. What it owns is everything a generic pan-zoom gets wrong for pixel art:
+                   the zoom walks a fixed ladder (1 2 3 4 6 8 12 16 24 32 48 64) so every pixel is the same
+                   size, the transparency checker is drawn <em>inside</em> the canvas and locked to the pixel
+                   grid, a pixel grid appears from 8×, and onion-skin underlays, a floating-selection
+                   overlay, a marquee and a brush-footprint hover box stack on top. The
+                   <a href="#/pixel-lab">Pixel Lab</a> app is the full workbench built from it.</p>
+                <div class="sg-demo sg-row" style="align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+                    <sac-pixel-canvas id="demo-pixel" tile-grid="8" brush="1"
+                                      style="flex:1 1 320px;height:300px;border-radius:var(--radius-m);"></sac-pixel-canvas>
+                    <div class="sg-col" style="gap:0.5rem;flex:0 0 12rem;">
+                        <div style="padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius-m);">
+                            <sac-pixel-canvas id="demo-pixel-pv" static zoom="3"></sac-pixel-canvas>
+                        </div>
+                        <span id="demo-pixel-state" style="color:var(--text-muted);font-size:0.85rem;font-variant-numeric:tabular-nums;">
+                            click to paint · wheel zooms · Space-drag pans</span>
+                    </div>
+                </div>
+                ${table("Attribute", [
+                    ["zoom", "Integer CSS px per image pixel, reflected on every change and snapped onto the ladder. Omit it and the view fits the image — and keeps fitting while the element resizes, until the user zooms or pans. An author-given zoom is kept (re-centered on resize)."],
+                    ["min-zoom / max-zoom", "Ladder bounds, default <code>1</code> / <code>64</code>."],
+                    ["grid", "<code>auto</code> (default: the pixel grid from 8×), <code>on</code>, <code>off</code>. Color <code>--pixel-grid</code>."],
+                    ["tile-grid", "N — a stronger line every N pixels (<code>--border-strong</code>), measured from the region's origin."],
+                    ["brush", "Size of the hover box in image pixels (default 1, <code>0</code> hides it). Centered like a square brush."],
+                    ["static", "A preview: no input, and the element sizes itself to region × zoom — the small live preview beside the big canvas."],
+                ])}
+                ${table("Property", [
+                    ["image", "The pixels: <code>ImageData</code>, <code>{ width, height, data }</code>, a canvas / OffscreenCanvas, an <code>&lt;img&gt;</code> or ImageBitmap. A new size refits."],
+                    ["region", "<code>{ x, y, w, h }</code> — the part being edited (one frame of a strip). Default: the whole image. Events, selection and overlays all speak <b>absolute</b> image coordinates."],
+                    ["underlays", "<code>[{ image?, region?, opacity }]</code> under the image, over the checker — onion skin. <code>image</code> defaults to the main image, so a strip's neighbour frames are just regions."],
+                    ["overlays", "<code>[{ image, x, y, opacity? }]</code> over the image, clipped to the region — a floating selection's lifted pixels."],
+                    ["selection", "<code>{ x, y, w, h }</code> or <code>null</code> — the marquee, dashed in <code>--sink</code>/<code>--lift</code> so it reads over any pixel color."],
+                    ["zoom", "get/set; snapped onto the ladder."],
+                ])}
+                ${table("Method", [
+                    ["render()", "Re-upload the pixel buffers and redraw — call it after mutating the pixels in place."],
+                    ["fit() · center()", "Largest ladder zoom that shows the region, centered · center at the current zoom."],
+                    ["zoomIn(anchor?) · zoomOut(anchor?)", "One ladder step; <code>anchor</code> <code>{ clientX, clientY }</code> stays still (default: the center)."],
+                    ["cellAt(clientX, clientY)", "<code>{ x, y, lx, ly, inside }</code> for any screen point."],
+                ])}
+                ${table("Event", [
+                    ["sac:pixel-down", "A press (any button except the pan ones). detail = a cell: <code>{ x, y, lx, ly, inside, button, buttons, shiftKey, altKey, ctrlKey, metaKey, pointerType, pressure }</code>. Outside-region cells are reported too (<code>inside: false</code>) — a line dragged past the edge still has an end."],
+                    ["sac:pixel-move", "The pressed pointer entered <em>another</em> pixel — one event per pixel change. Fast strokes skip pixels: connect them (Bresenham) in the app."],
+                    ["sac:pixel-up", "The press ended (captured, so also outside the element)."],
+                    ["sac:pixel-cancel", "A second finger turned the stroke into a pinch — roll the stroke back."],
+                    ["sac:pixel-hover", "The hovered pixel changed; <code>null</code> on leave."],
+                    ["sac:zoom", "detail { zoom }, after any zoom change. All bubble, not composed."],
+                ])}
+                ${table("Interaction", [
+                    ["Wheel", "Zooms one ladder step around the cursor (trackpad bursts are accumulated, so a flick does not race to 64×)."],
+                    ["Pan", "Middle-drag, or <kbd>Space</kbd> held over the canvas + drag. A pan always leaves 32px of the image on screen."],
+                    ["Right-click", "Not consumed — listen for <code>contextmenu</code> on the element and open a <code>&lt;sac-menu&gt;</code>."],
+                ])}
+                ${code(`<sac-pixel-canvas tile-grid="8" style="height: 480px"></sac-pixel-canvas>
+
+canvas.image = doc.composite(frame);                  // ImageData
+canvas.underlays = [{ image: doc.composite(frame - 1), opacity: 0.3 }];
+canvas.addEventListener("sac:pixel-down", (e) => tool.down(e.detail));
+canvas.addEventListener("sac:pixel-move", (e) => tool.drag(e.detail));
+canvas.addEventListener("sac:pixel-up",   ()  => tool.up());
+// after the tool changed pixels in place:
+canvas.render();`)}
+                ${compact(`one finger draws (<code>sac:pixel-*</code> as with a mouse); a second finger cancels that stroke
+                   and pinches — the zoom snaps to the ladder around the fingers' midpoint, both fingers pan.
+                   <code>touch-action: none</code> keeps the gesture inside the element; the page outside scrolls as usual.`)}
+
+                <h2 id="sac-toolbox">&lt;sac-toolbox&gt;</h2>
+                <p>A tool ribbon for any editor — paint, map, diagram, selection modes: a radio grid of
+                   square icon buttons, exactly one active.
+                   Where <code>&lt;sac-segmented-control&gt;</code> is a row of words, this is a grid of
+                   glyphs — so every tool carries a kit tooltip with its name and shortcut, and the name
+                   is its accessible label. With <code>hotkeys</code> each tool's key goes through
+                   <code>sac.hotkeys</code> and shows up in the shortcut sheet for free.</p>
+                <div class="sg-demo sg-row" style="align-items:flex-start;gap:2rem;flex-wrap:wrap;">
+                    <sac-toolbox id="demo-toolbox" value="pencil" columns="2" group="Demo tools"></sac-toolbox>
+                    <sac-toolbox id="demo-toolbox-row" value="rect" columns="row"></sac-toolbox>
+                    <span id="demo-toolbox-state" style="color:var(--text-muted);font-size:0.85rem;">tool: pencil — try B, E, G, I</span>
+                </div>
+                ${table("Attribute", [
+                    ["value", "Active tool id, reflected."],
+                    ["columns", "Grid columns, default <code>2</code>. <code>row</code> = one horizontal row (a top ribbon). <code>auto</code> = as many per row as the container fits, wrapping only when it gets too narrow — the choice for a resizable side panel. A number is a custom property, so changing it re-renders nothing."],
+                    ["hotkeys", "Presence registers every tool's <code>key</code> through <code>sac.hotkeys</code> while connected (description = label, group = <code>group</code>). The key selects the tool and fires <code>sac:change</code>."],
+                    ["group", "Heading the hotkeys are listed under in the shortcut sheet. Default <code>Tools</code>."],
+                    ["disabled", "Inert + dimmed; fires nothing, hotkeys ignored."],
+                ])}
+                ${table("Property", [
+                    ["tools", "Array of <code>{ id, icon, label, key? }</code>. <code>null</code> or <code>{ separator: true }</code> inserts a gap — a full-width break in a grid, a hairline in a row. Setting it rebuilds the buttons (and re-registers the hotkeys)."],
+                    ["value", "get/set; setting is silent."],
+                    ["disabled", "get/set (boolean), reflects the attribute."],
+                ])}
+                ${table("Event", [["sac:change", "detail { value } (tool id) — on click, keyboard or hotkey only. Bubbles, not composed."]])}
+                ${table("Interaction", [
+                    ["Arrows", "<kbd>←</kbd>/<kbd>→</kbd> step in order (wrapping); <kbd>↑</kbd>/<kbd>↓</kbd> move to the tool visually above/below (measured from the layout, so gaps never trap the cursor). Moving selects. Roving tabindex: only the active tool is a tab stop."],
+                    ["Tooltip", "Kit bubble, \"Label (K)\" — right of a grid, below a row."],
+                ])}
+                ${code(`<sac-toolbox value="pencil" columns="2" hotkeys></sac-toolbox>
+<script>
+  box.tools = [
+    { id: "pencil", icon: "pencil",     label: "Pencil",     key: "b" },
+    { id: "eraser", icon: "eraser",     label: "Eraser",     key: "e" },
+    null,
+    { id: "fill",   icon: "bucket",     label: "Fill",       key: "g" },
+    { id: "pick",   icon: "eyedropper", label: "Eyedropper", key: "i" },
+  ];
+  box.addEventListener("sac:change", (e) => setTool(e.detail.value));
+<\/script>`)}
+                ${compact(`under <code>pointer: coarse</code> every button grows to 44 × 44 (the glyph keeps its size — a tool
+                   grid is tapped all day, a halo would steal a neighbour's taps); no hover wash sticks to a tapped tool.`)}
+
+                <h2 id="sac-filmstrip">&lt;sac-filmstrip&gt;</h2>
+                <p>The frame row of any animation or image sequence — a sprite timeline, a slideshow,
+                   rendered 3D frames, a video's keyframes: a row of thumbnails, one active. It
+                   <em>shows</em> frames, it does not own them — the app keeps the content and calls
+                   <code>refresh(i)</code> after changing a frame. Thumbnails scale smoothly on the token
+                   checker (<code>pixelated</code> keeps hard pixel edges, as in this sprite demo), numbered
+                   from 1 — the same numbers a 1…0 key row selects. App buttons (play, onion skin) go in the
+                   <code>controls</code> slot.</p>
+                <div class="sg-demo sg-col" style="max-width:none;">
+                    <sac-filmstrip id="demo-film" value="0" actions reorderable pixelated style="align-self:stretch;">
+                        <button slot="controls" class="icon-btn" id="demo-film-play" title="Play" aria-label="Play">
+                            <sac-icon name="play"></sac-icon>
+                        </button>
+                    </sac-filmstrip>
+                    <span id="demo-film-state" style="color:var(--text-muted);font-size:0.85rem;">frame 1 of 4</span>
+                </div>
+                ${table("Attribute", [
+                    ["value", "Active frame index (0-based), reflected. Clamped into the frame range on render."],
+                    ["thumb-size", "Thumbnail box edge in px, default <code>48</code>."],
+                    ["actions", "Presence adds trailing Add / Duplicate / Delete buttons (Delete is disabled on the last frame)."],
+                    ["reorderable", "Presence enables drag-to-reorder and <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd>."],
+                    ["label", "Accessible name of the strip, default “Frames”."],
+                    ["pixelated", "Hard pixel edges and an integer scale when the frame fits — for pixel art. Default: thumbnails scale smoothly to the box (photos, vector, 3D)."],
+                    ["--sac-filmstrip-inset", "CSS custom property — left/right inset that keeps the controls and actions off the edges. Default <code>0.5rem</code>; <code>0</code> inside a container that already pads."],
+                ])}
+                ${table("Property", [
+                    ["frames", "get/set array of frame sources, any mix: a canvas / image / ImageBitmap, an <code>ImageData</code>, a plain <code>{ width, height, data }</code> RGBA buffer, or an image URL. Setting rebuilds every thumbnail and fires nothing; the getter returns the current (user-reordered) order."],
+                    ["value", "get/set number. Setting is silent."],
+                ])}
+                ${table("Method", [
+                    ["refresh(index?)", "Redraw one thumbnail (or all) from its source. Sources are held by reference, so a canvas the app keeps painting into only needs this call."],
+                ])}
+                ${table("Event", [
+                    ["sac:change", "detail { index } — the user picked a frame."],
+                    ["sac:reorder", "detail { from, to } — the user moved a frame. The strip has already reordered itself and the active frame followed; mirror it on your data: <code>frames.splice(to, 0, ...frames.splice(from, 1))</code>."],
+                    ["sac:action", "detail { action: \"add\" | \"duplicate\" | \"delete\", index } — <code>index</code> is the active frame. The strip changes nothing itself: edit your frames and set <code>frames</code> (and <code>value</code>) anew."],
+                ])}
+                ${table("Interaction", [
+                    ["Pointer", "Click selects · drag reorders (<code>reorderable</code>)."],
+                    ["Keyboard", "<kbd>←</kbd>/<kbd>→</kbd> select · <kbd>Home</kbd>/<kbd>End</kbd> · <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd> move the frame · <kbd>Delete</kbd> fires the delete action (<code>actions</code>). Roving tabindex: the active frame is the one tab stop."],
+                ])}
+                ${code(`<sac-filmstrip value="0" actions reorderable>
+    <button slot="controls" class="icon-btn" title="Play"><sac-icon name="play"></sac-icon></button>
+</sac-filmstrip>
+
+strip.frames = frameCanvases;                     // one canvas per frame
+strip.addEventListener("sac:change",  (e) => editFrame(e.detail.index));
+strip.addEventListener("sac:reorder", (e) => moveFrame(e.detail.from, e.detail.to));
+strip.addEventListener("sac:action",  (e) => frameAction(e.detail.action, e.detail.index));
+// after painting into frame 2:
+strip.refresh(2);`)}
+                ${compact(`the thumbnail row scrolls sideways inside its own box — the page never widens — and the
+                   active frame is scrolled into view on every change. Under <code>pointer: coarse</code> frames and
+                   action buttons reach 44px; a drag needs a 250ms long-press so a swipe still scrolls the row.`)}
+
+                <h2 id="sac-layer-list">&lt;sac-layer-list&gt;</h2>
+                <p>The layer stack of any layered document — a paint or pixel editor, a design tool, a map
+                   editor: thumbnail, name, visibility eye and lock per row,
+                   drag to reorder, double-click to rename. Like the filmstrip it <em>shows</em> layers and
+                   reports what the user did; it keeps its own rows in step so nothing flickers back while the
+                   app catches up. <b>Order:</b> <code>layers[0]</code> is the top row and the topmost layer —
+                   composite by walking the array in reverse.</p>
+                <div class="sg-demo sg-row" style="align-items:flex-start;gap:1.5rem;flex-wrap:wrap;">
+                    <sac-layer-list id="demo-layers" value="ink" actions pixelated style="width:240px;"></sac-layer-list>
+                    <span id="demo-layers-state" style="color:var(--text-muted);font-size:0.85rem;">no change yet</span>
+                </div>
+                ${table("Attribute", [
+                    ["value", "Active layer id, reflected."],
+                    ["actions", "Presence adds a footer with Add / Duplicate / Delete (Delete is disabled on the last layer)."],
+                    ["thumb-size", "Thumbnail box edge in px, default <code>32</code>."],
+                    ["label", "Accessible name, default “Layers”."],
+                    ["pixelated", "Hard pixel edges and an integer scale when the thumbnail fits — for pixel art. Default: smooth."],
+                ])}
+                ${table("Property", [
+                    ["layers", "get/set array of <code>{ id, name, visible, locked, thumb? }</code> — <code>thumb</code> takes the same sources as the filmstrip. Setting rebuilds the rows and fires nothing; your objects are copied, never mutated. The getter returns the list's current state."],
+                    ["value", "get/set active id. Setting is silent."],
+                ])}
+                ${table("Method", [
+                    ["refresh(id?)", "Redraw one thumbnail (or all) after painting."],
+                ])}
+                ${table("Event", [
+                    ["sac:change", "detail { id } — a different layer became active."],
+                    ["sac:reorder", "detail { from, to } — array indices, top row = 0. Mirror with <code>layers.splice(to, 0, ...layers.splice(from, 1))</code>."],
+                    ["sac:toggle", "detail { id, prop: \"visible\" | \"locked\", value }."],
+                    ["sac:rename", "detail { id, name } — trimmed, non-empty, actually changed."],
+                    ["sac:action", "detail { action: \"add\" | \"duplicate\" | \"delete\", id } — <code>id</code> is the active layer; the list changes nothing itself."],
+                ])}
+                ${table("Interaction", [
+                    ["Pointer", "Click activates · drag reorders · double-click the name renames (<kbd>Enter</kbd>/blur commits, <kbd>Esc</kbd> reverts) · eye and lock toggle in place."],
+                    ["Keyboard", "<kbd>↑</kbd>/<kbd>↓</kbd> move the active layer · <kbd>Home</kbd>/<kbd>End</kbd> · <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> move it in the stack · <kbd>F2</kbd> renames · <kbd>Tab</kbd> from the active row reaches its eye and lock."],
+                ])}
+                ${code(`<sac-layer-list value="ink" actions></sac-layer-list>
+
+list.layers = [
+    { id: "ink",   name: "Ink",        visible: true,  locked: false, thumb: inkCanvas },
+    { id: "color", name: "Flat color", visible: true,  locked: false, thumb: colorCanvas },
+    { id: "bg",    name: "Background", visible: false, locked: true,  thumb: bgCanvas },
+];
+list.addEventListener("sac:toggle",  (e) => setLayer(e.detail.id, e.detail.prop, e.detail.value));
+list.addEventListener("sac:reorder", (e) => moveLayer(e.detail.from, e.detail.to));`)}
+                ${compact(`rows are 44px tall under <code>pointer: coarse</code>, the eye and lock get 44px hit halos,
+                   and a drag needs a 250ms long-press so a swipe still scrolls the panel.`)}
+
+                <h2 id="sac-shortcut-sheet">&lt;sac-shortcut-sheet&gt; + sac.shortcuts</h2>
+                <p>The "keyboard shortcuts" cheat sheet. It lists every active binding in
+                   <code>sac.hotkeys</code>, grouped by the <code>group</code> it was registered with, plus
+                   static entries the registry cannot express — gestures and held keys
+                   (<kbd>Space</kbd> + drag, <kbd>Alt</kbd> + click, wheel). It re-reads the registry on
+                   every opening, so it is never out of date. Bindings without a description are internal
+                   plumbing and are not listed.</p>
+                <div class="sg-demo sg-row">
+                    <button class="btn" id="demo-shortcuts" style="width:auto;">Show shortcuts</button>
+                    <span style="color:var(--text-muted);font-size:0.85rem;">or press <kbd>?</kbd></span>
+                </div>
+                ${table("sac.shortcuts", [
+                    ["show({ title?, extra? })", "Open the shared sheet. <code>extra</code> adds entries for this opening only."],
+                    ["hide() · toggle(opts?)", "Close / flip."],
+                    ["add(entries)", "Persistent extras shown on every opening → remove function. Entry: <code>{ group?, keys, description }</code>; <code>keys</code> is an array of chips (<code>[\"Alt\", \"click\"]</code>) or one string split on <code>+</code> (<code>\"Space + drag\"</code>)."],
+                    ["bind(combo = \"shift+?\")", "Registers the toggle hotkey (group <code>Help</code>) → unregister. <code>shift+?</code> because matching is exact and <kbd>?</kbd> is a shifted key on the common layouts (US Shift+/, DE Shift+ß) — the event is <code>key \"?\"</code> with <code>shiftKey</code>, so a plain <code>\"?\"</code> would never fire."],
+                ])}
+                ${table("Element", [
+                    ["title", "Attribute — heading, default \"Keyboard shortcuts\"."],
+                    ["extra", "Property — the static entries (same shape as <code>add()</code>)."],
+                    ["open() · close() · toggle()", "Methods. <code>open</code> is reflected while shown."],
+                    ["sac:close", "Event after it closes. Bubbles, composed."],
+                ])}
+                ${table("Interaction", [["Keyboard", "<kbd>Esc</kbd>, backdrop or ✕ close; <kbd>Tab</kbd> cycles the list and ✕; focus returns to the opener."]])}
+                ${code(`sac.shortcuts.bind();                         // "?" toggles the sheet
+sac.shortcuts.add([
+  { group: "View", keys: "Space + drag",    description: "Pan" },
+  { group: "View", keys: ["Wheel"],         description: "Zoom" },
+  { group: "Draw", keys: ["Alt", "click"],  description: "Pick a color" },
+]);
+sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
+                ${compact(`a bottom sheet (full width, above the safe area, at most 85dvh, list scrolling) and one column
+                   instead of two; the close button reaches 44 × 44.`)}
             </div>
             `;
     }
@@ -2036,6 +2296,161 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
         root.querySelector("#demo-theme-toggle").addEventListener("sac:change", (e) => {
             themeState.textContent = `theme: ${e.detail.value}`;
         });
+
+        // Pixel workbench demos share one helper: a w×h canvas with a few
+        // pixels painted — stand-in sprite frames. Colors come from the data
+        // palette tokens, so the demos follow the theme.
+        const sgCs = getComputedStyle(document.documentElement);
+        const sgColor = (token) => sgCs.getPropertyValue(token).trim() || "#888";
+        function sgSprite(w, h, paint) {
+            const c = document.createElement("canvas");
+            c.width = w; c.height = h;
+            paint(c.getContext("2d"));
+            return c;
+        }
+
+        // sac-pixel-canvas — a 16×16 sprite painted with a one-pixel pencil;
+        // the static preview beside it shares the same canvas.
+        const pixel = root.querySelector("#demo-pixel");
+        if (pixel) {
+            const art = sgSprite(16, 16, (ctx) => {
+                ctx.fillStyle = sgColor("--palette-indigo"); ctx.fillRect(4, 3, 8, 10);
+                ctx.fillStyle = sgColor("--palette-yellow"); ctx.fillRect(5, 4, 6, 8);
+                ctx.fillStyle = sgColor("--palette-indigo"); ctx.fillRect(6, 6, 1, 2); ctx.fillRect(9, 6, 1, 2); ctx.fillRect(6, 10, 4, 1);
+            });
+            const pv = root.querySelector("#demo-pixel-pv");
+            const state = root.querySelector("#demo-pixel-state");
+            const ink = sgColor("--palette-pink");
+            let hover = null;
+            const say = () => { state.textContent = `${hover && hover.inside ? `${hover.lx}, ${hover.ly}` : "–"} · ${pixel.zoom}×`; };
+            const paint = (c) => {
+                if (!c.inside) return;
+                const ctx = art.getContext("2d");
+                ctx.fillStyle = ink;
+                ctx.fillRect(c.x, c.y, 1, 1);
+                pixel.render(); pv.render();
+            };
+            pixel.image = art;
+            pv.image = art;
+            pixel.addEventListener("sac:pixel-down", (e) => paint(e.detail));
+            pixel.addEventListener("sac:pixel-move", (e) => paint(e.detail));
+            pixel.addEventListener("sac:pixel-hover", (e) => { hover = e.detail; say(); });
+            pixel.addEventListener("sac:zoom", say);
+        }
+
+        // sac-toolbox — its hotkeys attribute is switched by the app itself
+        // (on stage only: the keys are global), see _syncDemoKeys().
+        const tb = root.querySelector("#demo-toolbox");
+        if (tb) {
+            tb.tools = [
+                { id: "pencil", icon: "pencil",     label: "Pencil",     key: "b" },
+                { id: "eraser", icon: "eraser",     label: "Eraser",     key: "e" },
+                null,
+                { id: "fill",   icon: "bucket",     label: "Fill",       key: "g" },
+                { id: "pick",   icon: "eyedropper", label: "Eyedropper", key: "i" },
+                null,
+                { id: "select", icon: "marquee",    label: "Select",     key: "m" },
+                { id: "move",   icon: "move",       label: "Move",       key: "v" },
+            ];
+            const st = root.querySelector("#demo-toolbox-state");
+            tb.addEventListener("sac:change", (e) => { st.textContent = "tool: " + e.detail.value; });
+        }
+        const tr = root.querySelector("#demo-toolbox-row");
+        if (tr) tr.tools = [
+            { id: "line", icon: "line", label: "Line" },
+            { id: "rect", icon: "square", label: "Rectangle" },
+            { id: "rectfill", icon: "square-fill", label: "Filled rectangle" },
+            { separator: true },
+            { id: "ellipse", icon: "circle", label: "Ellipse" },
+            { id: "ellipsefill", icon: "circle-fill", label: "Filled ellipse" },
+        ];
+
+        const film = root.querySelector("#demo-film");
+        if (film) {
+            const hues = ["var(--palette-blue)", "var(--palette-orange)", "var(--palette-green)", "var(--palette-pink)"];
+            // A bouncing 16×16 ball, four frames. Colors are resolved from the
+            // data palette so the demo follows the theme.
+            const ball = (dy, i) => sgSprite(16, 16, (ctx) => {
+                ctx.fillStyle = sgColor(hues[i].slice(4, -1));
+                ctx.fillRect(5, 3 + dy, 6, 6);
+                ctx.fillRect(4, 4 + dy, 8, 4);
+                ctx.fillStyle = sgColor("--palette-gray");
+                ctx.fillRect(3, 14, 10, 1);
+            });
+            let frames = [0, 3, 6, 3].map(ball);
+            film.frames = frames;
+            const state = root.querySelector("#demo-film-state");
+            const say = (msg) => { state.textContent = `frame ${film.value + 1} of ${frames.length}${msg ? " · " + msg : ""}`; };
+            film.addEventListener("sac:change", () => say());
+            film.addEventListener("sac:reorder", (e) => {
+                frames.splice(e.detail.to, 0, ...frames.splice(e.detail.from, 1));
+                say(`moved ${e.detail.from + 1} → ${e.detail.to + 1}`);
+            });
+            film.addEventListener("sac:action", (e) => {
+                const i = e.detail.index;
+                if (e.detail.action === "add") { frames.splice(i + 1, 0, sgSprite(16, 16, () => {})); film.frames = frames; film.value = i + 1; }
+                if (e.detail.action === "duplicate") {
+                    const src = frames[i];
+                    frames.splice(i + 1, 0, sgSprite(16, 16, (ctx) => ctx.drawImage(src, 0, 0)));
+                    film.frames = frames; film.value = i + 1;
+                }
+                if (e.detail.action === "delete" && frames.length > 1) { frames.splice(i, 1); film.frames = frames; film.value = Math.min(i, frames.length - 1); }
+                say(e.detail.action);
+            });
+            // Play: the timer is the app's, the strip just follows.
+            let timer = null;
+            const play = root.querySelector("#demo-film-play");
+            play.addEventListener("click", () => {
+                if (timer) { clearInterval(timer); timer = null; play.innerHTML = '<sac-icon name="play"></sac-icon>'; return; }
+                play.innerHTML = '<sac-icon name="pause"></sac-icon>';
+                timer = setInterval(() => {
+                    if (!film.isConnected) { clearInterval(timer); timer = null; return; }
+                    film.value = (film.value + 1) % frames.length; say();
+                }, 160);
+            });
+            say();
+        }
+
+        const layerList = root.querySelector("#demo-layers");
+        if (layerList) {
+            const col = sgColor;
+            const layers = [
+                { id: "ink",   name: "Ink",        visible: true,  locked: false,
+                  thumb: sgSprite(16, 16, (c) => { c.fillStyle = col("--palette-indigo"); c.fillRect(3, 3, 10, 1); c.fillRect(3, 12, 10, 1); c.fillRect(3, 3, 1, 10); c.fillRect(12, 3, 1, 10); }) },
+                { id: "color", name: "Flat color", visible: true,  locked: false,
+                  thumb: sgSprite(16, 16, (c) => { c.fillStyle = col("--palette-yellow"); c.fillRect(4, 4, 8, 8); }) },
+                { id: "bg",    name: "Background", visible: false, locked: true,
+                  thumb: sgSprite(16, 16, (c) => { c.fillStyle = col("--palette-teal"); c.fillRect(0, 0, 16, 16); }) },
+            ];
+            layerList.layers = layers;
+            const state = root.querySelector("#demo-layers-state");
+            let n = 0;
+            layerList.addEventListener("sac:change",  (e) => { state.textContent = `active: ${e.detail.id}`; });
+            layerList.addEventListener("sac:toggle",  (e) => { state.textContent = `${e.detail.id}.${e.detail.prop} = ${e.detail.value}`; });
+            layerList.addEventListener("sac:rename",  (e) => { state.textContent = `renamed ${e.detail.id} → “${e.detail.name}”`; });
+            layerList.addEventListener("sac:reorder", (e) => { state.textContent = `moved ${e.detail.from} → ${e.detail.to}`; });
+            layerList.addEventListener("sac:action",  (e) => {
+                const cur = layerList.layers;                       // the list's own state
+                const i = Math.max(0, cur.findIndex((l) => l.id === e.detail.id));
+                if (e.detail.action === "add") {
+                    const id = "layer-" + (++n);
+                    cur.splice(i, 0, { id, name: `Layer ${n}`, visible: true, locked: false, thumb: sgSprite(16, 16, () => {}) });
+                    layerList.layers = cur; layerList.value = id;
+                } else if (e.detail.action === "duplicate") {
+                    const id = cur[i].id + "-copy-" + (++n);
+                    cur.splice(i, 0, { ...cur[i], id, name: cur[i].name + " copy" });
+                    layerList.layers = cur; layerList.value = id;
+                } else if (e.detail.action === "delete" && cur.length > 1) {
+                    cur.splice(i, 1);
+                    layerList.layers = cur; layerList.value = cur[Math.min(i, cur.length - 1)].id;
+                }
+                state.textContent = e.detail.action;
+            });
+        }
+
+        // sac-shortcut-sheet — "?" is bound while the guide is on stage.
+        const sb = root.querySelector("#demo-shortcuts");
+        if (sb) sb.addEventListener("click", () => sac.shortcuts.show());
     }
 
     /* ---------------------------------------------------------- layout --- */
@@ -2802,6 +3217,7 @@ list.addEventListener("click", (e) => { showItem(e.target); split.show = "end"; 
 <script defer src="kit/js/lib/pan-zoom.js"><\/script>   <!-- optional: viewports -->
 <script defer src="kit/js/lib/apps.js"><\/script>       <!-- optional: app runtime + hub pages -->
 <script defer src="kit/js/lib/hotkeys.js"><\/script>    <!-- optional: shortcuts + Ctrl-K palette -->
+<script defer src="kit/js/lib/sortable.js"><\/script>   <!-- required by filmstrip + layer list -->
 <script defer src="kit/js/lib/color.js"><\/script>      <!-- required by the color components -->
 <!-- vendor (optional, for markdown): marked + purify -->
 <!-- components in any order, then views -->`)}
@@ -2850,6 +3266,45 @@ pz.reset();                               // e.g. when a new image loads`)}
                 ${compact(`one finger pans, two fingers pinch-zoom around their midpoint (and pan with it), a double-tap
                    resets. The pane gets <code>touch-action: none</code>, so the gesture stays inside it — page scroll
                    and page zoom are untouched everywhere else.`)}
+
+                <h2 id="sac-sortable">sac.sortable — drag to reorder</h2>
+                <p>Pointer-based drag-to-reorder for any list of elements — the engine under
+                   <code>&lt;sac-filmstrip reorderable&gt;</code> and <code>&lt;sac-layer-list&gt;</code>, usable on
+                   plain markup too. The dragged item travels through the list and its slot opens as a live gap;
+                   on drop it stays there and <code>onReorder(from, to)</code> reports the move once. Works inside
+                   shadow roots (nothing is moved out of the container). Keyboard reordering is the component's
+                   job — the helper is pointer-only.</p>
+                <div class="sg-demo">
+                    <ul id="demo-sortable" class="sg-sortable" style="list-style:none;margin:0;padding:0;display:flex;gap:6px;flex-wrap:wrap;">
+                        <li class="sg-chip-item"><sac-chip label="Alpha"></sac-chip></li>
+                        <li class="sg-chip-item"><sac-chip label="Bravo"></sac-chip></li>
+                        <li class="sg-chip-item"><sac-chip label="Charlie"></sac-chip></li>
+                        <li class="sg-chip-item"><sac-chip label="Delta"></sac-chip></li>
+                        <li class="sg-chip-item"><sac-chip label="Echo"></sac-chip></li>
+                    </ul>
+                    <span id="demo-sortable-state" style="color:var(--text-muted);font-size:0.85rem;">drag a chip</span>
+                </div>
+                ${table("Option", [
+                    ["items", "Selector for the draggable children of <code>container</code>. Default <code>*</code>."],
+                    ["handle", "Optional selector — only this part starts a drag. On touch a handle drags at once (it gets <code>touch-action: none</code>); without one a drag needs a 250ms long-press, so a swipe keeps scrolling."],
+                    ["axis", "<code>\"y\"</code> (default), <code>\"x\"</code> or <code>\"grid\"</code> (wrapping rows — nearest item decides)."],
+                    ["onReorder(from, to)", "Called once on drop, only if the index changed. Mirror with <code>arr.splice(to, 0, ...arr.splice(from, 1))</code>."],
+                    ["disabled", "Boolean or function returning one — e.g. <code>() =&gt; editing</code>."],
+                    ["ignore", "Presses starting here never drag. Default <code>input, textarea, select, [contenteditable], [data-sortable-ignore]</code>."],
+                ])}
+                ${table("Returns", [["{ destroy() }", "Removes every listener (and puts back an item mid-drag)."]])}
+                ${table("Interaction", [
+                    ["Mouse / pen", "Press and move 4px to lift — a plain click stays a click; the click after a drop is eaten."],
+                    ["Touch", "250ms long-press without moving (or the handle) lifts; moving first is a scroll."],
+                    ["Escape", "Cancels the drag and puts the item back — no callback."],
+                    ["Edges", "The nearest scrolling ancestor (across shadow roots) auto-scrolls near its edge."],
+                    ["Styling", "The item in flight carries <code>data-sortable-dragging</code> — give it a lift (<code>box-shadow: var(--shadow-2)</code>)."],
+                ])}
+                ${code(`sac.sortable(listEl, {
+    items: "li",
+    axis: "grid",
+    onReorder(from, to) { tags.splice(to, 0, ...tags.splice(from, 1)); save(tags); },
+});`)}
 
                 <h2>Toolbars — no projection, by design</h2>
                 <p><strong>The app owns its top area.</strong> There is no <code>sac.toolbar</code>:
@@ -3364,6 +3819,19 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
     }
 
     function wireHelpers(root) {
+        const sortList = root.querySelector("#demo-sortable");
+        if (sortList && window.sac && sac.sortable) {
+            const state = root.querySelector("#demo-sortable-state");
+            sac.sortable(sortList, {
+                items: "li",
+                axis: "grid",
+                onReorder: (from, to) => {
+                    const order = Array.from(sortList.children, (li) => li.textContent.trim() || li.querySelector("sac-chip").getAttribute("label"));
+                    state.textContent = `moved ${from} → ${to}: ${order.join(", ")}`;
+                },
+            });
+        }
+
         // Live pan-zoom demo: two panes, one transform.
         const grid = (label) => {
             const div = document.createElement("div");
@@ -3576,11 +4044,25 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                     () => sac.toast("Ran from the keyboard.", { kind: "success" }),
                     { description: "Toast a success message" }),
             ];
+            // The shortcut sheet's "?" and its gesture entries, and the demo
+            // toolbox's tool keys — global too, so on stage only.
+            offs.push(sac.shortcuts.bind(), sac.shortcuts.add([
+                { group: "Demo tools", keys: "Space + drag", description: "Pan the pixel canvas" },
+                { group: "Demo tools", keys: ["Alt", "click"], description: "Pick a color" },
+            ]));
             this._demoOff = () => offs.forEach((f) => typeof f === "function" && f());
+            this._syncDemoKeys();
         }
 
         _demoCmdsOff() {
             if (this._demoOff) { this._demoOff(); this._demoOff = null; }
+            this._syncDemoKeys();
+        }
+
+        /** The demo toolbox registers its keys only while the guide is on stage. */
+        _syncDemoKeys() {
+            const tb = this.querySelector("#demo-toolbox");
+            if (tb) tb.toggleAttribute("hotkeys", !!this._demoOff);
         }
 
         unmount() {
@@ -3732,6 +4214,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                 // demos wire themselves fresh on every render.
                 this._body.innerHTML = section.html();
                 if (section.wire) section.wire(this._body);
+                this._syncDemoKeys();
                 this._watchCode();
                 // Every h2/h3 with an id is addressable ("patterns/responsive");
                 // only an anchors section lists its h2s in the rail.

@@ -40,6 +40,7 @@
         "lib/pan-zoom.js",
         "lib/apps.js",
         "lib/hotkeys.js",
+        "lib/sortable.js", // drag-reorder — filmstrip + layer list use it
         "lib/color.js",
         "lib/fs.js",      // storage capability — apps.js hands it to apps
         "lib/identity.js",// who is at this desktop (rides on the fs backend)
@@ -90,6 +91,14 @@
         "components/sac-spinner.js",
         "components/sac-theme-toggle.js",
         "components/sac-launcher.js",
+
+        // pixel workbench — sac-toolbox after sac-tooltip (it attaches
+        // kit tooltips when it builds its buttons).
+        "components/sac-pixel-canvas.js",
+        "components/sac-toolbox.js",
+        "components/sac-filmstrip.js",
+        "components/sac-layer-list.js",
+        "components/sac-shortcut-sheet.js",
     ];
 
     let pending = files.length;

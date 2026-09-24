@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#eef2f7" media="(prefers-color-scheme: light)">
     <title>SACRVM APPKIT</title>
-    <meta name="description" content="A zero-dependency HTML UI kit for tool-style web apps: seed-driven themes, 40 sac-* web components, workspace layouts. No build step — vendor the kit/ folder as plain files.">
+    <meta name="description" content="A zero-dependency HTML UI kit for tool-style web apps: seed-driven themes, 45 sac-* web components, workspace layouts. No build step — vendor the kit/ folder as plain files.">
 
     <meta property="og:title" content="SACRVM APPKIT">
     <meta property="og:description" content="A zero-dependency HTML UI kit for tool-style web apps. No build step — vendor the kit/ folder as plain files.">
@@ -196,6 +196,15 @@
                                     <p class="tile-meta">App · demo</p>
                                 </div>
                             </a>
+                            <a class="tile" href="#/pixel-lab" style="--accent:#e6a341;">
+                                <sac-icon name="grid"></sac-icon>
+                                <div>
+                                    <h2>Pixel Lab</h2>
+                                    <p>The pixel workbench as a small sprite editor: integer-zoom canvas, tool
+                                       ribbon, layers, filmstrip with onion skin, export and a shortcut sheet.</p>
+                                    <p class="tile-meta">App · demo</p>
+                                </div>
+                            </a>
                             <!-- A window app: the click injects its script and
                                  mounts it into a floating sac-window. -->
                             <a class="tile" href="?app=about" data-app="about" style="--accent:#ec4899;">
@@ -332,6 +341,15 @@
                 // Its accent is its own identity — the app's stylesheet sets
                 // it, so it stays green standalone too. manifest.accent is for
                 // when the SHELL wants to tint an app it hosts.
+            });
+            sac.apps.register({
+                id:          "pixel-lab",
+                name:        "Pixel Lab",
+                icon:        "grid",
+                description: "The pixel workbench: a small sprite editor built from kit parts only.",
+                kind:        "view",
+                tag:         "app-pixel-lab",
+                src:         "demo/pixel-lab/app.js",
             });
             sac.apps.register({
                 id:          "build",

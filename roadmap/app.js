@@ -275,9 +275,9 @@
         </tr>
         <tr data-item="pixel-workbench">
             <td>Pixel workbench</td>
-            <td>Integer-snap pan-zoom + checkerboard tokens, icon tool-ribbon, filmstrip/timeline, sortable layer list, ~14 tool icons, export dialog, shortcut cheat-sheet.</td>
+            <td><code>sac-pixel-canvas</code> (integer-ladder zoom, grid-locked checker, onion/float/marquee layers), <code>sac-toolbox</code>, <code>sac-filmstrip</code>, <code>sac-layer-list</code> on <code>sac.sortable</code>, <code>sac-shortcut-sheet</code>, checker + pixel-grid tokens, 20 tool icons. The export dialog is a <code>sac-dialog</code> recipe in the Pixel Lab demo.</td>
             <td>Atelier</td><td>L</td>
-            <td><sac-chip label="open" color="gray"></sac-chip></td>
+            <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
         <tr data-item="date-suite">
             <td><code>sac-calendar</code> + <code>sac-date-field</code></td>
@@ -313,8 +313,8 @@
         </tr>
         <tr data-item="md-editor">
             <td>Markdown editor add-on</td>
-            <td>Standing decision: optional module, not core.</td>
-            <td><sac-chip label="open" color="gray"></sac-chip></td>
+            <td>Optional module, not core — shipped as its own repo, <a href="https://github.com/SACRVM/sac-md-editor">sac-md-editor</a>.</td>
+            <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
     </table>
 
@@ -395,7 +395,7 @@
     <table class="rm rm-matrix">
         <tr><th></th><th>SACRVM</th><th>Web Awesome</th><th>Pico</th><th>Open Props</th><th>daisyUI</th></tr>
         <tr><td>Zero build / no npm</td><td>✔</td><td>✔ (CDN)</td><td>✔</td><td>✔ (CDN)</td><td>✘ (Tailwind)</td></tr>
-        <tr><td>Web components</td><td>✔ 40</td><td>✔ ~45</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>Web components</td><td>✔ 45</td><td>✔ ~45</td><td>—</td><td>—</td><td>—</td></tr>
         <tr><td>Token theming</td><td>✔ seeds→derived</td><td>✔ props</td><td>✔ vars</td><td>✔✔ scales</td><td>✔ themes</td></tr>
         <tr><td>Dark + light</td><td>✔ auto</td><td>✔</td><td>✔ auto</td><td>✔</td><td>✔ many</td></tr>
         <tr><td>App shell / router</td><td>✔✔</td><td>✘</td><td>✘</td><td>✘</td><td>✘</td></tr>

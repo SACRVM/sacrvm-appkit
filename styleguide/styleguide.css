@@ -456,3 +456,7 @@ table.sg td:first-child { white-space: nowrap; }
 @media (hover: none) and (pointer: coarse) {
     .sg-kbd-hint { display: none; }
 }
+
+/* sac.sortable demo (Helpers) */
+.sg-sortable li { cursor: grab; border-radius: var(--radius-m); }
+.sg-sortable li[data-sortable-dragging] { cursor: grabbing; box-shadow: var(--shadow-2); }
