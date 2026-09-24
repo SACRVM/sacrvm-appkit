@@ -458,7 +458,7 @@
                 ])}
                 ${table("Method", [
                     ["open() / close() / toggle()", "Show, hide, flip. open() also brings to front."],
-                    ["bringToFront()", "Z-index walk over all sac-windows (base 10000)."],
+                    ["bringToFront()", "Raises the window over the other sac-windows. Windows stack in their own band, <code>10000–18999</code>: above the page, below the open burger panel / rail drawer (<code>19000+</code>) and dialogs (<code>20000</code>) — reaching the top re-packs the band, so no window ever covers the menu."],
                     ["minimize() / maximize()", "Enter either state. Each clears the other; leaving <code>maximized</code> puts the saved rect back first."],
                     ["restore()", "Back to the saved rect from either state, clamped in case the viewport shrank meanwhile."],
                 ])}
