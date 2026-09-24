@@ -73,13 +73,15 @@ class SacCopyButton extends HTMLElement {
                     display: inline-flex;
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                 }
+                /* The .icon-btn recipe from ui.css — shared via the
+                   --icon-btn-* tokens, since the class can't reach in here. */
                 button {
-                    --icon-size: 14px;
+                    --icon-size: var(--icon-btn-icon);
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    width: 26px;
-                    height: 26px;
+                    width: var(--icon-btn-size);
+                    height: var(--icon-btn-size);
                     padding: 0;
                     border: none;
                     border-radius: var(--radius-m);

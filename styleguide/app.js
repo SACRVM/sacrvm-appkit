@@ -204,6 +204,11 @@
                 <p>The whole kit rounds through these three tokens — identical in every theme (never set
                    inside a <code>[data-theme]</code> block). Tuning: override the three vars after
                    <code>ui.css</code> to resharpen or soften the entire kit at once.</p>
+                <table class="sg">
+                    <tr><th>Token</th><th>Value</th><th>Use for</th></tr>
+                    <tr><td><code>--icon-btn-size</code></td><td>26px</td><td>box of <code>.icon-btn</code> and <code>&lt;sac-copy-button&gt;</code></td></tr>
+                    <tr><td><code>--icon-btn-icon</code></td><td>14px</td><td>glyph inside it</td></tr>
+                </table>
 
                 <h2>Typography</h2>
                 <div class="sg-demo">
@@ -1080,7 +1085,8 @@ zone.addEventListener("sac:rejected", (e) => {
                 <p>Click-to-copy in one tag: a literal <code>value</code>, or a <code>for</code>
                    selector — the form to prefer next to a command line, since the page text stays the
                    single source of truth. The icon swaps in place to a check for ~1.4s on success and
-                   to an error glyph on failure; nothing moves, nothing resizes.</p>
+                   to an error glyph on failure; nothing moves, nothing resizes. A button beside it
+                   (delete, edit) is an <code>.icon-btn</code> — same recipe, same tokens.</p>
                 <div class="sg-demo sg-col" style="max-width:420px;">
                     <div class="sg-row">
                         <sac-copy-button id="demo-copy-value" value="npx serve ."></sac-copy-button>
@@ -2033,6 +2039,23 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
     <button class="btn primary">Open File</button>
     <button class="nav-icon-btn"><sac-icon name="settings"></sac-icon></button>
 </div>`)}
+
+                <h2>Small icon button — .icon-btn</h2>
+                <p>The 26px ghost icon button for rows, lists and cards — the light-DOM twin of
+                   <code>&lt;sac-copy-button&gt;</code>. <strong>An icon button next to a copy button is an
+                   <code>.icon-btn</code></strong>: both read <code>--icon-btn-size</code>/<code>--icon-btn-icon</code>,
+                   so they stay alike across kit upgrades. Variants: <code>.danger</code> (danger on hover),
+                   <code>:disabled</code>.</p>
+                <div class="sg-demo">
+                    <div class="sg-row">
+                        <button class="icon-btn danger" title="Remove"><sac-icon name="trash"></sac-icon></button>
+                        <button class="icon-btn" title="Edit"><sac-icon name="pencil"></sac-icon></button>
+                        <sac-copy-button value="Ada Lovelace"></sac-copy-button>
+                        <button class="icon-btn" title="Remove" disabled><sac-icon name="trash"></sac-icon></button>
+                    </div>
+                </div>
+                ${code(`<button class="icon-btn danger" title="Remove"><sac-icon name="trash"></sac-icon></button>
+<sac-copy-button value="Ada Lovelace"></sac-copy-button>`)}
 
                 <h2>Form controls</h2>
                 <p>Native <code>input</code>/<code>select</code>/<code>textarea</code>/<code>label</code> are

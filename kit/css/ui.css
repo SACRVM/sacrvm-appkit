@@ -123,6 +123,13 @@
     --radius-m: 4px;   /* controls: buttons, inputs, chips, menu items, tabs */
     --radius-l: 6px;   /* surfaces: panels, cards, tiles, windows, dialogs, popovers, toasts */
 
+    /* Small ghost icon button — ONE measure for the light-DOM .icon-btn and
+       the shadow buttons that must match it (sac-copy-button). Custom
+       properties cross shadow roots; a class does not. 14/26 ≈ the kit's
+       ~56% icon-to-box ratio. */
+    --icon-btn-size: 26px;
+    --icon-btn-icon: 14px;
+
     /* Caption / eyebrow type — the ONE shared shape for uppercase section
        titles (sac-section) and lone light-DOM captions (.sac-caption), so the
        two can never drift. Colour is deliberately NOT here: it is per role —
@@ -628,6 +635,46 @@ a.nav-icon-btn { text-decoration: none; }
    round shape, so this only sizes the avatar to sit inside with the usual
    hover ring. Combines with .labeled (avatar + name in the pill). */
 .nav-icon-btn.avatar { --avatar-size: 26px; }
+
+/* Small ghost icon button for rows, lists and cards — the light-DOM twin of
+   <sac-copy-button>'s inner button. Both read --icon-btn-size/--icon-btn-icon,
+   so a delete button beside a copy button stays its twin across kit upgrades. */
+.icon-btn {
+    --icon-size: var(--icon-btn-icon);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: var(--icon-btn-size);
+    height: var(--icon-btn-size);
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-m);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 120ms var(--ease-smooth), background 120ms var(--ease-smooth);
+}
+.icon-btn:hover:not(:disabled) {
+    background: var(--hover);
+    color: var(--text);
+}
+.icon-btn:active:not(:disabled) { background: var(--hover-strong); }
+.icon-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+.icon-btn.danger:hover:not(:disabled) { color: var(--danger-text); }
+.icon-btn:disabled { opacity: 0.3; cursor: default; }
+.icon-btn[hidden] { display: none; }
+.icon-btn svg {
+    width: var(--icon-size);
+    height: var(--icon-size);
+}
+@media (prefers-reduced-motion: reduce) {
+    .icon-btn { transition: none; }
+}
 
 /* --------------------------------------------------------------------------
    9. Panels, cards, menus, logs (CSS patterns — documented in the style guide)
