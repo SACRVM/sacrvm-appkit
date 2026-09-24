@@ -283,7 +283,18 @@
             </sac-filmstrip>
         </div>
     </sac-split>
-</div>`;
+</div>
+
+<sac-menu class="pl-ctx">
+    <button data-action="undo"><sac-icon name="undo"></sac-icon> Undo</button>
+    <button data-action="redo"><sac-icon name="redo"></sac-icon> Redo</button>
+    <hr>
+    <button data-action="select-all"><sac-icon name="marquee"></sac-icon> Select all</button>
+    <button data-action="clear" data-danger><sac-icon name="eraser"></sac-icon> Clear selection</button>
+    <hr>
+    <button data-action="save"><sac-icon name="save"></sac-icon> Save</button>
+    <button data-action="export"><sac-icon name="download"></sac-icon> Export…</button>
+</sac-menu>`;
         }
 
         /* ------------------------------------------------- app contract --- */
@@ -339,14 +350,16 @@
         }
 
         _bindKeys() {
-            const k = (combo, fn, description, group) =>
-                this._offs.push(sac.hotkeys.register(combo, fn, { description, group }));
-            k("mod+z", () => this._undo(), "Undo", "Edit");
-            k("mod+shift+z", () => this._redo(), "Redo", "Edit");
-            k("mod+y", () => this._redo(), "Redo", "Edit");
+            // skipInInput: these combos also edit text — in the hex field, a
+            // stepper or a layer rename they must stay the input's own.
+            const k = (combo, fn, description, group, skipInInput) =>
+                this._offs.push(sac.hotkeys.register(combo, fn, { description, group, skipInInput }));
+            k("mod+z", () => this._undo(), "Undo", "Edit", true);
+            k("mod+shift+z", () => this._redo(), "Redo", "Edit", true);
+            k("mod+y", () => this._redo(), "Redo", "Edit", true);
             k("delete", () => this._clearSelection(), "Clear the selection", "Edit");
             k("escape", () => this._select(null), "Deselect", "Edit");
-            k("mod+a", () => this._select({ x: 0, y: 0, w: W, h: H }), "Select all", "Edit");
+            k("mod+a", () => this._select({ x: 0, y: 0, w: W, h: H }), "Select all", "Edit", true);
             k("[", () => this._setBrush(this.brush - 1), "Smaller brush", "Tools");
             k("]", () => this._setBrush(this.brush + 1), "Bigger brush", "Tools");
             k("plus", () => this.$canvas.zoomIn(), "Zoom in", "View");
@@ -401,7 +414,17 @@
             c.addEventListener("sac:pixel-cancel", () => this._cancel());
             c.addEventListener("sac:pixel-hover", (e) => this._hud(e.detail));
             c.addEventListener("sac:zoom", () => this._hud(this._lastCell));
-            c.addEventListener("contextmenu", (e) => e.preventDefault());
+            // Right-click: the kit menu at the pointer (sac-menu openAt).
+            const ctx = this.querySelector(".pl-ctx");
+            c.addEventListener("contextmenu", (e) => { e.preventDefault(); ctx.openAt(e); });
+            ctx.addEventListener("sac:select", (e) => ({
+                "undo": () => this._undo(),
+                "redo": () => this._redo(),
+                "select-all": () => this._select({ x: 0, y: 0, w: W, h: H }),
+                "clear": () => this._clearSelection(),
+                "save": () => this._save(false),
+                "export": () => this._export(),
+            })[e.detail.action]?.());
 
             // Layers.
             const L = this.$layers;

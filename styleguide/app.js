@@ -223,6 +223,8 @@
                     <tr><th>Token</th><th>Value</th><th>Use for</th></tr>
                     <tr><td><code>--icon-btn-size</code></td><td>26px</td><td>box of <code>.icon-btn</code> and <code>&lt;sac-copy-button&gt;</code></td></tr>
                     <tr><td><code>--icon-btn-icon</code></td><td>14px</td><td>glyph inside it</td></tr>
+                    <tr><td><code>--tool-btn-size</code></td><td>32px (44px coarse)</td><td>box of <code>&lt;sac-toolbox&gt;</code>'s tools and <code>.icon-btn.tool</code></td></tr>
+                    <tr><td><code>--tool-btn-icon</code></td><td>18px</td><td>glyph inside it</td></tr>
                 </table>
 
                 <h2>Typography</h2>
@@ -444,7 +446,8 @@
                     <span id="demo-window-state" style="color:var(--text-muted);font-size:0.85rem;"></span>
                 </div>
                 ${table("Attribute", [
-                    ["title, width, height, top, left", "Geometry + title. width/height/top/left accept any CSS length."],
+                    ["title, width, height, top, left", "Geometry + title. width/height/top/left accept any CSS length. <code>height=\"auto\"</code> is supported: the window sizes to its content until the user resizes it."],
+                    ["right, bottom", "Anchor to the viewport's right / bottom edge instead of left / top (used only when <code>left</code> / <code>top</code> is absent): <code>right=\"16px\" bottom=\"16px\"</code> keeps a preview window in the corner while the browser resizes, and survives maximize / restore. The user's first drag or resize turns the anchor into a plain left / top position — where they put it is where it stays."],
                     ["open", "Presence = visible."],
                     ["minimized", "Collapsed to the title bar: body and resize handle hidden, configured width kept. Still draggable, not resizable. Reflected."],
                     ["maximized", "Filled to the viewport with an 8px inset, the top clearing the fixed 50px nav ribbon. Neither draggable nor resizable. Reflected, and mutually exclusive with <code>minimized</code>."],
@@ -461,6 +464,10 @@
                 ${table("Event", [
                     ["sac:open / sac:close", "Bubbles + composed, <code>detail.window</code> = the element."],
                     ["sac:minimize / sac:maximize / sac:restore", "Bubbles + composed, <code>detail.window</code> = the element. The restore event covers the return from either state."],
+                ])}
+                ${table("CSS custom property / part", [
+                    ["--window-padding", "The content's inner padding, default <code>20px</code>. A tool palette wants about <code>8px</code>; <code>0</code> for edge-to-edge content (a canvas, a list)."],
+                    ["::part(content)", "The scrolling content box, for the rare app that needs more than the padding."],
                 ])}
                 ${compact(`always maximized below the nav — an open window maximizes itself, the maximize dot is hidden,
                    dragging is off, minimize collapses it to its title bar at the top. The traffic lights get 44px
@@ -1491,6 +1498,18 @@ group.active = "two";   // programmatic switch — no event`)}
                     </sac-menu>
                     <span id="demo-menu-result" style="color:var(--text-muted);font-size:0.85rem;"></span>
                 </div>
+                <div class="sg-demo">
+                    <div id="demo-ctx-area" tabindex="0"
+                         style="display:grid;place-items:center;height:110px;border:1px dashed var(--border-strong);border-radius:var(--radius-m);color:var(--text-muted);font-size:0.85rem;user-select:none;">
+                        <span>Right-click here — a context menu via <code>openAt(event)</code></span>
+                    </div>
+                    <sac-menu id="demo-ctx-menu">
+                        <button data-action="cut"><sac-icon name="scissors"></sac-icon> Cut</button>
+                        <button data-action="copy"><sac-icon name="copy"></sac-icon> Copy</button>
+                        <hr>
+                        <button data-action="flip-h"><sac-icon name="flip-h"></sac-icon> Flip horizontal</button>
+                    </sac-menu>
+                </div>
                 ${table("Slot", [
                     ["trigger", "The element that opens the menu (a <code>.btn</code>, an icon button, …). Kept in sync with <code>aria-haspopup</code> / <code>aria-expanded</code>."],
                     ["(default)", "Menu items: <code>&lt;button data-action=\"…\"&gt;</code>. An <code>&lt;hr&gt;</code> draws a separator; <code>data-danger</code> tints the hover state with <code>--danger</code>. Icons inside items inherit <code>--icon-size: 16px</code> from the panel."],
@@ -1498,6 +1517,7 @@ group.active = "two";   // programmatic switch — no event`)}
                 ${table("Attribute / Method", [
                     ["open", "Presence = panel visible. Reflected by the methods; settable directly (it positions itself either way)."],
                     ["open() / close() / toggle()", "Show, hide, flip. <code>open()</code> anchors the panel to the trigger's viewport rect and shows it in the <strong>top layer</strong> (<code>popover</code>), so neither a clipping ancestor nor a transformed one can reach it — a menu works inside a <code>.tile</code>, which is both. It flips above the trigger when there is no room below, and re-anchors on scroll/resize."],
+                    ["openAt(point)", "A <b>context menu</b>: opens with its top-left at a viewport point — pass the <code>contextmenu</code> event itself or any <code>{ clientX, clientY }</code>. Flips left / up where there is no room, clamped 8px inside the viewport; same keyboard. No trigger needed — a <code>&lt;sac-menu&gt;</code> with only items is a context menu. Scrolling closes it (the point no longer means anything); <kbd>Esc</kbd> returns focus to what had it before."],
                 ])}
                 ${table("Event", [["sac:select", "detail { action }."]])}
                 ${table("Keyboard", [
@@ -1511,7 +1531,13 @@ group.active = "two";   // programmatic switch — no event`)}
     <button data-action="delete" data-danger><sac-icon name="trash"></sac-icon> Delete</button>
 </sac-menu>
 
-menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
+menu.addEventListener("sac:select", e => console.log(e.detail.action));
+
+// context menu — no trigger slot
+canvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    ctxMenu.openAt(e);
+});`)}
                 ${compact(`the panel is at most <code>100vw - 16px</code> wide, so the 8px clamp holds at 360px; under
                    <code>pointer: coarse</code> every item is at least 44px tall. The trigger opens on tap — nothing is
                    hover-only — and a closed panel takes no layout, so a menu at the right edge never adds sideways
@@ -1551,7 +1577,9 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
                     ["combo", "<code>ctrl</code> · <code>alt</code> · <code>shift</code> · <code>meta</code> · <code>mod</code> (Ctrl on Windows/Linux, ⌘ on macOS), in any order, then the key: <code>\"mod+k\"</code>, <code>\"ctrl+shift+p\"</code>, <code>\"alt+1\"</code>, <code>\"escape\"</code>. Matching is exact — <code>ctrl+k</code> does not fire while Shift is held."],
                     ["opts.description", "Shown by <code>list()</code> (and any shortcuts help screen)."],
                     ["opts.group", "Heading the binding is listed under in <code>&lt;sac-shortcut-sheet&gt;</code> (\"Tools\", \"Edit\"). A listing aid only — it changes no matching."],
-                    ["opts.allowInInput", "Combos without ctrl/alt/meta are ignored while the user types in an input, textarea, select or contenteditable — including inside Shadow DOM. This opts out."],
+                    ["opts.allowInInput", "Combos without ctrl/alt/meta are ignored while the user types in an input, textarea, select or contenteditable — including inside Shadow DOM. This opts out (of the activation guard below too)."],
+                    ["opts.skipInInput", "Combos <em>with</em> ctrl/alt/meta fire even while typing — nobody types Ctrl-K. For a combo that also edits text (<code>mod+a</code>, <code>mod+z</code>, <code>mod+c/x/v</code>) pass <code>skipInInput: true</code>: the canvas keeps its select-all, every input on the page keeps its own."],
+                    ["Activation guard", "A plain <code>enter</code> or <code>space</code> binding does not fire while focus is on something those keys already press — a button, a link, a checkbox, a <code>[role=button]</code> / menuitem / tab / option. Enter on a focused button presses the button, not the page's “play”."],
                     ["Same combo twice", "A stack: the newest registration wins, unregistering it restores the previous one. That is what makes a modal's temporary binding safe."],
                     ["list() / format(combo)", "<code>[{ combo, display, description, group }]</code> for every active binding · a platform-aware display string (<code>\"Ctrl+Shift+X\"</code> / <code>\"⌃⇧X\"</code>)."],
                 ])}
@@ -1743,7 +1771,7 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
                 ${table("Interaction", [
                     ["Wheel", "Zooms one ladder step around the cursor (trackpad bursts are accumulated, so a flick does not race to 64×)."],
                     ["Pan", "Middle-drag, or <kbd>Space</kbd> held over the canvas + drag. A pan always leaves 32px of the image on screen."],
-                    ["Right-click", "Not consumed — listen for <code>contextmenu</code> on the element and open a <code>&lt;sac-menu&gt;</code>."],
+                    ["Right-click", "Not consumed — listen for <code>contextmenu</code> on the element and open a <code>&lt;sac-menu&gt;</code> there with <code>openAt(event)</code>."],
                 ])}
                 ${code(`<sac-pixel-canvas tile-grid="8" style="height: 480px"></sac-pixel-canvas>
 
@@ -1798,6 +1826,9 @@ canvas.render();`)}
   ];
   box.addEventListener("sac:change", (e) => setTool(e.detail.value));
 <\/script>`)}
+                <p>The button measure is the kit token <code>--tool-btn-size</code> / <code>--tool-btn-icon</code>
+                   (32 / 18px) — the same one <code>.icon-btn.tool</code> reads, so an action row under the box
+                   matches it. <code>--tool-size</code> on the element still overrides one box.</p>
                 ${compact(`under <code>pointer: coarse</code> every button grows to 44 × 44 (the glyph keeps its size — a tool
                    grid is tapped all day, a halo would steal a neighbour's taps); no hover wash sticks to a tapped tool.`)}
 
@@ -2343,6 +2374,12 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
         root.querySelector("#demo-menu").addEventListener("sac:select", (e) => {
             menuResult.textContent = `selected: ${e.detail.action}`;
         });
+        const ctxArea = root.querySelector("#demo-ctx-area");
+        const ctxMenu = root.querySelector("#demo-ctx-menu");
+        ctxArea.addEventListener("contextmenu", (e) => { e.preventDefault(); ctxMenu.openAt(e); });
+        ctxMenu.addEventListener("sac:select", (e) => {
+            ctxArea.textContent = `context menu: ${e.detail.action}`;
+        });
 
         // Command palette — just the live opener here. The two demo commands
         // and the mod+shift+x hotkey are GLOBAL registrations, so they belong
@@ -2749,6 +2786,21 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                 </div>
                 ${code(`<button class="icon-btn danger" title="Remove"><sac-icon name="trash"></sac-icon></button>
 <sac-copy-button value="Ada Lovelace"></sac-copy-button>`)}
+                <h3>Tool-sized: .icon-btn.tool</h3>
+                <p>An action row that sits beside a <code>&lt;sac-toolbox&gt;</code> — copy, paste, flip,
+                   crop under the tools of a pixel editor — must share its measure. <code>.icon-btn.tool</code>
+                   reads <code>--tool-btn-size</code>/<code>--tool-btn-icon</code>, the same tokens the toolbox
+                   reads, so the row and the box can never drift; 44px under a coarse pointer, like the box.
+                   <code>.active</code> or <code>aria-pressed="true"</code> takes the toolbox's active look.</p>
+                <div class="sg-demo sg-row">
+                    <button class="icon-btn tool" title="Copy"><sac-icon name="copy"></sac-icon></button>
+                    <button class="icon-btn tool" title="Cut"><sac-icon name="scissors"></sac-icon></button>
+                    <button class="icon-btn tool" title="Paste"><sac-icon name="paste"></sac-icon></button>
+                    <button class="icon-btn tool" title="Flip horizontal"><sac-icon name="flip-h"></sac-icon></button>
+                    <button class="icon-btn tool" title="Crop to the object"><sac-icon name="crop"></sac-icon></button>
+                    <button class="icon-btn tool" aria-pressed="true" title="Onion skin"><sac-icon name="onion"></sac-icon></button>
+                </div>
+                ${code(`<button class="icon-btn tool" title="Paste"><sac-icon name="paste"></sac-icon></button>`)}
 
                 <h2>Form controls</h2>
                 <p>Native <code>input</code>/<code>select</code>/<code>textarea</code>/<code>label</code> are
