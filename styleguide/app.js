@@ -1739,12 +1739,12 @@ canvas.addEventListener("contextmenu", (e) => {
                     </div>
                 </div>
                 ${table("Attribute", [
-                    ["zoom", "Integer CSS px per image pixel, reflected on every change and snapped onto the ladder. Omit it and the view fits the image — and keeps fitting while the element resizes, until the user zooms or pans. An author-given zoom is kept (re-centered on resize)."],
+                    ["zoom", "Integer CSS px per image pixel, reflected on every change and snapped onto the ladder <code>1 2 3 4 6 8 12 16 24 32 48 64 96 128</code> (within min/max-zoom): a value off it goes to the nearest step, a tie going down — <code>5</code> is <code>4</code>, so offer ladder values in a zoom menu. A <code>static</code> canvas has no ladder: any integer within min/max-zoom is taken as is (a 5× preview is 5×), and a zoom change re-sizes the element. Omit it and the view fits the image — and keeps fitting while the element resizes, until the user zooms or pans. An author-given zoom is kept (re-centered on resize)."],
                     ["min-zoom / max-zoom", "Ladder bounds, default <code>1</code> / <code>64</code>."],
                     ["grid", "<code>auto</code> (default: the pixel grid from 8×), <code>on</code>, <code>off</code>. Color <code>--pixel-grid</code>."],
                     ["tile-grid", "N — a stronger line every N pixels (<code>--border-strong</code>), measured from the region's origin."],
                     ["brush", "Size of the hover box in image pixels (default 1, <code>0</code> hides it). Centered like a square brush."],
-                    ["static", "A preview: no input, and the element sizes itself to region × zoom — the small live preview beside the big canvas."],
+                    ["static", "A preview: no drawing, and the element sizes itself to region × zoom — the small live preview beside the big canvas. Larger than its box (a scrolling window or panel), a middle-drag pans that box — the editor's gesture; touch scrolls natively."],
                 ])}
                 ${table("Property", [
                     ["image", "The pixels: <code>ImageData</code>, <code>{ width, height, data }</code>, a canvas / OffscreenCanvas, an <code>&lt;img&gt;</code> or ImageBitmap. A new size refits."],
