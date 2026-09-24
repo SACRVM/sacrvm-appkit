@@ -1,7 +1,7 @@
 {
     "name": "sacrvm-appkit",
-    "version": "2.6.0",
-    "description": "Zero-dependency HTML UI kit: seed-derived design tokens, 41 sac-* web components, workspace layout patterns. No build step, no node_modules - vendor the kit/ folder as plain files. This package exists only as a courtesy mirror of those files.",
+    "version": "2.7.0",
+    "description": "Zero-dependency HTML UI kit: seed-derived design tokens, 46 sac-* web components, workspace layout patterns. No build step, no node_modules - vendor the kit/ folder as plain files. This package exists only as a courtesy mirror of those files.",
     "license": "MIT",
     "author": "SACRVM",
     "homepage": "https://github.com/SACRVM/sacrvm-appkit",

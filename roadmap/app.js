@@ -395,7 +395,7 @@
     <table class="rm rm-matrix">
         <tr><th></th><th>SACRVM</th><th>Web Awesome</th><th>Pico</th><th>Open Props</th><th>daisyUI</th></tr>
         <tr><td>Zero build / no npm</td><td>✔</td><td>✔ (CDN)</td><td>✔</td><td>✔ (CDN)</td><td>✘ (Tailwind)</td></tr>
-        <tr><td>Web components</td><td>✔ 45</td><td>✔ ~45</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>Web components</td><td>✔ 46</td><td>✔ ~45</td><td>—</td><td>—</td><td>—</td></tr>
         <tr><td>Token theming</td><td>✔ seeds→derived</td><td>✔ props</td><td>✔ vars</td><td>✔✔ scales</td><td>✔ themes</td></tr>
         <tr><td>Dark + light</td><td>✔ auto</td><td>✔</td><td>✔ auto</td><td>✔</td><td>✔ many</td></tr>
         <tr><td>App shell / router</td><td>✔✔</td><td>✘</td><td>✘</td><td>✘</td><td>✘</td></tr>
