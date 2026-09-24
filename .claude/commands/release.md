@@ -57,6 +57,7 @@ Follow these steps exactly:
    - `sacrvm-newskit` — the editorial sister kit; vendors appkit like an app and
      re-vendors on every release (the two-kit model).
    - `umbrella-toolkit` — a suite of apps (Flyer Creator, DJ List, …) on a vendored kit.
+   - `pixel-atelier` — the standalone pixel / sprite editor (Atelier's successor).
    Each message carries: the version + release URL, the one-line re-vendor step (delete
    `kit/`, unzip the new ZIP), the headline changes that touch that repo, and the
    version-skew caveat (a new-version feature is unusable on a host still on an older
