@@ -345,6 +345,15 @@
                 and <code>context.setDirty()</code> guards unsaved work. Driven by Atelier.</td>
             <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
+        <tr data-item="runtime-language">
+            <td>Runtime language</td>
+            <td>One global language, switchable at runtime, owned by the host like the theme:
+                <code>context.lang</code>, <code>sac.i18n.add(lang, table)</code> for app strings, a
+                <code>&lt;sac-lang-toggle&gt;</code>, every kit component re-rendering its strings.
+                EN + DE ship with the kit; the default is the system language as far as a page can
+                see it (the browser's language list). Language switching is kit work, not app work.</td>
+            <td><sac-chip label="open" color="gray"></sac-chip></td>
+        </tr>
         <tr data-item="release-embeds">
             <td>Release embeds</td>
             <td>Packaging only at release via GitHub Actions: one self-contained .js per app, prefixed internal tags, no local build ever.</td>
