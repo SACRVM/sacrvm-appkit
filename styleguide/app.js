@@ -54,6 +54,10 @@
             ${rows.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${v}</td></tr>`).join("")}
         </table>`;
 
+    // A component's phone behaviour, one short line in every section it
+    // applies to. The full story lives in CSS Patterns → Responsive.
+    const compact = (html) => `<p class="sg-compact"><b>Compact / touch:</b> ${html}</p>`;
+
     const sw = (token, note) => `
         <div class="sg-swatch">
             <div class="chip" style="--sw: var(${token})"></div>
@@ -285,7 +289,7 @@
                 <h2 id="sac-icon">&lt;sac-icon&gt;</h2>
                 <p>Inline SVG icon from the <code>sac.icons</code> registry. Size via <code>--icon-size</code>, color via <code>currentColor</code>.</p>
                 <div class="sg-demo">
-                    <div class="sg-row" id="icon-grid" style="gap:1rem;"></div>
+                    <div class="sg-row sg-icon-grid" id="icon-grid"></div>
                 </div>
                 ${table("Attribute", [["name", "Lookup key in the registry. <code>sac.icons.register(name, path)</code> adds or overrides; <code>{filled:true}</code> renders fill instead of stroke."]])}
                 ${code(`<sac-icon name="cube" style="--icon-size: 48px; color: var(--accent);"></sac-icon>`)}
@@ -302,16 +306,40 @@
                     ["brand-icon", "Icon name rendered before the brand text."],
                     ["brand-href", "Brand link target (default <code>#/</code>, scope-aware)."],
                     ["app-name", "Accent-colored text after the brand — spacing alone separates the segments."],
+                    ["compact-title", "The app's name as the <b>phone ribbon</b> shows it. Absent = <code>brand</code> for a hosted app, else <code>app-name</code>, else <code>brand</code>. Set it where <code>app-name</code> is no name — the home hub's is the version, so it sets <code>compact-title=\"SACRVM APPKIT\"</code>."],
                     ["host-href / host-label / host-icon", "Attribute form of the host jump alone, for static pages. A hosted app sets the <code>host</code> property instead. Icon default <code>home</code>."],
+                    ["rail", "Which rail the burger opens as a drawer on compact: a CSS selector, or <code>none</code> to opt out. Absent = the first <code>&lt;sac-sidebar&gt;</code> / <code>.sidebar</code> inside a <code>.main-layout</code> next to the nav. A rail that is still empty (a hidden <code>&lt;sac-sidebar&gt;</code>) is adopted too; the burger appears once it has items. This guide sets it explicitly (<code>app-styleguide &gt; .main-layout &gt; sac-sidebar</code>)."],
+                    ["host-nav", "<code>always</code> (default) | <code>wide</code>. <code>wide</code> drops the host group (Home + the suite's app list) from the burger on compact — for a suite whose dashboard is the phone's main level; the ⌂ in the ribbon (shown while the menu is open) leads back to it. See <a href=\"#/styleguide/patterns/responsive-burger\">Who owns the burger</a>."],
+                    ["sections-nav", "<code>always</code> (default) | <code>wide</code>. <code>wide</code> drops the app's own <code>sections</code> from the burger on compact — for an app whose rail already lists them, so the phone drawer holds ONE list with ONE scroll instead of the same entries twice. This guide, Build an App and the Roadmap use it."],
                 ])}
                 ${table("Property", [
-                    ["host", "THE injection point of the app contract — one line in <code>mount()</code>: <code>nav.host = context.host</code>. Shape <code>{ name, icon, href, nav, toolbar }</code>: name/icon/href render the “SACRVM APPKIT” jump-home segment before the brand, in the SAME brand recipe — one title-bar style everywhere, host then app with the app's segment in accent, spacing as the only divider (visible at the top of this page); <code>nav</code> entries (<code>{label, href, icon?}</code>) become a labeled host group at the top of the burger panel; the group opens with a <b>Home</b> entry (the host's ⌂ jump — so the way back to the host lives in the menu, not only the ribbon breadcrumb), then the suite's cross-app navigation (open the burger: “SACRVM APPKIT” is that group, Home first). A <code>nav</code> entry whose <code>href</code> is <code>?app=&lt;id&gt;</code> opens that window app <b>in place</b> on a plain click (via <code>sac.apps.open</code>) and stays a deep link on a modified/middle click (new tab) — so a host can list window apps in the burger beside its routes; <code>toolbar</code> entries (<code>{icon | avatar:{name,src?}, label?, title?, href?|onClick?}</code>) render as controls at the right end of the ribbon — a suite-wide action (the GitHub button up right is one), or a signed-in user: give an entry <code>avatar</code> instead of <code>icon</code> and it materializes a real <code>&lt;sac-avatar&gt;</code> (accent-independent, name-hashed color), so the who-am-I control looks the part on every host. They are real <code>.nav-icon-btn</code> elements in the light DOM — the exact same recipe as the app's own ribbon buttons (labeled entries get the <code>.labeled</code> pill variant, avatar entries the <code>.avatar</code> variant), so host controls and app controls always look alike. Routes already listed in the host group are dropped from the app's own group, so a shared-page suite lists nothing twice. A host may re-declare later (the signed-in user was renamed, say): assign <code>context.host</code> to the nav once — the kit refreshes the injected chrome in place (<code>sac:host-changed</code>), no app cooperation. <code>null</code> = standalone, none of it renders."],
+                    ["host", "THE injection point of the app contract — one line in <code>mount()</code>: <code>nav.host = context.host</code>. Shape <code>{ name, icon, href, nav, toolbar }</code>: name/icon/href render the “SACRVM APPKIT” jump-home segment before the brand, in the SAME brand recipe — one title-bar style everywhere, host then app with the app's segment in accent, spacing as the only divider (visible at the top of this page); <code>nav</code> entries (<code>{label, href, icon?}</code>) become a labeled host group at the top of the burger panel; the group opens with a <b>Home</b> entry (the host's ⌂ jump — so the way back to the host lives in the menu, not only the ribbon breadcrumb; on compact the ribbon's ⌂, shown while the menu is open, takes its place), then the suite's cross-app navigation (open the burger: “SACRVM APPKIT” is that group, Home first). A <code>nav</code> entry whose <code>href</code> is <code>?app=&lt;id&gt;</code> opens that window app <b>in place</b> on a plain click (via <code>sac.apps.open</code>) and stays a deep link on a modified/middle click (new tab) — so a host can list window apps in the burger beside its routes; <code>toolbar</code> entries (<code>{icon | avatar:{name,src?}, label?, title?, href?|onClick?}</code>) render as controls at the right end of the ribbon — a suite-wide action (the GitHub button up right is one), or a signed-in user: give an entry <code>avatar</code> instead of <code>icon</code> and it materializes a real <code>&lt;sac-avatar&gt;</code> (accent-independent, name-hashed color), so the who-am-I control looks the part on every host. They are real <code>.nav-icon-btn</code> elements in the light DOM — the exact same recipe as the app's own ribbon buttons (labeled entries get the <code>.labeled</code> pill variant, avatar entries the <code>.avatar</code> variant), so host controls and app controls always look alike. Routes already listed in the host group are dropped from the app's own group, so a shared-page suite lists nothing twice. A host may re-declare later (the signed-in user was renamed, say): assign <code>context.host</code> to the nav once — the kit refreshes the injected chrome in place (<code>sac:host-changed</code>), no app cooperation. <code>null</code> = standalone, none of it renders."],
                     ["sections", "The app's OWN sub-navigation, <b>optional</b>: <code>[{label, href, icon?}]</code>. Entirely the app's choice — a simple app sets nothing and its suite entry stays a plain point. When set and a host group is present, the entries nest indented under the app's own entry in the burger — one tree, the suite with the running app unfolded (open the burger on this page: the Style Guide's five sections hang under its entry). Standalone the same entries are the panel's flat list. This app sets it from the same data as its rail: <code>nav.sections = SECTIONS.map(s =&gt; ({ label, href: ctx.href(s.id), icon }))</code>."],
                 ])}
                 ${table("Slot", [
+                    ["panel", "The app's <em>own</em> burger-panel content, rendered first, above the navigation groups — filters, account, settings: the burger belongs to the app, not only to a global navigation. Its presence alone makes the burger appear. A tap on an <code>a[href]</code> or <code>[data-nav-close]</code> inside closes the panel; other controls leave it open."],
                     ["context", "For persistent controls (the theme switcher above lives here)."],
-                    ["toolbar", "Right-aligned content — the <em>owner's</em> chrome: whoever writes the <code>&lt;sac-nav&gt;</code> markup puts their own buttons here. There is no projection surface; an app draws its own toolbar in its own area (see Orb Lab). Use the <code>.toolbar</code> recipe for sizing."],
+                    ["toolbar", "Right-aligned content — the <em>owner's</em> chrome: whoever writes the <code>&lt;sac-nav&gt;</code> markup puts their own buttons here. There is no projection surface; an app draws its own toolbar in its own area (see Orb Lab). Use the <code>.toolbar</code> recipe for sizing. What does not fit moves behind a “…” menu — at any width (below)."],
                 ])}
+                ${table("Method / event", [
+                    ["open() / close() / toggle()", "What the burger does: the rail drawer on compact (stacked under the panel's entries), otherwise the panel. <code>open()</code> is a no-op when there is nothing to open."],
+                    ["sac:nav-open / sac:nav-close", "<code>detail { drawer }</code> — the panel and/or the rail drawer came out / went away. Bubbles, composed."],
+                ])}
+                ${compact(`the ribbon is the burger, the app's <b>name as text</b> (<code>compact-title</code>) and the app's
+                   own controls right-aligned — <code>brand</code>, <code>brand-icon</code> and the host jump leave it
+                   (three bare glyphs read as cryptic); the name truncates only once the toolbar has overflowed into
+                   “…”. Opening the burger turns the ribbon into the desktop title bar: the controls slide out to
+                   the right while ⌂ with the suite's name (it truncates first) and the app icon ease in before the
+                   app's name — the desktop brand row exactly: same colours, sizes and spacing — where you
+                   are and the way home, so the panel drops its Home entry. An app with nothing behind a burger
+                   shows the icons all along. The panel wears the rail recipe (solid <code>--panel</code>, hairlines, item pills);
+                   the app's rail is adopted as an off-canvas drawer with scrim, Escape, swipe-left-to-close and a
+                   focus trap, panel entries stacked above it. The ribbon grows by the top safe-area inset.
+                   <a href="#/styleguide/patterns/responsive-ribbon">Phone ribbon →</a>`)}
+                <p><b>Toolbar overflow</b> (every width, ResizeObserver-driven): when the toolbar slot plus the host
+                   tools do not fit, the trailing buttons hide behind a “…” <code>&lt;sac-menu&gt;</code> (label key
+                   <code>nav.more</code>); a menu item clicks the original button. <code>data-overflow="never"</code>
+                   pins a control. Needs <code>sac-menu.js</code>; without it nothing overflows.</p>
                 ${code(`<sac-nav brand="MY TOOLS" app-name="EDITOR" brand-icon="cube">
     <div slot="toolbar" class="toolbar">
         <button class="btn primary">Open</button>
@@ -333,7 +361,19 @@
                 ])}
                 ${table("Attribute", [
                     ["width", "Rail width, default 220px — also settable via <code>--sidebar-width</code>."],
+                    ["drawer", "Set by the <code>&lt;sac-nav&gt;</code> that adopts the rail. Only on compact does it change anything: the rail leaves the flow and becomes an off-canvas drawer, <code>--drawer-width</code> wide. Without a nav, set it yourself."],
+                    ["open", "Reflected: the drawer is out. Ignored while the rail is inline (desktop, or no <code>drawer</code>)."],
                 ])}
+                ${table("Method", [
+                    ["open() / close() / toggle(force?)", "Set, clear or flip <code>[open]</code>."],
+                ])}
+                ${table("Event", [
+                    ["sac:sidebar-toggle", "<b>Listened for</b> on <code>window</code> — dispatch it (optionally <code>detail { open: true|false }</code>) to drive the rail from any button. The nav's burger holds the rail directly and does not need it."],
+                    ["sac:sidebar-open / sac:sidebar-close", "Fired by the rail (bubbles + composed) whenever <code>[open]</code> changes."],
+                ])}
+                ${compact(`the rail on this page is the drawer — open the burger. An item tap closes it (the item navigated);
+                   scrim, Escape, swipe-back and the focus trap belong to the nav that adopted it.
+                   <a href="#/styleguide/patterns/responsive-drawer">Rail drawer →</a>`)}
 
                 <h2 id="sac-launcher">&lt;sac-launcher&gt;</h2>
                 <p>One tile per app in the <code>sac.apps</code> registry — or several: a
@@ -371,6 +411,11 @@
                         kind: "page", href: "docs/", tile: "wide" });
     sac.apps.init();   // tiles handle their own clicks; init adds ?app= deep links
 <\/script>`)}
+                ${compact(`the grid is its own container: below ~584px of <em>its own</em> width it goes single-column, wide and
+                   large tiles included; below a 480px viewport each tile is a row, icon beside the text (the <code>.tile</code>
+                   pattern). Under <code>pointer: coarse</code> the edit controls grow to a 36px look with a
+                   44px hit halo; under <code>hover: none</code> the Add tile's hover tint is off. The windows it opens
+                   maximize themselves on compact.`)}
 
                 <h2 id="sac-window">&lt;sac-window&gt;</h2>
                 <p>Draggable, resizable, glassmorphic floating window. Content = light-DOM children.
@@ -394,6 +439,7 @@
                     ["maximized", "Filled to the viewport with an 8px inset, the top clearing the fixed 50px nav ribbon. Neither draggable nor resizable. Reflected, and mutually exclusive with <code>minimized</code>."],
                     ["controls", "Space-separated subset of <code>min max close</code> — which traffic lights render. Absent = all three. Without <code>max</code>, double-clicking the title bar does nothing. Runtime changes apply (CSS token matching); the methods stay callable."],
                     ["no-resize", "Boolean: no resize handle, no resizing. Dragging is unaffected. An app manifest sets these two via <code>controls</code> / <code>resizable: false</code> (see sac.apps in Helpers)."],
+                    ["compact", "Set <b>by the component</b> while the viewport is compact — a styling hook, not an input."],
                 ])}
                 ${table("Method", [
                     ["open() / close() / toggle()", "Show, hide, flip. open() also brings to front."],
@@ -405,6 +451,11 @@
                     ["sac:open / sac:close", "Bubbles + composed, <code>detail.window</code> = the element."],
                     ["sac:minimize / sac:maximize / sac:restore", "Bubbles + composed, <code>detail.window</code> = the element. The restore event covers the return from either state."],
                 ])}
+                ${compact(`always maximized below the nav — an open window maximizes itself, the maximize dot is hidden,
+                   dragging is off, minimize collapses it to its title bar at the top. The traffic lights get 44px
+                   hit areas. Maximized on a phone the window is <b>opaque</b> — the glass hue without the blur, so the page
+                   behind never shows through a full-screen app. Back on a wide screen a window the phone maximized
+                   returns to its rect; one the user maximized stays maximized.`)}
 
                 <h2 id="sac-split">&lt;sac-split&gt;</h2>
                 <p>Two panels, one draggable divider; the end panel takes what the start leaves, so the
@@ -439,9 +490,20 @@
                     ["min-start / min-end", "CSS lengths clamping the drag (default <code>0</code>): px, bare numbers, rem. Re-applied on container resize, so a narrowed window can never leave a sidebar below its minimum. If both minimums cannot hold at once, min-start wins."],
                     ["dragging", "Set by the component while a drag is in progress, not by hand — a styling hook."],
                     ["aria-label", "Names the divider for screen readers (it is a focusable <code>role=\"separator\"</code> with aria-valuenow/min/max in percent). Defaults to “Resize panels”."],
+                    ["collapse", "List/detail on a phone: when the split's <b>own</b> width drops to this or below, it shows one panel at a time. <code>compact</code> (768px — also a bare <code>collapse</code>), <code>narrow</code> (480px) or a px length. It measures itself, so it also collapses inside a narrow sac-window on a wide screen. Absent = never collapses."],
+                    ["show", "<code>start</code> (default) | <code>end</code> — the panel a collapsed split shows. Set <code>end</code> when the user opens an item; the back bar sets <code>start</code>. Nothing re-renders: the hidden panel keeps its scroll, form state, canvas."],
+                    ["collapsed", "Set by the component while collapsed — a styling hook; the divider is hidden."],
+                    ["rail-start", "Set by the component when the start slot holds a rail that <code>&lt;sac-nav&gt;</code> turned into a drawer (the resizable-sidebar recipe below): collapsed, the split then leaves the drawer alone and shows the end panel, with no back bar."],
+                    ["no-back", "Hide the built-in back bar (draw your own and set <code>show</code>)."],
+                    ["back-label", "The back bar's text (default “Back”, key <code>split.back</code>)."],
                 ])}
                 ${table("Property", [
                     ["position", "get/set, normalized to one decimal (<code>\"34.2%\"</code>). Setting it does NOT fire sac:resize (the caller already knows); user interaction does."],
+                    ["show", "get/set <code>\"start\"</code> | <code>\"end\"</code> (the attribute)."],
+                    ["collapsed", "Read-only boolean."],
+                ])}
+                ${table("Method", [
+                    ["back()", "What the back bar does: show <code>start</code>, after a <code>sac:split-back</code> nobody cancelled."],
                 ])}
                 ${table("Slot", [
                     ["start", "Left (horizontal) / top (vertical) panel. Scrolls its own overflow."],
@@ -449,9 +511,11 @@
                 ])}
                 ${table("Event", [
                     ["sac:resize", "detail { position } — the percent string. Fired live during a drag, on keyboard moves, on the double-click reset, and when a container resize forces a clamp; never when the app sets it itself."],
+                    ["sac:split-back", "The back bar was used or <code>back()</code> called. Bubbles + composed, <b>cancelable</b>: <code>preventDefault()</code> keeps the end panel (confirm unsaved changes first)."],
+                    ["sac:collapse", "detail { collapsed } — the split entered or left one-panel mode. Bubbles + composed."],
                 ])}
                 ${table("CSS custom property", [
-                    ["--split-divider", "Thickness of the divider's grab zone (default 9px). The hairline inside stays 1px."],
+                    ["--split-divider", "Thickness of the divider's grab zone (default 9px). The divider takes 1px of layout — the hairline — and the grab zone is laid invisibly over the panels beside it, so no empty strip stands between a panel (or its scrollbar) and the line."],
                 ])}
                 ${table("Keyboard", [
                     ["Divider", "<kbd>←</kbd>/<kbd>→</kbd> (vertical split: <kbd>↑</kbd>/<kbd>↓</kbd>) move 1%, <kbd>Shift</kbd> 5%, <kbd>Home</kbd>/<kbd>End</kbd> jump to the clamped extremes. Double-click resets to the starting position."],
@@ -460,13 +524,18 @@
     <div slot="start">…left panel…</div>
     <div slot="end">…right panel…</div>
 </sac-split>`)}
+                ${compact(`nothing changes unless <code>collapse</code> is set — then one panel at a time with a back bar.
+                   <a href="#/styleguide/patterns/responsive-list-detail">Live list/detail demo →</a>`)}
                 <p class="sg-note"><b>Resizable sidebar:</b> the workspace layout (fixed 50px nav +
                    sidebar + viewport) becomes resizable by wrapping the sidebar and the viewport in one
                    split. <code>min-start</code> keeps the sidebar usable, <code>min-end</code> protects
-                   the canvas; the sidebar hands its own 260px width over to the panel.</p>
+                   the canvas; the sidebar hands its own 260px width over to the panel. On a phone the
+                   nav adopts the sidebar as its drawer and, with <code>collapse</code>, the split gives the
+                   viewport the whole width (<code>rail-start</code>). <code>.sidebar.fill</code> (ui.css) hands the sidebar's width
+                   to the panel and yields to the drawer's own size on compact — no media query needed.</p>
                 ${code(`<div class="main-layout">
-    <sac-split style="flex:1" position="20%" min-start="180px" min-end="320px">
-        <aside class="sidebar" slot="start" style="width:100%;height:100%">…</aside>
+    <sac-split style="flex:1" position="20%" min-start="180px" min-end="320px" collapse>
+        <aside class="sidebar fill" slot="start">…</aside>
         <section class="viewport" slot="end">…</section>
     </sac-split>
 </div>`)}
@@ -518,6 +587,10 @@ await sac.dialog.info({
                     ["sac:open", "Fired on open (bubbles + composed)."],
                     ["sac:action", "Fired on close; <code>detail { action }</code> (bubbles + composed). Escape / backdrop close with <code>null</code>."],
                 ])}
+                ${compact(`a bottom sheet — full width, anchored above the home-bar inset, at most 85dvh with the body
+                   scrolling; the actions go full-width and stack, the last one (usually the primary) on top. Focus
+                   trap and Escape unchanged. Arming cancels on a finger touching another button, not just a
+                   pointer entering it.`)}
 
                 <h3 id="sac-about"><code>sac.about.open(data)</code></h3>
                 <p>The shared About surface — a <code>&lt;sac-window&gt;</code>, not a dialog, because credits and
@@ -560,6 +633,8 @@ sac.about.open({                          // or an explicit object (standalone)
                     ["hide()", "Clears the strip."],
                     ["kind / message / open", "Declarative attribute equivalents."],
                 ])}
+                ${compact(`in flow and full width; long unbroken strings (paths, URLs, error codes) wrap instead of pushing
+                   the page sideways. No controls.`)}
 
                 <h2 id="sac-section">&lt;sac-section&gt;</h2>
                 <p>Sidebar group separator: uppercase title + thin border.</p>
@@ -593,6 +668,8 @@ sac.about.open({                          // or an explicit object (standalone)
                 </div>
                 ${table("Attribute", [["label", "Text left of the switch."], ["checked", "Presence = on. Property <code>.checked</code> mirrors it."]])}
                 ${table("Event", [["sac:change", "detail { value: boolean }. Bubbles, not composed (native change semantics). Programmatic .checked is silent."]])}
+                ${compact(`the whole row — label and switch — is the tap target, at least 44px tall under
+                   <code>pointer: coarse</code>. The switch keeps its size.`)}
 
                 <h2 id="sac-slider">&lt;sac-slider&gt;</h2>
                 <p>Range slider with live value readout. <strong>All seven attributes are observed</strong>,
@@ -607,6 +684,9 @@ sac.about.open({                          // or an explicit object (standalone)
                     ["labels", "Comma-separated texts mapped by integer value — turns the readout into discrete steps."],
                 ])}
                 ${table("Event", [["sac:input", "On drag; detail { value } (string)."], ["sac:change", "On release; detail { value } (string). Both bubble, not composed."]])}
+                ${compact(`a native range input, so dragging is the browser's own. Under <code>pointer: coarse</code> it is a
+                   44px-tall hit strip with a 20px thumb, and <code>touch-action: pan-y</code> lets a vertical swipe
+                   scroll the page while a sideways drag moves the thumb.`)}
 
                 <h2 id="sac-stepper">&lt;sac-stepper&gt;</h2>
                 <p>Discrete −/value/+ pill for small numeric quantities — part counts, brush sizes.
@@ -643,6 +723,10 @@ sac.about.open({                          // or an explicit object (standalone)
                 ])}
                 ${code(`<sac-stepper value="3" min="1" max="99" unit="parts" label="Parts"></sac-stepper>
 <sac-stepper value="0.5" min="0" max="1" step="0.1" label="Mix ratio"></sac-stepper>`)}
+                ${compact(`press-and-hold works with a finger (a long press never opens the context menu; a vertical swipe
+                   cancels it and scrolls). Under <code>pointer: coarse</code> the pill is 44px tall, the ± buttons reach
+                   44 × 44 with a halo, the field uses 16px type; <code>touch-action: manipulation</code> stops quick taps
+                   from zooming.`)}
 
                 <h2 id="sac-segmented-control">&lt;sac-segmented-control&gt;</h2>
                 <p>Button group, one active at a time. Buttons are slotted light DOM (text, icons, SVG — your
@@ -663,6 +747,9 @@ sac.about.open({                          // or an explicit object (standalone)
                 </div>
                 ${table("Attribute", [["value", "Active data-value. Property <code>.value</code> mirrors it; setting fires change."]])}
                 ${table("Event", [["sac:change", "detail { value } (string), on user click/keypress only. Bubbles, not composed; a programmatic set is silent."]])}
+                ${compact(`never runs past its container — too many segments fold onto a second row. Under
+                   <code>pointer: coarse</code> each segment keeps its look with a 44px-tall hit halo; no hover wash
+                   sticks to a tapped segment.`)}
 
                 <h2 id="sac-color-picker">&lt;sac-color-picker&gt;</h2>
                 <p>The whole color surface in one element: a saturation/value field, a hue strip, an
@@ -715,6 +802,10 @@ sac.about.open({                          // or an explicit object (standalone)
     brush.color = e.detail.value;        // "#3b82f6" — or "#3b82f699" with [alpha]
 });
 picker.value = "#10b981";                // updates in place, fires nothing`)}
+                ${compact(`caps itself at its container's width, so it fits a 360px phone or a narrow popover. Under
+                   <code>pointer: coarse</code> the hue/alpha strips grow to 24px with 44px halos, the RGB sliders get a
+                   44px hit box, the fields are 44px tall with 16px type. Every surface is a pointer-captured drag with
+                   <code>touch-action: none</code>, so a finger drag never scrolls the page.`)}
 
                 <h3 id="sac-color">sac.color</h3>
                 <p>The shared color math every color component speaks through, so a rounding rule or a
@@ -775,6 +866,9 @@ if (rgba) {
 
 field.addEventListener("sac:change", (e) => paint(e.detail.value));
 field.value = "#22c55e";   // programmatic — updates the UI, fires nothing`)}
+                ${compact(`the popover is at most <code>100vw - 16px</code> wide and the picker inside shrinks to it, so the
+                   8px viewport clamp holds at 360px. Under <code>pointer: coarse</code> the well is 44 × 44 and the hex
+                   input 44px tall with 16px type.`)}
 
                 <h2 id="sac-swatch-grid">&lt;sac-swatch-grid&gt; + &lt;sac-swatch&gt;</h2>
                 <p>A grid of square color buttons — the cell a palette strip, a recent-colors row or a
@@ -848,6 +942,10 @@ field.value = "#22c55e";   // programmatic — updates the UI, fires nothing`)}
 
 grid.addEventListener("sac:change", (e) => setBrush(e.detail.value));
 grid.colors = [{ value: "#ef4444", label: "Red" }];   // bulk rebuild, no event`)}
+                ${compact(`no dragging — tap selects. Columns stay at <code>columns</code> (it is the keyboard stride too)
+                   and cells shrink with the container; a long caption ellipsizes. Under <code>pointer: coarse</code> a
+                   swatch's hit area is its cell plus half the gap (44px once a cell is ~36px wide) — pick fewer columns
+                   for touch-first palettes.`)}
 
                 <h2 id="sac-calendar">&lt;sac-calendar&gt;</h2>
                 <p>An embeddable month calendar: a paged header (‹ month, ‹‹ year, ‹‹‹ decade — a
@@ -859,11 +957,11 @@ grid.colors = [{ value: "#ef4444", label: "Red" }];   // bulk rebuild, no event`
                     <sac-calendar id="demo-cal" value="2026-08-15"></sac-calendar>
                     <sac-calendar id="demo-cal-bounded" value="2026-08-15"
                                   min="2026-08-04" max="2026-08-27" week-start="0"
-                                  style="--calendar-width:240px;"></sac-calendar>
+></sac-calendar>
                     <div class="sg-col" style="gap:0.6rem;min-width:200px;">
                         <code id="demo-cal-out">waiting for a selection…</code>
                         <p class="sg-note" style="margin:0;">Both calendars report into the same
-                           line. The right one is bounded (min/max) and starts its weeks on Sunday.</p>
+                           line. The second one is bounded (min/max) and starts its weeks on Sunday.</p>
                     </div>
                 </div>
                 ${table("Attribute", [
@@ -881,7 +979,7 @@ grid.colors = [{ value: "#ef4444", label: "Red" }];   // bulk rebuild, no event`
                     ["sac:change", "detail { value } — the ISO string. Fired on USER selection only (click, <kbd>Enter</kbd>/<kbd>Space</kbd>) and only when the date actually changes — re-selecting the selected day stays quiet."],
                 ])}
                 ${table("CSS custom property", [
-                    ["--calendar-width", "Width of the whole calendar. Default <code>280px</code>."],
+                    ["--calendar-width", "Width of the whole calendar. Default <code>280px</code> (<code>320px</code> under <code>pointer: coarse</code>, for 44px day cells). Never wider than its container — the day cells shrink instead."],
                 ])}
                 ${table("Interaction", [
                     ["Header", "Three chevron pairs page the view: ‹ › ±1 month, ‹‹ ›› ±1 year, ‹‹‹ ››› ±10 years — the selection never moves; the month label announces each page (aria-live polite)."],
@@ -899,6 +997,9 @@ grid.colors = [{ value: "#ef4444", label: "Red" }];   // bulk rebuild, no event`
     load(e.detail.value);        // "2026-08-15"
 });
 cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
+                ${compact(`caps itself at its container's width, so the seven columns shrink rather than overflow. Under
+                   <code>pointer: coarse</code> the default width grows to 320px for 44 × 44 day cells, and the header
+                   wraps: the month label on its own line, the six paging buttons as 44px targets below it.`)}
 
                 <h2 id="sac-date-field">&lt;sac-date-field&gt;</h2>
                 <p>The compact form row for a sidebar or settings panel: an optional label, an ISO
@@ -931,7 +1032,7 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                     ["sac:change", "detail { value } — the normalized ISO, or <code>\"\"</code> when the user cleared the input. Fired on USER changes only: a committed typed date or a picked day. The inner calendar's identically named event is stopped at the boundary, so apps see exactly one."],
                 ])}
                 ${table("CSS custom property", [
-                    ["--calendar-width", "Set on the field, forwarded to the popover's <code>&lt;sac-calendar&gt;</code>. Default <code>280px</code>."],
+                    ["--calendar-width", "Set on the field, forwarded to the popover's <code>&lt;sac-calendar&gt;</code>. Default <code>280px</code> (<code>320px</code> under <code>pointer: coarse</code>)."],
                 ])}
                 ${table("Interaction", [
                     ["Calendar button", "Click drops the calendar below the field (built on first open); an outside click, a re-click, <kbd>Esc</kbd> or picking a day closes it, focus returning to the button. The popover is <code>position: fixed</code> on the dropdown layer and flips above the field when there is no room below."],
@@ -942,6 +1043,9 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
 
 field.addEventListener("sac:change", (e) => plan(e.detail.value));
 field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`)}
+                ${compact(`the popover is at most <code>100vw - 16px</code> wide and the calendar shrinks to it. Under
+                   <code>pointer: coarse</code> the input and the calendar button are 44px (the button 44 × 44), the input
+                   uses 16px type, the calendar gets 44px day cells.`)}
 
                 <h2 id="sac-collapsible">&lt;sac-collapsible&gt;</h2>
                 <p>Clamps content to a max height; when it actually overflows, a separator line with a
@@ -965,6 +1069,8 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                 ])}
                 ${table("Event", [["sac:toggle", "detail { expanded }."]])}
                 ${table("Method", [["measure()", "Re-run overflow detection (escape hatch)."]])}
+                ${compact(`the tab gets a 44 × 44 hit halo under <code>pointer: coarse</code>; no hover tint sticks after a tap.
+                   The clamp re-measures when a phone rotates or a panel narrows.`)}
 
                 <h2 id="sac-chip">&lt;sac-chip&gt;</h2>
                 <p>Colored pill. <code>color</code> is a <strong>palette slot name</strong> resolved to
@@ -982,6 +1088,9 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["removable / selected / clickable", "× button / active ring / hover affordance."],
                 ])}
                 ${table("Event", [["sac:remove", "detail { label } (only with [removable])."]])}
+                ${compact(`under <code>pointer: coarse</code> the × grows to 24px with a 44 × 44 halo and a
+                   <code>clickable</code> chip gets a 44px-tall host halo — the pill keeps its look. Under
+                   <code>hover: none</code> the × is always shown. Give chips ~10px gap on touch so halos do not overlap.`)}
 
                 <h2 id="sac-chip-input">&lt;sac-chip-input&gt;</h2>
                 <p>Combobox for a list of named chips — chips + input + filtered dropdown. Decoupled
@@ -1006,6 +1115,10 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                 ${table("Keyboard", [
                     ["Input", "<kbd>Tab</kbd> / <kbd>Enter</kbd> / comma commit the highlighted (or top) entry · <kbd>Esc</kbd> closes the dropdown without committing · <kbd>↓</kbd>/<kbd>↑</kbd> move the highlight · <kbd>Backspace</kbd> on an empty input removes the last chip."],
                 ])}
+                ${compact(`a tap commits a suggestion (a swipe that scrolls the list picks nothing). Under
+                   <code>pointer: coarse</code> suggestion rows are 44px, the add button and colour swatches get 44px
+                   halos, chips sit 10px apart and the field uses 16px type. The dropdown is at most
+                   <code>100vw - 16px</code> wide and flips above the field when the on-screen keyboard is up.`)}
 
                 <h2 id="sac-drop-zone">&lt;sac-drop-zone&gt;</h2>
                 <p>One surface for both ways files arrive: drag files onto it, click it, or focus it and
@@ -1013,7 +1126,8 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                    so an app wires one listener and never asks which gesture the user chose.</p>
                 <div class="sg-demo sg-col" style="max-width:520px;">
                     <sac-drop-zone id="demo-drop" accept=".svg,.png,image/*" multiple
-                                   label="Drop images here" hint="or click to browse"></sac-drop-zone>
+                                   label="Drop images here" hint="or click to browse"
+                                   touch-label="Choose images" touch-hint="Tap to browse"></sac-drop-zone>
                     <ul id="demo-drop-list" style="margin:0;padding-left:1.1rem;color:var(--text-muted);font-size:0.85rem;">
                         <li>No files yet.</li>
                     </ul>
@@ -1025,6 +1139,7 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["multiple", "Presence = keep every accepted file; absent = the first one only."],
                     ["label", "Main line. Default <code>Drop files here</code>; <code>label=\"\"</code> hides it."],
                     ["hint", "Dim second line. Default <code>or click to browse</code>; <code>hint=\"\"</code> hides it."],
+                    ["touch-label / touch-hint", "The two lines on a touch-only device (<code>hover: none</code> and <code>pointer: coarse</code>), where nothing can be dragged in. Defaults <code>Choose files</code> / <code>Tap to browse</code> — used only when the matching <code>label</code> / <code>hint</code> is not set, so an app that sets <code>label</code> sets <code>touch-label</code> too."],
                     ["disabled", "Dims the surface and blocks click, keyboard <em>and</em> drop — the drag is not accepted, so the browser shows the “no drop” cursor rather than a lie."],
                     ["over", "Set by the component while a file drag hovers — an accent wash + accent icon and label, never a thicker border or a scale that would move the target while the user aims at it. Drags carrying no files never set it. Read it, don't write it."],
                 ])}
@@ -1042,13 +1157,18 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["zone", "The dashed surface itself, for the rare app that needs to reshape it."],
                 ])}
                 ${code(`<sac-drop-zone accept=".svg,image/*" multiple
-               label="Drop your SVG here" hint="or click to browse"></sac-drop-zone>`)}
+               label="Drop your SVG here" hint="or click to browse"
+               touch-label="Choose an SVG" touch-hint="Tap to browse"></sac-drop-zone>`)}
                 ${code(`zone.addEventListener("sac:files", (e) => {
     for (const file of e.detail.files) console.log(file.name, file.size);
 });
 zone.addEventListener("sac:rejected", (e) => {
     sac.toast(\`\${e.detail.files.length} file(s) of the wrong type.\`, { kind: "warn" });
 });`)}
+                ${compact(`phones have no OS drag-and-drop, so on a touch-only device (<code>hover: none</code> and
+                   <code>pointer: coarse</code>) the zone is a tap target first: the whole surface opens the picker and the
+                   <code>touch-label</code> / <code>touch-hint</code> wording replaces “drop / click”. It follows a live
+                   switch between touch and mouse; drops still work where the platform supports them.`)}
 
                 <h2 id="sac-avatar">&lt;sac-avatar&gt;</h2>
                 <p>Round identity badge — initials by default, photo when <code>src</code> is set. The
@@ -1109,6 +1229,9 @@ zone.addEventListener("sac:rejected", (e) => {
                 ])}
                 ${code(`<sac-copy-button value="npx serve ."></sac-copy-button>
 <sac-copy-button for="#install-cmd" label="Copy command"></sac-copy-button>`)}
+                ${compact(`under <code>pointer: coarse</code> it keeps its 26px look with a 44 × 44 hit halo — the
+                   <code>.icon-btn</code> rule. No hover wash sticks after a tap. Copying needs a secure context on phones
+                   too.`)}
 
                 <h2 id="sac-scene-graph">&lt;sac-scene-graph&gt; + &lt;sac-scene-item&gt;</h2>
                 <p>Generic tree list with visibility eyes, color wells, delete buttons and expand chevrons.
@@ -1132,6 +1255,9 @@ zone.addEventListener("sac:rejected", (e) => {
                     ["sac:visibility", "detail.visible = requested new state (host applies it)."],
                     ["sac:expand / sac:delete / sac:recolor", "detail.expanded / — / detail.color."],
                 ])}
+                ${compact(`under <code>pointer: coarse</code> every row is 44px tall and each control (chevron, eye, colour
+                   well, trash) a real 44 × 44 box — side by side, so boxes, not overlapping halos. Every action is
+                   always visible; under <code>hover: none</code> no row stays lit after a tap.`)}
 
                 <h2 id="sac-log">&lt;sac-log&gt;</h2>
                 <div class="sg-demo sg-col" style="max-width:420px;">
@@ -1147,6 +1273,9 @@ zone.addEventListener("sac:rejected", (e) => {
                     ["clear() / copy()", "Empty the log / copy all entries to the clipboard."],
                 ])}
                 <p>There is also a plain CSS <code>.log</code> box for div-based logs — see CSS Patterns.</p>
+                ${compact(`entry text is always selectable, even inside a <code>user-select: none</code> shell. Under
+                   <code>pointer: coarse</code> the Copy / Clear buttons are 44px (the header grows). The body is its own
+                   container: below 480px of its own width, long unbroken strings wrap instead of scrolling sideways.`)}
 
                 <h2 id="sac-hud">&lt;sac-hud&gt;</h2>
                 <p>Viewport overlay readout: absolute inside a relative parent, auto-hides when empty,
@@ -1164,6 +1293,8 @@ zone.addEventListener("sac:rejected", (e) => {
                     <sac-loader id="demo-loader-el"></sac-loader>
                 </div>
                 ${table("Method", [["show(title, subtitle)", "Displays the overlay."], ["hide()", "Fades out over 300ms."]])}
+                ${compact(`the overlay covers the whole screen, its content kept clear of notch and home bar by safe-area
+                   padding; a long title wraps centred. No controls.`)}
 
                 <h2 id="sac-footer">&lt;sac-footer&gt;</h2>
                 <p>Branded footer. The link renders <em>only</em> when <code>link-href</code> is set —
@@ -1175,6 +1306,8 @@ zone.addEventListener("sac:rejected", (e) => {
                     ["brand / version", "Text + optional \" · v…\"."],
                     ["link-href / link-label", "Optional external link (label default \"LINK\")."],
                 ])}
+                ${compact(`the bottom padding adds <code>env(safe-area-inset-bottom)</code>, so the home bar never sits on the
+                   text; the line wraps at 360px. Under <code>pointer: coarse</code> the link gets a 44px-tall halo.`)}
 
                 <h2 id="sac-tabs">&lt;sac-tab-group&gt; + &lt;sac-tab&gt; + &lt;sac-tab-panel&gt;</h2>
                 <p>Three elements, one state: the group's <code>active</code> attribute toggles
@@ -1281,6 +1414,10 @@ zone.addEventListener("sac:rejected", (e) => {
 </sac-tab-group>`)}
                 ${code(`group.addEventListener("sac:tab-show", (e) => console.log(e.detail.name));
 group.active = "two";   // programmatic switch — no event`)}
+                ${compact(`a group <b>without</b> <code>overflow</code> pans below 768px, like <code>overflow="scroll"</code>
+                   (a single unwrapped row would push the page sideways). A panning strip swipes natively, and
+                   <code>overscroll-behavior-x: contain</code> keeps the swipe from becoming browser back. Under
+                   <code>pointer: coarse</code> tabs are 44px tall, ‹ › 44px wide. <code>overflow="wrap"</code> is unchanged.`)}
 
                 <h2 id="sac-menu">&lt;sac-menu&gt;</h2>
                 <p>Dropdown menu — the <code>.floating-menu</code> look with behavior attached. Trigger
@@ -1316,6 +1453,10 @@ group.active = "two";   // programmatic switch — no event`)}
 </sac-menu>
 
 menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
+                ${compact(`the panel is at most <code>100vw - 16px</code> wide, so the 8px clamp holds at 360px; under
+                   <code>pointer: coarse</code> every item is at least 44px tall. The trigger opens on tap — nothing is
+                   hover-only — and a closed panel takes no layout, so a menu at the right edge never adds sideways
+                   scroll.`)}
 
                 <h2 id="sac-command-palette">&lt;sac-command-palette&gt;</h2>
                 <p>Ctrl-K palette — one line of markup per app
@@ -1327,7 +1468,7 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
                 <div class="sg-demo">
                     <div class="sg-row">
                         <button class="btn" style="width:auto" id="palette-open">Open the palette</button>
-                        <span style="color:var(--text-dim);font-size:0.85rem;">…or press
+                        <span class="sg-kbd-hint" style="color:var(--text-dim);font-size:0.85rem;">…or press
                             <kbd>Ctrl</kbd>+<kbd>K</kbd> anywhere on this page.</span>
                     </div>
                 </div>
@@ -1364,6 +1505,10 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
     });
     sac.hotkeys.register("mod+shift+e", () => exportJson(), { description: "Export as JSON" });
 <\/script>`)}
+                ${compact(`on compact the panel is a full-width sheet anchored to the <b>top</b> edge (below the
+                   notch inset) — the half an on-screen keyboard leaves free; tapping the dimmed area closes it. Rows are
+                   44px and the field 16px under <code>pointer: coarse</code>. <kbd>mod</kbd>+<kbd>K</kbd> does not exist on
+                   a phone: give the palette a button calling <code>sac.palette.open()</code>.`)}
 
                 <h2 id="sac-tooltip">&lt;sac-tooltip&gt;</h2>
                 <p>Wraps a trigger (default slot) and shows a small glass bubble beside it — hover
@@ -1373,12 +1518,13 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
                    Cross-root ARIA can't point a light-DOM trigger at a shadow bubble, so this is a
                    <strong>visual affordance only</strong>: keep an <code>aria-label</code> on
                    icon-only triggers.</p>
-                <div class="sg-demo" style="padding-bottom:2.75rem">
+                <div class="sg-demo sg-tip-demo">
                     <div class="sg-row">
                         <sac-tooltip content="Bubble above the trigger" placement="top"><button class="btn" style="width:auto">top</button></sac-tooltip>
                         <sac-tooltip content="Bubble below the trigger" placement="bottom"><button class="btn" style="width:auto">bottom</button></sac-tooltip>
                         <sac-tooltip content="Bubble left of the trigger" placement="left"><button class="btn" style="width:auto">left</button></sac-tooltip>
                         <sac-tooltip content="Bubble right of the trigger" placement="right"><button class="btn" style="width:auto">right</button></sac-tooltip>
+                        <span class="sg-row-break"></span>
                         <sac-tooltip content="Forced visible with [open] — no hover needed" placement="bottom" open><button class="btn" style="width:auto">open</button></sac-tooltip>
                     </div>
                 </div>
@@ -1397,6 +1543,10 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
         <sac-icon name="sync"></sac-icon>
     </button>
 </sac-tooltip>`)}
+                ${compact(`no hover on a touch screen, so a <b>long-press</b> (~500ms, finger still) shows the bubble and the
+                   next tap hides it; a normal tap is untouched and its click goes through. The bubble is at most
+                   <code>min(280px, 100vw - 16px)</code> wide. A tooltip must never be the only way to reach
+                   information.`)}
 
                 <h2 id="sac-toast">&lt;sac-toast-stack&gt;</h2>
                 <p>Corner-anchored, self-dismissing notifications — the floating sibling of
@@ -1424,6 +1574,9 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
                     ["→ returns", "The toast element, carrying a <code>.dismiss()</code> method for dismissing it yourself."],
                 ])}
                 ${code(`sac.toast("Saved.", { kind: "success" });`)}
+                ${compact(`on compact every stack sits at the bottom edge, full width minus an 8px gutter, above the home
+                   bar, newest nearest the bottom. A finger on a toast holds its timer; a sideways swipe past ~80px
+                   dismisses it. Under <code>pointer: coarse</code> the close button keeps its look with a 44px hit area.`)}
 
                 <h2 id="sac-progress">&lt;sac-progress&gt;</h2>
                 <p>Horizontal progress bar. Bar width and the percentage readout track
@@ -1465,8 +1618,17 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
                     <sac-theme-toggle id="demo-theme-toggle"></sac-theme-toggle>
                     <span id="demo-theme-toggle-state" style="color:var(--text-muted);font-size:0.85rem;">theme: dark</span>
                 </div>
+                ${table("Attribute", [
+                    ["collapse", "<code>\"never\"</code> keeps the pill even in a phone ribbon. Absent = the nav collapse below. A toggle in page content (a settings page, the demo above) never collapses — it has the room."],
+                    ["in-nav", "Set <b>by the component</b> when it sits inside a <code>&lt;sac-nav&gt;</code> — a styling hook, not an input."],
+                ])}
                 ${table("Property", [["theme", "get/set \"dark\" | \"light\" | \"auto\". Setting applies + persists + re-highlights the pill (no event — that's reserved for user clicks)."]])}
                 ${table("Event", [["sac:change", "Fired on user click only (never on a programmatic .theme set); detail { value: theme }. Bubbles, not composed."]])}
+                ${compact(`inside a <code>&lt;sac-nav&gt;</code> below 768px the ~145px pill would push the app's toolbar
+                   into the “…” menu, so it collapses to <b>one round button</b> (36px, 44px on touch) that cycles
+                   dark → light → auto; its icon shows the current theme, its label says it (“Theme: Dark”, key
+                   <code>theme-toggle.label</code>). The ribbon of this page shows it on a phone. The pill itself gets a
+                   44px-tall hit halo per button under <code>pointer: coarse</code>; no hover tint sticks after a tap.`)}
             </div>
             `;
     }
@@ -1530,13 +1692,16 @@ menu.addEventListener("sac:select", e => console.log(e.detail.action));`)}
             if (!win) {
                 win = document.createElement("sac-window");
                 win.id = "sg-demo-window";
+                win.className = "sg-demo-window";   // its text has a phone variant
                 win.setAttribute("title", "Demo Window");
                 win.setAttribute("width", "360px");
                 win.setAttribute("height", "240px");
                 win.setAttribute("left", `${Math.max((window.innerWidth - 360) / 2, 20)}px`);
                 win.setAttribute("top", "140px");
-                win.innerHTML = `<p>Drag the title bar, resize at the bottom-right corner. The dots
-                                    minimize, maximize and close — or double-click the title bar.</p>`;
+                win.innerHTML = `<p><span class="sg-only-wide">Drag the title bar, resize at the bottom-right corner. The dots
+                                    minimize, maximize and close — or double-click the title bar.</span><span
+                                    class="sg-only-compact">On a phone every window opens maximized: the orange
+                                    dot collapses it to its title bar, the red one closes it.</span></p>`;
                 document.body.appendChild(win);
                 requestAnimationFrame(() => win.open());
             } else {
@@ -1980,14 +2145,30 @@ sac.router.register("#/notes", "my-notes-view", { label: "Notes", icon: "note" }
 sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vector" });
 // no mount() — this page is just a page; the nav panel still lists everything.`)}
 
+                <h2>List / detail</h2>
+                <p>A list beside its detail — mail, contacts, settings — in one <code>&lt;sac-split collapse&gt;</code>:
+                   two panels on a wide screen, one at a time with a back bar on a phone. Template:
+                   <code>kit/templates/list-detail.html</code>; the live demo is in
+                   <a href="#/styleguide/patterns/responsive-list-detail">CSS Patterns → Responsive</a>.</p>
+                ${code(`<div class="main-layout">
+    <sac-split collapse position="32%" min-start="220px" min-end="320px">
+        <nav slot="start">…the list…</nav>
+        <article slot="end">…the open item…</article>
+    </sac-split>
+</div>`)}
+
                 <h2>The one rule that matters</h2>
                 <p class="sg-note"><b>Views use light DOM, components use Shadow DOM.</b> Views are composed
                    from the global classes (<code>.grid</code>, <code>.tile</code>, <code>.btn</code>) and
                    need ui.css to reach them; components need style isolation so a view's CSS can't reach
                    in. Guess wrong and either your view is unstyled or your component leaks.</p>
-                <p class="sg-note"><b>Scrollbar caveat:</b> the global scrollbar rules in ui.css do
-                   <em>not</em> pierce Shadow DOM. A component with its own scrollable shadow content must
-                   duplicate them (all kit components already do).</p>
+                <p class="sg-note"><b>Scrollbars:</b> Chromium and Safari draw the kit's own bar
+                   (<code>::-webkit-scrollbar</code>: a rounded 6px thumb with 2px of air, no arrow buttons, the
+                   same on every OS); Firefox gets the standard <code>scrollbar-width</code>/<code>-color</code>
+                   pair, set ONLY there — a set <code>scrollbar-color</code> (inherited, even into shadow roots)
+                   makes Chrome ignore every <code>::-webkit-scrollbar</code> rule. The rules do <em>not</em>
+                   pierce Shadow DOM: a component with its own scrollable shadow content repeats the recipe
+                   (all kit components already do).</p>
             </div>
             `;
     }
@@ -2002,6 +2183,7 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                     Global classes from <code>ui.css</code>. Rule of thumb: if a thing needs behavior it's a
                     <code>sac-*</code> element; if it's pure styling it's one of these classes.
                     Everything below runs on tokens — no class hides a raw color.
+                    Phones and touch: <a href="#/styleguide/patterns/responsive">Responsive</a>, at the end.
                 </p>
 
                 <h2>Buttons — .btn</h2>
@@ -2039,6 +2221,9 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
     <button class="btn primary">Open File</button>
     <button class="nav-icon-btn"><sac-icon name="settings"></sac-icon></button>
 </div>`)}
+
+                ${compact(`under <code>pointer: coarse</code> a <code>.btn</code> in a <code>.toolbar</code> keeps its 32px look and
+                   gets a 44px <code>::after</code> hit halo — the ribbon stays 50px tall.`)}
 
                 <h2>Small icon button — .icon-btn</h2>
                 <p>The 26px ghost icon button for rows, lists and cards — the light-DOM twin of
@@ -2168,6 +2353,11 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                         </a>
                     </div>
                 </div>
+                ${compact(`the grid's columns never drop below the screen (<code>minmax(min(280px, 100%), 1fr)</code> —
+                   one column on a phone), rows become <code>minmax(150px, auto)</code> and tiles pad less. Below 480px a tile
+                   becomes a <b>row</b> — a 32px icon beside the text, a 1.15rem title, rows as tall as their content — so a
+                   phone shows twice the tiles per screen; <code>.hub-container .intro-text</code> steps down to 1rem. Under
+                   <code>hover: none</code> a tapped tile does not stay lifted.`)}
 
                 <h2>Hub header + .orb</h2>
                 <p><code>.hub-container</code> centers the launcher; its <code>h1</code> gets the
@@ -2319,8 +2509,276 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                    query in <code>ui.css</code> collapses animation/transition durations app-wide, but it
                    does not pierce Shadow DOM — components with their own animations carry their own
                    query too.</p>
+
+                <h2 id="responsive">Responsive — phones and touch</h2>
+                <p>An app built only from the kit works on a 360px portrait phone without one media
+                   query of its own. Desktop (≥ 1024px) is untouched: every rule below sits inside a
+                   width or input-capability query.</p>
+                <div class="sg-demo sg-row">
+                    <button class="btn primary sg-only-wide" style="width:auto" data-sg-width="phone">Preview this guide at 375px</button>
+                    <button class="btn primary sg-only-compact" style="width:auto" data-sg-drawer>Open this page's rail drawer</button>
+                    <span class="sg-muted">This guide is the live example — on a phone its rail is the drawer.</span>
+                </div>
+
+                <h3 id="responsive-breakpoints">Breakpoints</h3>
+                <p>Two fixed values, written out: a custom property cannot be used inside a media
+                   query, so a token would only pretend to be configurable.</p>
+                <table class="sg">
+                    <tr><th style="width:220px">Name</th><th>Query</th><th>What changes</th></tr>
+                    <tr><td><code>compact</code></td><td><code>(max-width: 768px), (max-height: 480px) and (pointer: coarse)</code></td><td>≤768px wide, <b>or</b> a short touch screen — a phone held sideways (844 × 390) is wide but far too short for the desktop layout. Copy the whole query when you need “compact”. The ribbon shows the app's name, the rail becomes a drawer, paddings shrink, <code>sac-dialog</code> becomes a bottom sheet, <code>sac-window</code> opens maximized.</td></tr>
+                    <tr><td><code>narrow</code></td><td style="white-space:nowrap"><code>(max-width: 480px)</code></td><td>A second step, only where a component truly needs one.</td></tr>
+                </table>
+
+                <h3 id="responsive-queries">Page @media, component @container</h3>
+                <p>The page reacts to the viewport. A component reacts to its own box, because it also
+                   lives in a <code>sac-window</code> or a <code>sac-split</code> panel that is narrow on a wide screen.</p>
+                <table class="sg">
+                    <tr><th style="width:220px">Who</th><th>Reacts to</th></tr>
+                    <tr><td>Page layout</td><td><code>@media</code> — <code>.main-layout</code>, the rail, <code>sac-nav</code>, dialogs, windows.</td></tr>
+                    <tr><td>Components</td><td><code>container-type: inline-size</code> + <code>@container</code> on their own box.</td></tr>
+                    <tr><td>Shadow components</td><td>Their own queries inside the shadow root — a light-DOM <code>@media</code> rule does not pierce it.</td></tr>
+                </table>
+                <p class="sg-note"><b>Containment caveat:</b> <code>inline-size</code> containment stops an
+                   element sizing to its content. Put the container on an inner wrapper or a block-level,
+                   full-width host — never on a shrink-to-fit host, which would collapse to 0.</p>
+                ${code(`.my-card { container-type: inline-size; }        /* block-level: safe */
+@container (max-width: 480px) {
+    .my-card .row { flex-direction: column; }
+}`)}
+
+                <h3 id="responsive-ribbon">The phone ribbon</h3>
+                <p>On compact the ribbon names the app in words and hands everything else to the
+                   burger. This page's own ribbon is the live example.</p>
+                <table class="sg">
+                    <tr><th style="width:220px">Part</th><th>On compact</th></tr>
+                    <tr><td>Ribbon</td><td>Burger + the app's name as text (<code>compact-title</code>) + the app's own controls, right-aligned. <code>brand</code>, <code>brand-icon</code> and the host jump do not show; the name truncates only after the toolbar has overflowed into “…”.</td></tr>
+                    <tr><td><code>compact-title</code></td><td>Default: <code>brand</code> for a hosted app, else <code>app-name</code>, else <code>brand</code>. Set it where <code>app-name</code> is a version, not a name.</td></tr>
+                    <tr><td>Menu open</td><td>The ribbon becomes the desktop title bar: the app's controls slide out to the right while the ⌂ host jump with the suite's name (truncates first; “Home” without a host label) and the app icon ease in before the app's name — colours, sizes and spacing are the desktop brand row's, so opening the menu changes no colour. That is where you are and the way home, so the panel drops its Home entry. An app with no burger shows the brand row all along. No “No sections yet.” on compact.</td></tr>
+                    <tr><td>Panel</td><td>Always the rail recipe — solid <code>--panel</code>, hairlines, item pills — alone or stacked above the adopted rail.</td></tr>
+                    <tr><td><code>sac-theme-toggle</code></td><td>In the context slot it collapses to one round button (see Toolbar overflow).</td></tr>
+                </table>
+
+                <h3 id="responsive-drawer">The rail drawer</h3>
+                <p>On compact the nav <b>adopts</b> the app's rail and its burger opens it as an
+                   off-canvas drawer — one burger, not two. The nav owns scrim, Escape,
+                   swipe-left-to-close and the focus trap; there is nothing to wire.</p>
+                <table class="sg">
+                    <tr><th style="width:220px">API</th><th>Description</th></tr>
+                    <tr><td><code>sac-nav rail</code></td><td>Which rail to adopt: a CSS selector, or <code>none</code>. Absent = the first <code>&lt;sac-sidebar&gt;</code> / <code>.sidebar</code> inside a <code>.main-layout</code> next to the nav. An empty <code>&lt;sac-sidebar&gt;</code> is adopted too — the burger appears the moment it gets items.</td></tr>
+                    <tr><td><code>drawer</code></td><td>Set by the nav on the rail it adopted. Changes nothing above 768px. Without a nav, set it yourself.</td></tr>
+                    <tr><td><code>open</code></td><td>Reflected: the drawer is out.</td></tr>
+                    <tr><td><code>open() / close() / toggle()</code></td><td><code>&lt;sac-sidebar&gt;</code> methods — set or clear <code>[open]</code>.</td></tr>
+                    <tr><td><code>sac:sidebar-toggle</code></td><td>Listened for on <code>window</code>; <code>detail { open }</code> optional. Drives a rail from any button.</td></tr>
+                    <tr><td><code>sac:sidebar-open / -close</code></td><td>Fired by <code>&lt;sac-sidebar&gt;</code> whenever <code>[open]</code> changes.</td></tr>
+                    <tr><td>Closing on navigation</td><td><code>&lt;sac-sidebar&gt;</code> closes on any item tap; a plain <code>.sidebar</code> on a tap on <code>a[href]</code> or <code>[data-drawer-close]</code>.</td></tr>
+                    <tr><td><code>--drawer-width</code></td><td>Token: <code>min(300px, 85vw)</code> — the drawer, and the burger panel beside it.</td></tr>
+                </table>
+                ${code(`<sac-nav brand="MY TOOLS" brand-icon="cube" app-name="EDITOR"></sac-nav>
+<div class="main-layout">
+    <div class="sidebar">
+        …controls…
+        <button class="btn" data-drawer-close>Apply</button>   <!-- closes the drawer -->
+    </div>
+    <div class="viewport">…</div>
+</div>
+
+<!-- any other button, anywhere: -->
+<button onclick="dispatchEvent(new CustomEvent('sac:sidebar-toggle'))">Settings</button>`)}
+
+                <h3 id="responsive-burger">Who owns the burger</h3>
+                <p>The burger is the <b>app's</b>. The kit ships the parts with today's behaviour as the
+                   default; the app decides what goes in. Recommended setups:</p>
+                <table class="sg">
+                    <tr><th style="width:220px">App</th><th>Setup</th></tr>
+                    <tr><td>Suite with a dashboard</td><td><code>host-nav="wide"</code>. On a phone the tile dashboard is the main level and the ⌂ in the open menu's ribbon leads back to it; the burger holds only the app itself. The desktop burger keeps the suite list.</td></tr>
+                    <tr><td>Tool page</td><td>Nothing to set: the burger opens the rail.</td></tr>
+                    <tr><td>Sections <em>and</em> a rail</td><td>If the rail lists the same sections: <code>sections-nav="wide"</code> — one list on the phone. If they differ (areas above, a folder list in the rail): they stack in one column, sections capped at 45dvh.</td></tr>
+                    <tr><td>Burger for something else</td><td>Put it in the <code>panel</code> slot; <code>rail="none"</code> keeps the rail out; <code>open()</code> / <code>sac:nav-open</code> to drive and follow it.</td></tr>
+                </table>
+                ${code(`<sac-nav brand="SUITE" brand-icon="cube" app-name="NOTES" host-nav="wide">
+    <div slot="panel">
+        <label>Filter</label>
+        <input type="search" placeholder="Search notes">
+        <a href="#/account">Account</a>          <!-- a link closes the panel -->
+    </div>
+</sac-nav>`)}
+
+                <h3 id="responsive-list-detail">List / detail — one panel at a time</h3>
+                <p><code>&lt;sac-split collapse&gt;</code> shows one panel when <b>its own</b> width drops
+                   to the threshold, with a back bar above the detail. Narrow the box: the split
+                   measures itself, not the page.</p>
+                <div class="sg-demo sg-col" style="max-width:none;">
+                    <div class="sg-row">
+                        <sac-segmented-control id="demo-ld-width" value="full">
+                            <button data-value="360">360px</button>
+                            <button data-value="600">600px</button>
+                            <button data-value="full">Full</button>
+                        </sac-segmented-control>
+                        <span id="demo-ld-out" class="sg-muted"></span>
+                    </div>
+                    <div class="sg-ld-box" id="demo-ld-box">
+                        <sac-split id="demo-ld" collapse="480px" position="36%" min-start="150px" min-end="200px">
+                            <div slot="start" class="sg-ld-list" id="demo-ld-list">
+                                <button type="button" data-role="Notes on the Analytical Engine">Ada Lovelace</button>
+                                <button type="button" data-role="The first compiler">Grace Hopper</button>
+                                <button type="button" data-role="Frequency hopping">Hedy Lamarr</button>
+                                <button type="button" data-role="Computability">Alan Turing</button>
+                            </div>
+                            <div slot="end" class="sg-ld-detail" id="demo-ld-detail">
+                                <span class="sg-muted">Pick someone from the list.</span>
+                            </div>
+                        </sac-split>
+                    </div>
+                </div>
+                <table class="sg">
+                    <tr><th style="width:220px">API</th><th>Description</th></tr>
+                    <tr><td><code>collapse</code></td><td><code>compact</code> (768px, also a bare <code>collapse</code>), <code>narrow</code> (480px) or a px length. Absent = never collapses.</td></tr>
+                    <tr><td><code>show</code></td><td><code>start</code> (default) | <code>end</code> — the panel a collapsed split shows. Set <code>end</code> when the user opens an item.</td></tr>
+                    <tr><td><code>no-back / back-label</code></td><td>Hide the built-in back bar / set its text (default “Back”, key <code>split.back</code>).</td></tr>
+                    <tr><td><code>back()</code></td><td>What the back bar does: show <code>start</code>, after <code>sac:split-back</code>.</td></tr>
+                    <tr><td><code>sac:split-back</code></td><td>Cancelable — <code>preventDefault()</code> keeps the detail (unsaved changes).</td></tr>
+                    <tr><td><code>sac:collapse</code></td><td><code>detail { collapsed }</code> — entered or left one-panel mode.</td></tr>
+                </table>
+                ${code(`<sac-split collapse position="30%">
+    <ul slot="start">…</ul>
+    <article slot="end">…</article>
+</sac-split>
+
+list.addEventListener("click", (e) => { showItem(e.target); split.show = "end"; });`)}
+
+                <h3 id="responsive-overlays">Dialogs and windows</h3>
+                <table class="sg">
+                    <tr><th style="width:220px">Component</th><th>On compact</th></tr>
+                    <tr><td><code>sac-dialog</code></td><td>A bottom sheet: full width above the home-bar inset, at most 85dvh with the body scrolling, actions full-width and stacked (primary on top). Focus trap and Escape unchanged.</td></tr>
+                    <tr><td><code>sac-window</code></td><td>Always maximized below the nav — no drag, the maximize dot hidden, 44px traffic-light hit areas, an opaque ground (no blur). The component sets <code>compact</code> meanwhile; back on a wide screen the window returns to its rect.</td></tr>
+                </table>
+                <div class="sg-demo sg-row">
+                    <button class="btn" style="width:auto" id="demo-resp-dialog">Open a dialog</button>
+                    <button class="btn" style="width:auto" id="demo-resp-window">Open a window</button>
+                </div>
+
+                <h3 id="responsive-overflow">Toolbar overflow</h3>
+                <p>When the nav's toolbar and host tools do not fit, the trailing buttons move behind
+                   a “…” <code>&lt;sac-menu&gt;</code> — at any width, driven by a ResizeObserver. A menu
+                   item clicks the original button, so its handlers run unchanged.</p>
+                <table class="sg">
+                    <tr><th style="width:220px">Rule</th><th>Description</th></tr>
+                    <tr><td>Candidates</td><td><code>button</code> / <code>a</code> in the toolbar slot (or one wrapper deep) and the host tools, trailing first.</td></tr>
+                    <tr><td><code>data-overflow="never"</code></td><td>Keeps a control in the ribbon.</td></tr>
+                    <tr><td><code>[data-sac-overflow]</code></td><td>Marks a parked button (hidden by ui.css) — it is never moved in the DOM.</td></tr>
+                    <tr><td>Needs</td><td><code>sac-menu.js</code> loaded; without it nothing overflows. Menu label: key <code>nav.more</code>.</td></tr>
+                    <tr><td>Theme toggle</td><td>Never parked: in the context slot on compact a <code>&lt;sac-theme-toggle&gt;</code> collapses to one round button first, so the pill does not push the app's toolbar out (<code>collapse="never"</code> opts out).</td></tr>
+                </table>
+
+                <h3 id="responsive-touch">Touch</h3>
+                <p>Input capability, not width: a touch laptop gets the same rules as a phone.</p>
+                <table class="sg">
+                    <tr><th style="width:220px">Query</th><th>Rule</th></tr>
+                    <tr><td><code>(pointer: coarse)</code></td><td>Every control gets a 44 × 44px <b>hit area</b> — not always a 44px look: small buttons keep their size and grow an invisible <code>::after</code> halo.</td></tr>
+                    <tr><td><code>(pointer: coarse)</code></td><td>Text fields get <code>font-size: max(16px, 1rem)</code> — below 16px iOS zooms the page on focus.</td></tr>
+                    <tr><td><code>(hover: none)</code></td><td>Nothing is reachable by hover alone. Anything revealed on hover is shown for good; sticky <code>:hover</code> lifts are neutralised.</td></tr>
+                    <tr><td><code>.reveal-on-hover</code> + <code>.hover-reveal</code></td><td>The utility for quiet row actions: hidden until the row is hovered or focused, always shown on a touch screen.</td></tr>
+                </table>
+                <div class="sg-demo">
+                    <ul class="sg-reveal-list">
+                        <li class="reveal-on-hover"><span>Ada Lovelace</span>
+                            <button class="icon-btn hover-reveal" title="Edit"><sac-icon name="pencil"></sac-icon></button>
+                            <button class="icon-btn danger hover-reveal" title="Remove"><sac-icon name="trash"></sac-icon></button></li>
+                        <li class="reveal-on-hover"><span>Grace Hopper</span>
+                            <button class="icon-btn hover-reveal" title="Edit"><sac-icon name="pencil"></sac-icon></button>
+                            <button class="icon-btn danger hover-reveal" title="Remove"><sac-icon name="trash"></sac-icon></button></li>
+                    </ul>
+                </div>
+                ${code(`<li class="reveal-on-hover">
+    Ada Lovelace
+    <button class="icon-btn hover-reveal" title="Edit"><sac-icon name="pencil"></sac-icon></button>
+</li>`)}
+
+                <h3 id="responsive-safe-areas">Safe areas and dvh</h3>
+                <p>The kit pads its nav, layouts and scroll regions by the <code>env(safe-area-inset-*)</code>
+                   insets. They are 0 until the page opts into the full screen:</p>
+                ${code(`<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">`)}
+                <table class="sg">
+                    <tr><th style="width:220px">Where</th><th>Inset</th></tr>
+                    <tr><td><code>sac-nav</code></td><td>Grows by the top inset, pads its sides by left / right.</td></tr>
+                    <tr><td><code>.main-layout</code>, <code>#app-root</code>, <code>.hub-container</code></td><td>Clear <code>50px + env(safe-area-inset-top)</code>.</td></tr>
+                    <tr><td><code>.app-scroll</code>, the drawer, the sheet</td><td>Pad by the bottom (home-bar) inset.</td></tr>
+                    <tr><td>Full-height layouts</td><td><code>100dvh</code> after a <code>100vh</code> fallback — dvh follows the mobile toolbar sliding in and out.</td></tr>
+                </table>
+
+                <h3 id="responsive-as-is">Left as they are, on purpose</h3>
+                <table class="sg">
+                    <tr><th style="width:220px">What</th><th>Why</th></tr>
+                    <tr><td><code>sac-window</code> drag / resize</td><td>A desktop metaphor — on compact a window is always maximized instead.</td></tr>
+                    <tr><td><code>sac-swatch-grid</code> columns</td><td>Kept at <code>columns</code>: it is the keyboard stride, and a palette's rows often mean something. Cells shrink; pick fewer columns for touch-first palettes.</td></tr>
+                    <tr><td><code>sac-toast</code> <code>position</code></td><td>Ignored on compact — every stack sits at the bottom edge, where a thumb is.</td></tr>
+                    <tr><td><kbd>mod</kbd>+<kbd>K</kbd></td><td>There is no such key on a phone. An app that wants the palette there gives it a button calling <code>sac.palette.open()</code>.</td></tr>
+                    <tr><td><code>sac-tooltip</code></td><td>Long-press only on touch — undiscoverable by design, so a tooltip is never the only way to reach information.</td></tr>
+                    <tr><td>Width preview in this guide</td><td>The frame reproduces width; <code>pointer</code> / <code>hover</code> follow the device, so touch rules are checked on a real phone or in DevTools device mode.</td></tr>
+                </table>
             </div>
             `;
+    }
+
+    function wirePatterns(root) {
+        // List/detail: a split that measures itself, so a narrower box — not
+        // a narrower page — collapses it.
+        const box = root.querySelector("#demo-ld-box");
+        const ld = root.querySelector("#demo-ld");
+        const ldOut = root.querySelector("#demo-ld-out");
+        const detail = root.querySelector("#demo-ld-detail");
+        const say = () => {
+            ldOut.textContent = ld.collapsed
+                ? `collapsed — showing ${ld.show === "end" ? "the detail" : "the list"}`
+                : "wide — both panels";
+        };
+        root.querySelector("#demo-ld-width").addEventListener("sac:change", (e) => {
+            box.style.maxWidth = e.detail.value === "full" ? "" : `${e.detail.value}px`;
+        });
+        root.querySelector("#demo-ld-list").addEventListener("click", (e) => {
+            const btn = e.target.closest("button");
+            if (!btn) return;
+            root.querySelectorAll("#demo-ld-list button").forEach((b) => b.classList.toggle("active", b === btn));
+            detail.replaceChildren(
+                Object.assign(document.createElement("h4"), { textContent: btn.textContent }),
+                Object.assign(document.createElement("p"), { textContent: btn.dataset.role }));
+            ld.show = "end";
+            say();
+        });
+        ld.addEventListener("sac:collapse", say);
+        ld.addEventListener("sac:split-back", () => requestAnimationFrame(say));
+        say();
+
+        root.querySelector("#demo-resp-dialog").addEventListener("click", () => {
+            sac.dialog.confirm({
+                title: "Discard the draft?",
+                message: "On a phone this is a bottom sheet, its actions stacked full-width.",
+                buttons: [
+                    { action: "keep", label: "Keep editing" },
+                    { action: "discard", label: "Discard", kind: "destructive" },
+                ],
+            });
+        });
+
+        root.querySelector("#demo-resp-window").addEventListener("click", () => {
+            let win = document.getElementById("sg-demo-compact-window");
+            if (!win) {
+                win = document.createElement("sac-window");
+                win.id = "sg-demo-compact-window";
+                win.setAttribute("title", "Compact window");
+                win.setAttribute("width", "340px");
+                win.setAttribute("height", "220px");
+                win.setAttribute("left", `${Math.max((window.innerWidth - 340) / 2, 20)}px`);
+                win.setAttribute("top", "160px");
+                win.innerHTML = `<p>A 340 × 220 window on a desktop. At 768px and below it opens
+                                    maximized under the nav, with no drag and no maximize dot.</p>`;
+                document.body.appendChild(win);
+                requestAnimationFrame(() => win.open());
+            } else {
+                if (win.hasAttribute("minimized")) win.restore();
+                win.open();
+            }
+        });
     }
 
     /* --------------------------------------------------------- helpers --- */
@@ -2386,7 +2844,12 @@ else document.addEventListener("sac:ready", boot, { once: true });`)}
     onChange: (scale) => hud.textContent = \`zoom \${scale.toFixed(2)}\`,
 });
 pz.reset();                               // e.g. when a new image loads`)}
-                <p>Each layer must fill its pane — the kit's <code>.pz-layer</code> class does exactly that.</p>
+                <p>Each layer must fill its pane — the kit's <code>.pz-layer</code> class does exactly that.
+                   <code>enabled()</code> returning false hands wheel, drag <em>and</em> touch to an edit tool.
+                   <code>.viewport.grabbing</code> (ui.css) shows the grabbing cursor while a pan runs.</p>
+                ${compact(`one finger pans, two fingers pinch-zoom around their midpoint (and pan with it), a double-tap
+                   resets. The pane gets <code>touch-action: none</code>, so the gesture stays inside it — page scroll
+                   and page zoom are untouched everywhere else.`)}
 
                 <h2>Toolbars — no projection, by design</h2>
                 <p><strong>The app owns its top area.</strong> There is no <code>sac.toolbar</code>:
@@ -2782,6 +3245,7 @@ sac.identity.clear();`)}
 <!-- component scripts after this -->`)}
                 <table class="sg">
                     <tr><th style="width:260px">Key</th><th>English default</th><th style="width:160px">Component</th></tr>
+                    <tr><td><code>about.title</code></td><td><code>About {name}</code></td><td>sac.about</td></tr>
                     <tr><td><code>calendar.prev-decade</code></td><td><code>Back 10 years</code></td><td>sac-calendar</td></tr>
                     <tr><td><code>calendar.prev-year</code></td><td><code>Previous year</code></td><td>sac-calendar</td></tr>
                     <tr><td><code>calendar.prev-month</code></td><td><code>Previous month</code></td><td>sac-calendar</td></tr>
@@ -2814,6 +3278,8 @@ sac.identity.clear();`)}
                     <tr><td><code>date-field.calendar</code></td><td><code>Calendar</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>drop-zone.label</code></td><td><code>Drop files here</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>drop-zone.hint</code></td><td><code>or click to browse</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>drop-zone.label-touch</code></td><td><code>Choose files</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>drop-zone.hint-touch</code></td><td><code>Tap to browse</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>footer.link</code></td><td><code>LINK</code></td><td>sac-footer</td></tr>
                     <tr><td><code>help.load-failed</code></td><td><code>Failed to load documentation</code></td><td>help-loader</td></tr>
                     <tr><td><code>help.check-console</code></td><td><code>Check console for details.</code></td><td>help-loader</td></tr>
@@ -2853,6 +3319,7 @@ sac.identity.clear();`)}
                     <tr><td><code>nav.home</code></td><td><code>Home</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.host</code></td><td><code>Host</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.menu</code></td><td><code>Menu</code></td><td>sac-nav</td></tr>
+                    <tr><td><code>nav.more</code></td><td><code>More</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.no-sections</code></td><td><code>No sections yet.</code></td><td>sac-nav</td></tr>
                     <tr><td><code>palette.title</code></td><td><code>Command palette</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.placeholder</code></td><td><code>Type a command…</code></td><td>sac-command-palette</td></tr>
@@ -2867,9 +3334,11 @@ sac.identity.clear();`)}
                     <tr><td><code>scene.visibility</code></td><td><code>Toggle visibility</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>sidebar.label</code></td><td><code>Sections</code></td><td>sac-sidebar</td></tr>
                     <tr><td><code>spinner.loading</code></td><td><code>Loading</code></td><td>sac-spinner</td></tr>
+                    <tr><td><code>split.back</code></td><td><code>Back</code></td><td>sac-split</td></tr>
                     <tr><td><code>split.resize-panels</code></td><td><code>Resize panels</code></td><td>sac-split</td></tr>
                     <tr><td><code>stepper.decrease</code></td><td><code>Decrease</code></td><td>sac-stepper</td></tr>
                     <tr><td><code>stepper.increase</code></td><td><code>Increase</code></td><td>sac-stepper</td></tr>
+                    <tr><td><code>theme-toggle.label</code></td><td><code>Theme</code></td><td>sac-theme-toggle</td></tr>
                     <tr><td><code>theme-toggle.dark</code></td><td><code>Dark</code></td><td>sac-theme-toggle</td></tr>
                     <tr><td><code>theme-toggle.light</code></td><td><code>Light</code></td><td>sac-theme-toggle</td></tr>
                     <tr><td><code>theme-toggle.auto</code></td><td><code>Auto</code></td><td>sac-theme-toggle</td></tr>
@@ -2940,7 +3409,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
         { id: "layout",     label: "Layouts",          icon: "globe",
           html: layoutHtml },
         { id: "patterns",   label: "CSS Patterns",     icon: "document",
-          html: patternsHtml },
+          html: patternsHtml,   wire: wirePatterns },
         { id: "helpers",    label: "Helpers",          icon: "settings",
           html: helpersHtml,    wire: wireHelpers },
     ];
@@ -2953,11 +3422,39 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
 
     const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // Width preview. A media query answers to the viewport, never to a div,
+    // so "Phone 375" is an <iframe> of this very page: inside it the kit sees
+    // a 375px viewport and does exactly what it does on a phone. The framed
+    // copy is marked ?sg-frame and draws no switch — a phone has none either.
+    const FRAMED = new URLSearchParams(location.search).has("sg-frame");
+    const WIDTHS = {
+        phone:  { label: "Phone 375",  w: 375, h: 812 },
+        tablet: { label: "Tablet 768", w: 768, h: 1024 },
+    };
+    const WIDTH_KEY = "sac.styleguide.width";
+    const COMPACT = matchMedia("(max-width: 768px), (max-height: 480px) and (pointer: coarse)");
+
+    /** The viewer's last choice. Storage may be absent or blocked: then Full. */
+    function readWidth() {
+        try {
+            const v = localStorage.getItem(WIDTH_KEY);
+            return WIDTHS[v] ? v : "full";
+        } catch { return "full"; }
+    }
+    function storeWidth(v) {
+        try {
+            if (WIDTHS[v]) localStorage.setItem(WIDTH_KEY, v);
+            else localStorage.removeItem(WIDTH_KEY);
+        } catch { /* a preview preference is not worth an error */ }
+    }
+    const themeOf = (doc) => doc.documentElement.getAttribute("data-theme") || "dark";
+
     class AppStyleguide extends HTMLElement {
         connectedCallback() {
             if (this.firstElementChild) return;   // a stage swap re-connects
             ensureStyles();
             this._anchors = [];
+            this._targets = [];
             this._anchor = "";
 
             // The app is complete: its own nav, its own rail, its own
@@ -2966,10 +3463,39 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             this._nav.setAttribute("brand", "STYLE GUIDE");
             this._nav.setAttribute("brand-icon", "star");
             this._nav.setAttribute("brand-href", "#/styleguide");
+            // On a phone the suite's tile dashboard is the main level (the
+            // ⌂ in the open menu's ribbon goes back to it), so the burger holds only this app — no suite list
+            // stacked above the rail.
+            this._nav.setAttribute("host-nav", "wide");
+            // Its rail lists the sections already: on a phone the burger
+            // opens that one list instead of a second copy stacked above it.
+            this._nav.setAttribute("sections-nav", "wide");
             const ctxSlot = document.createElement("div");
             ctxSlot.slot = "context";
             ctxSlot.appendChild(document.createElement("sac-theme-toggle"));
             this._nav.appendChild(ctxSlot);
+            // Pinned in the ribbon (data-overflow="never"): parked behind
+            // "…" the switch would be one tap further from what it previews.
+            if (!FRAMED) {
+                const tools = document.createElement("div");
+                tools.slot = "toolbar";
+                tools.className = "toolbar";
+                this._widthSwitch = document.createElement("sac-segmented-control");
+                this._widthSwitch.className = "sg-width-switch";
+                this._widthSwitch.setAttribute("aria-label", "Preview width");
+                this._widthSwitch.innerHTML = [
+                    ...Object.entries(WIDTHS).map(([k, v]) =>
+                        `<button type="button" data-value="${k}" data-overflow="never"
+                                 title="Render the guide in a ${v.w}px-wide frame">${v.label}</button>`),
+                    `<button type="button" data-value="full" data-overflow="never">Full</button>`,
+                ].join("");
+                this._widthSwitch.addEventListener("sac:change", (e) => this._setWidth(e.detail.value));
+                tools.appendChild(this._widthSwitch);
+                this._nav.appendChild(tools);
+            }
+            // Explicit, though the default would find it: demos below render
+            // their own .main-layout mock-ups, and the drawer must be OURS.
+            this._nav.setAttribute("rail", "app-styleguide > .main-layout > sac-sidebar");
 
             const layout = document.createElement("div");
             layout.className = "main-layout";
@@ -2980,20 +3506,38 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             this._scroll.appendChild(this._body);
             layout.append(this._rail, this._scroll);
             this.append(this._nav, layout);
+            this._layout = layout;
+
+            // In-page controls of the Responsive section.
+            this.addEventListener("click", (e) => {
+                const w = e.target.closest("[data-sg-width]");
+                if (w) this._setWidth(w.dataset.sgWidth);
+                if (e.target.closest("[data-sg-drawer]")) this._rail.open();
+            });
         }
 
         /** App contract: called once by sac.apps, right after the first insert. */
         mount(context) {
             this._ctx = context;
+            // Rail first: a rail with no items is [hidden], and the nav only
+            // adopts a visible rail as its compact drawer — it looks when it
+            // renders, which the two assignments below trigger.
+            const target = splitRoute(context.route);
+            this._go(target.id, target.anchor, false);
             // The host's injection (jump, suite nav, toolbar controls),
             // rendered by OUR nav. Null standalone — the nav shows nothing.
             this._nav.host = context.host;
             // Our own sections, offered to the burger: hosted they nest
             // under this app's suite entry, standalone they are the list.
+            // On compact sections-nav="wide" keeps them out of the burger:
+            // the rail beneath already lists them.
             this._nav.sections = SECTIONS.map((s) =>
                 ({ label: s.label, href: context.href(s.id), icon: s.icon }));
-            const target = splitRoute(context.route);
-            this._go(target.id, target.anchor, false);
+
+            this._width = FRAMED ? "full" : readWidth();
+            this._onCompact = () => { this._project(); this._applyWidth(); };
+            COMPACT.addEventListener("change", this._onCompact);
+            this._applyWidth();
 
             // Rail clicks, back/forward and pasted URLs arrive here.
             this._offRoute = context.onRoute((route) => {
@@ -3043,6 +3587,134 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             if (this._offRoute) { this._offRoute(); this._offRoute = null; }
             if (this._onApps) { document.removeEventListener("sac:apps-changed", this._onApps); this._onApps = null; }
             this._demoCmdsOff();
+            if (this._onCompact) { COMPACT.removeEventListener("change", this._onCompact); this._onCompact = null; }
+            this._dropFrame();
+            this._codeObs?.disconnect();
+        }
+
+        /* ----------------------------------------------- width preview --- */
+
+        /** The switch, and the "preview at 375px" button, land here. */
+        _setWidth(value) {
+            this._width = WIDTHS[value] ? value : "full";
+            storeWidth(this._width);
+            this._applyWidth();
+        }
+
+        /** Frame or not. A compact viewport always gets the guide itself. */
+        _applyWidth() {
+            if (this._widthSwitch) this._widthSwitch.value = this._width;
+            const size = COMPACT.matches ? null : WIDTHS[this._width];
+            if (!size) {
+                if (!this._frame) return;
+                // Back to Full where the frame was reading.
+                const r = this._frameRoute();
+                this._dropFrame();
+                if (r != null) {
+                    const t = splitRoute(r);
+                    this._go(t.id, t.anchor, false);
+                }
+                return;
+            }
+            if (!this._stage) {
+                this._stage = document.createElement("div");
+                this._stage.className = "sg-frame-stage";
+                this._layout.appendChild(this._stage);
+            }
+            if (!this._frame) {
+                this._frame = document.createElement("iframe");
+                this._frame.className = "sg-frame";
+                this._frame.title = "Style guide preview";
+                this._frameReady = false;
+                this._frame.addEventListener("load", () => this._wireFrame());
+                const url = new URL(location.href);
+                url.searchParams.delete("app");       // no window app twice
+                url.searchParams.set("sg-frame", "");
+                url.hash = this._ctx ? this._ctx.href(this._route()) : "";
+                this._frame.src = url.href;
+                const caption = document.createElement("p");
+                caption.className = "sg-frame-caption";
+                this._stage.replaceChildren(this._frame, caption);
+            }
+            this._frame.style.width = `${size.w}px`;
+            this._frame.style.maxHeight = `${size.h}px`;
+            this._stage.lastElementChild.innerHTML =
+                `<b>${size.w}px</b> — this guide in a ${size.w}px viewport, laid out exactly as a
+                 ${size.w}px screen lays it out. Touch rules (<code>pointer: coarse</code>,
+                 <code>hover: none</code>) follow the device you are on.`;
+            this._stage.hidden = false;
+            this._scroll.hidden = true;
+        }
+
+        _dropFrame() {
+            this._frameObs?.forEach((o) => o.disconnect());
+            this._frameObs = null;
+            this._frame = null;
+            this._frameReady = false;
+            if (this._stage) { this._stage.replaceChildren(); this._stage.hidden = true; }
+            if (this._scroll) this._scroll.hidden = false;
+        }
+
+        /** The frame's sub-route under this app, or null when it left the app. */
+        _frameRoute() {
+            try {
+                const h = this._frame.contentWindow.location.hash;
+                const base = this._ctx.href("");
+                if (h === base) return "";
+                if (h.startsWith(base + "/")) return h.slice(base.length + 1);
+            } catch { /* not loaded yet */ }
+            return null;
+        }
+
+        _route() {
+            return this._section ? this._section.id + (this._anchor ? "/" + this._anchor : "") : "";
+        }
+
+        /** Outer rail / burger / back button → the frame follows. */
+        _pushFrame() {
+            if (!this._frameReady || !this._frame || !this._ctx) return;
+            try {
+                const win = this._frame.contentWindow;
+                const want = this._ctx.href(this._route());
+                if (win.location.hash !== want) win.location.hash = want;
+            } catch { /* mid-load */ }
+        }
+
+        /** Per load: the frame's navigation and theme flow back out here. */
+        _wireFrame() {
+            const frame = this._frame;
+            let win;
+            try { win = frame.contentWindow; if (!win.document) return; } catch { return; }
+            this._frameReady = true;
+            // The frame's own router runs first; read its settled address.
+            win.addEventListener("hashchange", () => setTimeout(() => {
+                if (this._frame !== frame) return;
+                const r = this._frameRoute();
+                if (r == null) return;
+                const t = splitRoute(r);
+                this._go(t.id, t.anchor, false);
+            }));
+            // Theme both ways: the outer toggle is the one in reach, the
+            // frame's the one in view. Only a DIFFERENT value crosses, so the
+            // two observers cannot ping-pong.
+            const set = (doc, value) => {
+                if (value === "dark") doc.documentElement.removeAttribute("data-theme");
+                else doc.documentElement.setAttribute("data-theme", value);
+                // Every toggle re-highlights (and stores the same value again) —
+                // the shell's home keeps one of its own beside ours.
+                doc.querySelectorAll("sac-theme-toggle").forEach((t) => { t.theme = value; });
+            };
+            const sync = (from, to) => () => {
+                if (themeOf(from) !== themeOf(to)) set(to, themeOf(from));
+            };
+            const opts = { attributes: true, attributeFilter: ["data-theme"] };
+            const out = new MutationObserver(sync(document, win.document));
+            const inn = new MutationObserver(sync(win.document, document));
+            out.observe(document.documentElement, opts);
+            inn.observe(win.document.documentElement, opts);
+            this._frameObs?.forEach((o) => o.disconnect());
+            this._frameObs = [out, inn];
+            sync(document, win.document)();
         }
 
         /** Render, address, rail — in that order; everything else derives. */
@@ -3060,12 +3732,14 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                 // demos wire themselves fresh on every render.
                 this._body.innerHTML = section.html();
                 if (section.wire) section.wire(this._body);
-                this._anchors = section.anchors
-                    ? Array.from(this._body.querySelectorAll("h2[id]"),
-                                 (h) => ({ id: h.id, label: h.textContent.trim() }))
-                    : [];
+                this._watchCode();
+                // Every h2/h3 with an id is addressable ("patterns/responsive");
+                // only an anchors section lists its h2s in the rail.
+                this._targets = Array.from(this._body.querySelectorAll("h2[id], h3[id]"),
+                    (h) => ({ id: h.id, label: h.textContent.trim(), top: h.tagName === "H2" }));
+                this._anchors = section.anchors ? this._targets.filter((a) => a.top) : [];
             }
-            this._anchor = this._anchors.some((a) => a.id === anchor) ? anchor : "";
+            this._anchor = this._targets.some((a) => a.id === anchor) ? anchor : "";
 
             if (this._ctx) {
                 this._ctx.deepLink.set(section.id + (this._anchor ? "/" + this._anchor : ""));
@@ -3074,13 +3748,16 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
 
             if (this._anchor) this._scrollToAnchor(this._anchor, animate && !swapped, swapped);
             else if (swapped) this._scroller().scrollTop = 0;
+            this._pushFrame();
         }
 
         /** The rail is this app's OWN chrome — replaced on every move. */
         _project() {
             if (!this._ctx) return;
+            // On compact the open menu's ribbon right above already names the app,
+            // so the rail's own "Style guide" heading would say it twice.
             const items = [
-                { section: "Style guide" },
+                ...(COMPACT.matches ? [] : [{ section: "Style guide" }]),
                 ...SECTIONS.map((s) => ({
                     label:  s.label,
                     icon:   s.icon,
@@ -3099,6 +3776,24 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                 }));
             }
             this._rail.items = items;
+        }
+
+        /** Code blocks scroll sideways inside themselves. Each one says which
+         *  side still has more (.sg-more-start / .sg-more-end) — the phone
+         *  stylesheet turns that into a soft edge. A ResizeObserver covers the
+         *  first layout, a late stylesheet and a rotated phone alike. */
+        _watchCode() {
+            this._codeObs?.disconnect();
+            const mark = (pre) => {
+                const max = pre.scrollWidth - pre.clientWidth;
+                pre.classList.toggle("sg-more-start", pre.scrollLeft > 1);
+                pre.classList.toggle("sg-more-end", pre.scrollLeft < max - 1);
+            };
+            this._codeObs = new ResizeObserver((entries) => entries.forEach((e) => mark(e.target)));
+            this._body.querySelectorAll("pre.sg-code").forEach((pre) => {
+                pre.addEventListener("scroll", () => mark(pre), { passive: true });
+                this._codeObs.observe(pre);
+            });
         }
 
         /** The app owns its scrolling — the .app-scroll region beside the rail. */

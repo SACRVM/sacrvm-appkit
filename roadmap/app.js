@@ -31,6 +31,13 @@
             this._nav.setAttribute("brand", "ROADMAP");
             this._nav.setAttribute("brand-icon", "document");
             this._nav.setAttribute("brand-href", "#/roadmap");
+            // On a phone the suite's tile dashboard is the main level (⌂ goes
+            // back to it), so the burger holds only this app — no suite list
+            // stacked above the rail.
+            this._nav.setAttribute("host-nav", "wide");
+            // Its rail lists the sections already: on a phone the burger
+            // opens that one list instead of a second copy stacked above it.
+            this._nav.setAttribute("sections-nav", "wide");
             const ctxSlot = document.createElement("div");
             ctxSlot.slot = "context";
             ctxSlot.appendChild(document.createElement("sac-theme-toggle"));
@@ -278,6 +285,12 @@
             <td>own need</td><td>M</td>
             <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
+        <tr data-item="mobile">
+            <td>Mobile / responsive foundation</td>
+            <td>A kit-only app works on a 360px phone with no media query of its own: compact/narrow breakpoints, rail drawer from the nav burger, list/detail via <code>sac-split collapse</code>, dialog bottom sheet, maximized windows, toolbar overflow menu, 44px touch targets, safe areas, dvh.</td>
+            <td>The Fishbowl</td><td>L</td>
+            <td><sac-chip label="done" color="green"></sac-chip></td>
+        </tr>
     </table>
 
     <h3>Parked — no consumer demands it yet</h3>
@@ -409,6 +422,14 @@
     </p>
 </div>
 `;
+            // Each gap cell learns its column's name: on a narrow phone the
+            // table stacks into one card per row, and the small columns
+            // (inspired by, effort) label themselves from this.
+            this._scroll.querySelectorAll("table.rm:not(.rm-matrix)").forEach((t) => {
+                const head = Array.from(t.rows[0].cells, (c) => c.textContent.trim());
+                Array.from(t.rows).slice(1).forEach((r) =>
+                    Array.from(r.cells).forEach((c, i) => { c.dataset.label = head[i] || ""; }));
+            });
         }
 
         /** App contract: called once by sac.apps, right after the first insert. */

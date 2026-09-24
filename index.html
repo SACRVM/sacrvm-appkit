@@ -2,7 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- viewport-fit=cover: the page runs under a phone's notch and home bar;
+         the kit pads its nav, layouts and scroll regions by the safe-area
+         insets, so nothing important ends up behind them. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Browser chrome colour (a phone's status bar / tab strip). These two
+         values mirror the --bg seeds in kit/css/ui.css (dark / light) — the
+         one place a seed is repeated, because a meta tag cannot read a custom
+         property. A custom theme updates them together with its seeds. -->
+    <meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#eef2f7" media="(prefers-color-scheme: light)">
     <title>SACRVM APPKIT</title>
     <meta name="description" content="A zero-dependency HTML UI kit for tool-style web apps: seed-driven themes, 40 sac-* web components, workspace layouts. No build step — vendor the kit/ folder as plain files.">
 
@@ -33,6 +42,9 @@
             margin: 0 auto;
             padding: 0 2rem 3rem;
         }
+        @media (max-width: 768px), (max-height: 480px) and (pointer: coarse) {
+            .section { padding: 0 1rem 2rem; }
+        }
         .section h2 {
             font-size: 1.5rem;
             margin-bottom: 0.5rem;
@@ -46,7 +58,7 @@
         /* Two columns on wide screens, stacked below. */
         .two-col {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
             gap: 1.5rem;
             align-items: start;
         }
@@ -103,6 +115,24 @@
             white-space: nowrap;
         }
 
+        /* Phone: two columns leave the values a 20-character measure —
+           stack each fact, label over value. The snippet sits inside a card
+           that already pads, so it drops half of its own. */
+        @media (max-width: 480px) {
+            .facts tr { display: block; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+            .facts tr:last-child { border-bottom: none; }
+            .facts td { display: block; padding: 0; border-bottom: none; }
+            .facts td:first-child {
+                padding: 0 0 0.15rem;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                font-weight: 600;
+            }
+            .snippet { padding: 0.75rem; }
+            .steps { line-height: 1.7; }
+        }
+
         /* Tile footnote — the small line under a tile's own description. */
         .tile-meta {
             color: var(--text-dim);
@@ -120,7 +150,7 @@
         <!-- Home: shown at "#/", hidden while a view app is on stage. Its
              nav is the HOME'S chrome, so it lives and dies with it. -->
         <div id="app-home" class="app-home">
-            <sac-nav brand="SACRVM APPKIT" brand-icon="cube" brand-href="#/" app-name="v2.5.0">
+            <sac-nav brand="SACRVM APPKIT" brand-icon="cube" brand-href="#/" app-name="v2.5.0" compact-title="SACRVM APPKIT">
                 <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
                 <div slot="toolbar" class="toolbar">
                     <a class="btn" href="https://github.com/SACRVM/sacrvm-appkit">
@@ -244,7 +274,7 @@
                                 </div>
                                 <p class="tile-meta" style="margin-top:1rem">
                                     <code>kit/templates/</code> holds copy-out skeletons for a launcher hub, a tool
-                                    page, an SPA shell and this app shell. Older releases:
+                                    page, a list/detail page, an SPA shell and this app shell. Older releases:
                                     <a href="https://github.com/SACRVM/sacrvm-appkit/releases">all releases</a>.
                                 </p>
                             </div>

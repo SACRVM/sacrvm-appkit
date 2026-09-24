@@ -16,11 +16,16 @@ this help window itself is the kit's markdown help pattern:
 | **Color mode** | Accent (the app's `--accent` seed), Palette (10-slot data palette), Mono, Custom |
 | **Custom color** | Enabled in Custom mode: pick a color and the orbs follow live |
 
+On a phone the controls live behind the **☰** burger, and Pause, Reset
+view and Help behind **…** when the ribbon runs out of room.
+
 ## Viewport
 
-- **Wheel** — zoom, anchored at the cursor
-- **Drag** — pan (middle-drag always pans)
-- **Double-click** — reset the view
+| Mouse | Touch | Does |
+|---|---|---|
+| **Wheel** | **Pinch** | Zoom, anchored at the cursor / between the fingers |
+| **Drag** | **Drag** | Pan (middle-drag always pans) |
+| **Double-click** | **Double-tap** | Reset the view |
 
 ## Why this exists
 

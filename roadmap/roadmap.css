@@ -109,3 +109,68 @@ table.rm-matrix td:first-child, table.rm-matrix th:first-child { text-align: lef
     border-radius: var(--radius-l);
     padding: 0.8rem 1.1rem;
 }
+
+/* Phone: tighter page padding (same as Build an App — the two pages sit
+   side by side in the suite); the wide tables scroll inside themselves
+   instead of pushing the whole page sideways. */
+@media (max-width: 768px), (max-height: 480px) and (pointer: coarse) {
+    .rm-page { padding: 1.5rem 1rem 2.5rem; }
+    .rm-cards { grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); }
+    table.rm:not(.rm-matrix) { display: block; overflow-x: auto; }
+    table.rm td:first-child { white-space: normal; min-width: 8rem; }
+    /* The matrix stays a real grid — comparing across is its point — so
+       the feature names stay pinned while the kits scroll past them. */
+    table.rm-matrix td:first-child, table.rm-matrix th:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: var(--bg);
+        min-width: 9rem;
+        white-space: normal;
+    }
+    /* The cue that there is more to the right: the scroller's trailing edge
+       fades out (a mask reads only alpha, so any opaque token will do),
+       and the last column carries that much padding, so at the end of the
+       scroll the fade lands on empty space, not on data. */
+    .rm-scroll {
+        -webkit-mask-image: linear-gradient(to right, var(--fg) calc(100% - 2rem), transparent);
+        mask-image: linear-gradient(to right, var(--fg) calc(100% - 2rem), transparent);
+    }
+    table.rm-matrix td:last-child, table.rm-matrix th:last-child { padding-right: 2rem; }
+}
+
+/* Narrow phone: five columns cannot share 340px. Each gap row becomes a
+   small card — item and status chip on top, the why full-width below, the
+   small columns as a labelled meta line (app.js copies each column's
+   header onto its cells as data-label). */
+@media (max-width: 480px) {
+    .rm-page h1 { font-size: 1.8rem; }
+    .rm-page h2 { margin-top: 2.25rem; }
+    table.rm:not(.rm-matrix), table.rm:not(.rm-matrix) tbody { display: block; overflow: visible; }
+    table.rm:not(.rm-matrix) tr:first-child { display: none; }
+    table.rm:not(.rm-matrix) tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.3rem 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+    table.rm:not(.rm-matrix) tr:last-child { border-bottom: none; }
+    table.rm:not(.rm-matrix) td { padding: 0; border: none; }
+    table.rm:not(.rm-matrix) td:first-child { flex: 1 1 0; min-width: 0; font-weight: 600; }
+    table.rm:not(.rm-matrix) td:last-child { flex: none; }
+    table.rm:not(.rm-matrix) td:nth-child(2) { order: 1; flex: 1 0 100%; }
+    table.rm:not(.rm-matrix) td:not(:first-child):not(:nth-child(2)):not(:last-child) {
+        order: 2;
+        font-size: 0.78rem;
+        color: var(--text-dim);
+    }
+    table.rm:not(.rm-matrix) td:not(:first-child):not(:nth-child(2)):not(:last-child)::before {
+        content: attr(data-label) " ";
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.66rem;
+        font-weight: 700;
+    }
+}

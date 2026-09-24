@@ -6,6 +6,11 @@ workspace pages, floating windows, and a seed-driven theme system.
 **Zero dependencies. Zero build.** Plain HTML, vanilla JS Custom Elements,
 plain CSS. Files are served as-is.
 
+**Phone-ready.** An app built only from the kit works on a 360px phone —
+portrait or sideways — without a media query of its own: the rail becomes a
+drawer, dialogs become sheets, windows open full-screen, every control has a
+44px touch target.
+
 **Live: <https://sacrvm.github.io/sacrvm-appkit/>** — landing page, style
 guide, demo app and roadmap, all built with the kit.
 
@@ -45,7 +50,8 @@ kit/                    the library — copy or link this folder into your app
   js/vendor/            marked + DOMPurify (for the help loader)
   js/components/        37 files registering 41 sac-* Custom Elements
   templates/            copy-out skeletons: app shell, launcher, tool page,
-                        SPA shell, and two app skeletons (dialog, fullscreen)
+                        list/detail, SPA shell, and two app skeletons
+                        (dialog, fullscreen)
 styleguide/             the kit documenting itself (built WITH the kit)
 build/                  "Build an App" — the authoring guide, itself an app
 demo/                   launcher hub → Orb Lab workspace tool → overlays

@@ -237,3 +237,37 @@ table.bd td:first-child code { white-space: nowrap; }
     .bd-page { padding: 2rem 1.25rem 3rem; }
     .bd-page h1 { font-size: 1.8rem; }
 }
+
+/* Phone: tighter page padding; wide tables and code blocks scroll inside
+   themselves instead of pushing the whole page sideways. */
+@media (max-width: 768px), (max-height: 480px) and (pointer: coarse) {
+    .bd-page { padding: 1.5rem 1rem 3rem; }
+    .bd-code, .bd-code pre { max-width: 100%; }
+    table.bd { display: block; overflow-x: auto; }
+    /* A long first line scrolls under the copy button — give the button the
+       block's own ground (field over page) so the code passes beneath it
+       instead of through it. */
+    .bd-code sac-copy-button {
+        background: linear-gradient(var(--field), var(--field)), var(--bg);
+        border-radius: var(--radius-m);
+    }
+}
+
+/* Narrow phone: a two-column reference table squeezes its description into
+   half the width. Stacked, the key sits on its own line with the
+   description full-width below it — the header row says nothing the keys
+   don't, so it goes. */
+@media (max-width: 480px) {
+    .bd-page h2 { margin-top: 2.25rem; }
+    .bd-page h2:first-of-type { margin-top: 1rem; }
+    table.bd, table.bd tbody, table.bd tr, table.bd td { display: block; }
+    table.bd { overflow: visible; }
+    table.bd tr:first-child { display: none; }
+    table.bd tr {
+        padding: 0.65rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+    table.bd tr:last-child { border-bottom: none; }
+    table.bd td { padding: 0; border-bottom: none; }
+    table.bd td:first-child { white-space: normal; margin-bottom: 0.3rem; }
+}

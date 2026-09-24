@@ -43,6 +43,13 @@
             this._nav.setAttribute("brand", "BUILD AN APP");
             this._nav.setAttribute("brand-icon", "plus");
             this._nav.setAttribute("brand-href", "#/build");
+            // On a phone the suite's tile dashboard is the main level (⌂ goes
+            // back to it), so the burger holds only this app — no suite list
+            // stacked above the rail.
+            this._nav.setAttribute("host-nav", "wide");
+            // Its rail lists the sections already: on a phone the burger
+            // opens that one list instead of a second copy stacked above it.
+            this._nav.setAttribute("sections-nav", "wide");
             const ctxSlot = document.createElement("div");
             ctxSlot.slot = "context";
             ctxSlot.appendChild(document.createElement("sac-theme-toggle"));

@@ -60,6 +60,9 @@
     align-items: center;
     gap: 0.75rem;
 }
+.sg-icon-grid { gap: 1rem; }
+.sg-row-break { display: none; }
+.sg-tip-demo { padding-bottom: 2.75rem; }
 .sg-col {
     display: flex;
     flex-direction: column;
@@ -180,6 +183,13 @@ table.sg td:first-child { white-space: nowrap; }
 .sg-accent-dots button:hover { transform: scale(1.15); }
 .sg-accent-dots button.active { border-color: var(--text); }
 
+/* The bounded calendar demos --calendar-width. Not under a coarse pointer:
+   there the kit's 320px carries 44px targets, and 240px would wrap its
+   six paging buttons onto two rows. */
+@media not (pointer: coarse) {
+    #demo-cal-bounded { --calendar-width: 240px; }
+}
+
 /* Accent-seed playground, in the Tokens section: the nav ribbon belongs to
    the shell, but the per-app --accent override is style-guide material. */
 .sg-accent-play {
@@ -219,4 +229,230 @@ table.sg td:first-child { white-space: nowrap; }
     border-radius: var(--radius-l);
     overflow: hidden;
     border: 1px solid var(--border);
+}
+
+/* ------------------------------------------------------------------------
+   Responsive section demos.
+   ------------------------------------------------------------------------ */
+.sg-muted { color: var(--text-muted); font-size: 0.85rem; }
+
+/* "Compact / touch:" — a component's phone behaviour, one line per section.
+   Accent-tinted where .sg-note is warm: a fact, not a warning. */
+.sg-page p.sg-compact {
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    border-radius: var(--radius-l);
+    padding: 0.7rem 1rem;
+    margin: 0.75rem 0;
+    font-size: 0.87rem;
+    max-width: none;
+}
+.sg-compact b { color: var(--accent-text); }
+
+/* Wide-only / compact-only controls (the preview button vs. the drawer
+   button: each only makes sense on one side of the breakpoint). */
+.sg-page .sg-only-compact,
+.sg-demo-window .sg-only-compact { display: none; }
+@media (max-width: 768px), (max-height: 480px) and (pointer: coarse) {
+    .sg-page .sg-only-wide,
+    .sg-demo-window .sg-only-wide { display: none; }
+    .sg-page .sg-only-compact { display: inline-flex; }
+    .sg-demo-window .sg-only-compact { display: inline; }
+}
+
+/* List/detail: the box narrows, the split inside measures itself. */
+.sg-ld-box {
+    height: 260px;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-l);
+    overflow: hidden;
+    background: var(--bg);
+    transition: max-width 0.3s var(--ease-smooth);
+}
+.sg-ld-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0.5rem;
+}
+.sg-ld-list button {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    min-height: 40px;
+    border: none;
+    border-radius: var(--radius-m);
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: pointer;
+}
+.sg-ld-list button:hover { background: var(--hover); color: var(--text); }
+.sg-ld-list button.active { background: var(--accent-tint); color: var(--accent-text); }
+.sg-ld-detail { padding: 1rem; }
+.sg-ld-detail h4 { margin: 0 0 0.35rem; font-size: 1rem; }
+.sg-ld-detail p { margin: 0; }
+
+.sg-reveal-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 360px;
+}
+.sg-reveal-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: var(--radius-m);
+}
+.sg-reveal-list li:hover { background: var(--hover); }
+.sg-reveal-list li span { flex: 1; }
+
+/* ------------------------------------------------------------------------
+   Width preview — "Phone 375 / Tablet 768 / Full" in the ribbon.
+   A media query answers to the VIEWPORT, never to a div, so the preview is
+   an <iframe> of this very guide: inside it the kit sees a 375px viewport
+   and does exactly what it does on a phone. The frame's copy hides the
+   switch (?sg-frame) — a phone never sees it either.
+   ------------------------------------------------------------------------ */
+/* Sized like the theme pill beside it — two ribbon pills, one scale. */
+.sg-width-switch button {
+    white-space: nowrap;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.sg-frame-stage {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.25rem 1rem;
+    overflow: auto;
+    background:
+        radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
+        var(--bg);
+}
+.sg-frame-stage[hidden] { display: none; }
+.sg-frame-caption {
+    margin: 0 auto;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-align: center;
+    max-width: 60ch;
+}
+.sg-frame-caption b { color: var(--text-muted); font-weight: 600; }
+.sg-frame {
+    flex: 1;
+    min-height: 480px;
+    max-height: 900px;
+    /* The border sits OUTSIDE the width the kit sees: 375 means 375. */
+    box-sizing: content-box;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-l);
+    background: var(--bg);
+    box-shadow: var(--shadow-2);
+    /* Auto margins centre it and, unlike align-items: center, never push a
+       frame wider than the stage out past the left edge. */
+    margin-inline: auto;
+    flex-shrink: 0;
+}
+
+/* A phone gets the guide itself, never a preview of a phone. */
+@media (max-width: 768px), (max-height: 480px) and (pointer: coarse) {
+    .sg-width-switch { display: none; }
+}
+
+/* ------------------------------------------------------------------------
+   The guide on a phone. Page layout, so @media (the page is the container).
+   ------------------------------------------------------------------------ */
+@media (max-width: 768px), (max-height: 480px) and (pointer: coarse) {
+    .sg-page { padding: 1.5rem 1rem 3rem; }
+    .sg-page h1 { font-size: 1.8rem; }
+    .sg-page > p.lead { font-size: 1rem; margin-bottom: 1.75rem; }
+    .sg-page h2 { margin-top: 2.25rem; }
+    .sg-demo { padding: 1rem; }
+    /* A chip that wraps keeps its border and padding on both lines. */
+    .sg-page code {
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+    }
+    /* Code scrolls inside itself; a soft inset edge on the side that still
+       has more says so (the classes are kept by the app, see _watchCode). */
+    pre.sg-code {
+        padding: 0.75rem 0.85rem;
+        overscroll-behavior-x: contain;
+        --sg-edge: color-mix(in srgb, var(--fg) 16%, transparent);
+    }
+    pre.sg-code.sg-more-end { box-shadow: inset -18px 0 14px -14px var(--sg-edge); }
+    pre.sg-code.sg-more-start { box-shadow: inset 18px 0 14px -14px var(--sg-edge); }
+    pre.sg-code.sg-more-start.sg-more-end {
+        box-shadow: inset -18px 0 14px -14px var(--sg-edge), inset 18px 0 14px -14px var(--sg-edge);
+    }
+    /* 72px cells, four to a phone row instead of three. */
+    .sg-icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+        gap: 0.75rem 0;
+        justify-items: center;
+    }
+    /* The forced-open bubble gets a row of its own and room below it, so it
+       never lies over the four hover demos. */
+    .sg-row-break { display: block; flex-basis: 100%; height: 0; }
+    .sg-tip-demo { padding-bottom: 4rem; }
+    /* Keys wrap instead of pushing the table past the edge; the inline
+       220px key-column widths are a desktop affordance. */
+    table.sg th { width: auto !important; }
+    table.sg td { overflow-wrap: anywhere; }
+    /* A key breaks at its spaces and slashes, never inside a name: the
+       column grows to its longest word ("register(manifest)") instead of
+       splitting it into "register(" / "manifest". */
+    table.sg td:first-child { white-space: normal; overflow-wrap: break-word; }
+}
+@media (max-width: 480px) {
+    /* Two columns of prose do not fit a phone: each row stacks, the key on
+       top of its description. */
+    table.sg, table.sg tbody, table.sg tr, table.sg td, table.sg th { display: block; }
+    /* The header row keeps its first cell — "Attribute", "Event" … is the
+       only thing that says what the keys below are. */
+    table.sg th + th { display: none; }
+    table.sg td, table.sg th { padding: 0.15rem 0; border-bottom: none; }
+    table.sg td:first-child { padding-top: 0.6rem; }
+    table.sg tr { border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    /* Three columns stacked: the middle one is a VALUE (a curve, a length,
+       a fallback string), set a step brighter than the prose under it. */
+    table.sg td:not(:first-child):not(:last-child) { color: var(--text); }
+    .sg-page h2 { font-size: 1.2rem; margin-top: 2rem; }
+    .sg-page h3 { margin-top: 1.6rem; }
+    /* Swatches become a list: chip beside its name, so no name wraps and
+       the eye runs down one column. */
+    .sg-swatches { grid-template-columns: 1fr; gap: 0.5rem; }
+    .sg-swatch { display: flex; }
+    .sg-swatch .chip { flex: none; width: 64px; height: auto; min-height: 44px; }
+    .sg-swatch .meta {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+}
+
+/* The guide's own small controls follow the kit's touch rule: the look
+   stays, an invisible halo takes the hit area to 44px. The accent dots sit
+   8px apart, so they grow on the short axis only. */
+@media (pointer: coarse) {
+    .sg-accent-dots button { position: relative; }
+    .sg-accent-dots button::after {
+        content: "";
+        position: absolute;
+        inset: calc((100% - 44px) / 2) -4px;
+    }
+    .sg-ld-list button { min-height: 44px; }
+}
+
+/* Ctrl+K on a touch-only device: there is no key to press. */
+@media (hover: none) and (pointer: coarse) {
+    .sg-kbd-hint { display: none; }
 }

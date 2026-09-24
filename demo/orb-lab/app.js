@@ -15,6 +15,10 @@
  *                    renders the host's jump (context.host). The same actions
  *                    register on sac.commands so the palette reaches them.
  *   rail           — none. The app has no sections.
+ *   phone          — the control panel becomes the nav's rail drawer (its
+ *                    burger opens it) and the canvas gets the whole screen:
+ *                    the split sees a drawer in its start slot and collapses
+ *                    to the canvas by itself (sac-split rail-start).
  *
  * The view fills the stage without scrolling it, pauses its animation loop
  * whenever it is not on screen, and keeps every bit of state (orbs, controls,
@@ -70,8 +74,10 @@
             sac.app.styles(BASE + "style.css", CSS_ID);
             this.innerHTML = `
 <!-- The app is complete: its own nav carries its own tools. A host adds
-     nothing here — its presence arrives via context.host in mount(). -->
-<sac-nav brand="ORB LAB" brand-icon="globe" brand-href="#/orb-lab">
+     nothing here — its presence arrives via context.host in mount().
+     host-nav="wide": on a phone the suite's tile dashboard is the main
+     level (⌂ goes back to it), so the burger opens only this app's rail. -->
+<sac-nav brand="ORB LAB" brand-icon="globe" brand-href="#/orb-lab" host-nav="wide">
     <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
     <div slot="toolbar" class="toolbar">
         <button type="button" class="nav-icon-btn ol-act-pause" title="Pause">
@@ -86,14 +92,20 @@
     </div>
 </sac-nav>
 
-<div class="ol-root">
+<!-- .main-layout clears the fixed nav (and a phone's notch), and it is where
+     sac-nav looks for the rail it turns into a drawer on a phone. -->
+<div class="main-layout ol-root">
     <!-- Resizable control panel: one <sac-split> owns both widths. min-start
          keeps the controls usable, min-end protects the canvas. Drag the
-         hairline, or focus it and use the arrow keys. -->
+         hairline, or focus it and use the arrow keys.
+         Phone: the nav adopts the control panel as its drawer, and the
+         split — seeing a drawer in its start slot — gives the canvas the
+         whole width. .sidebar.fill hands the panel's width to the split on
+         a wide screen and yields to the drawer's size on a phone. -->
     <sac-split class="ol-split" position="22%" min-start="200px" min-end="320px"
                aria-label="Resize the control panel">
 
-        <div class="sidebar" slot="start">
+        <div class="sidebar fill ol-panel" slot="start">
             <sac-section title="Simulation">
                 <sac-slider class="ol-count" label="Orbs" min="10" max="300" step="10" value="80"></sac-slider>
                 <sac-slider class="ol-speed" label="Speed" min="0" max="3" step="0.1" value="1" suffix="×"></sac-slider>
@@ -188,7 +200,10 @@
             });
             this._io.observe(this);
 
-            this._log.add("Orb Lab ready — wheel to zoom, drag to pan, double-click to reset");
+            // Name the gestures the visitor actually has — a phone has no wheel.
+            this._log.add(matchMedia("(pointer: coarse)").matches
+                ? "Orb Lab ready — pinch to zoom, drag to pan, double-tap to reset"
+                : "Orb Lab ready — wheel to zoom, drag to pan, double-click to reset");
             this._updateHud();
         }
 
