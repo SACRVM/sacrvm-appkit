@@ -32,7 +32,7 @@ Not carried over:
 
 | Legacy | Status |
 |---|---|
-| `fb-md-editor` | not in the core kit — planned as an optional add-on module |
+| `fb-md-editor` | not in the core kit — shipped as the optional add-on [`sac-md-editor`](https://github.com/SACRVM/sac-md-editor) |
 | `dream-terminal` | dropped — too close to `sac-log`, which wins. Port: `append(text, level)` → `add(text, level)`; levels `normal`/`success` → `info`, timestamps appear |
 | `3dx-*`, converter/domain logic | left behind by design; UI only |
 
