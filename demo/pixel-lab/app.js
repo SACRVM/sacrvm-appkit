@@ -233,7 +233,7 @@
             sac.app.styles(BASE + "style.css", CSS_ID);
             this.innerHTML = `
 <sac-nav brand="PIXEL LAB" brand-icon="grid" brand-href="#/pixel-lab" host-nav="wide">
-    <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
+    <div slot="context"><sac-lang-toggle></sac-lang-toggle><sac-theme-toggle></sac-theme-toggle></div>
     <div slot="toolbar" class="toolbar">
         <button type="button" class="nav-icon-btn pl-open" title="Open…"><sac-icon name="folder"></sac-icon></button>
         <button type="button" class="nav-icon-btn pl-save" title="Save"><sac-icon name="save"></sac-icon></button>

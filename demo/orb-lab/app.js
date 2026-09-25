@@ -78,7 +78,7 @@
      host-nav="wide": on a phone the suite's tile dashboard is the main
      level (⌂ goes back to it), so the burger opens only this app's rail. -->
 <sac-nav brand="ORB LAB" brand-icon="globe" brand-href="#/orb-lab" host-nav="wide">
-    <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
+    <div slot="context"><sac-lang-toggle></sac-lang-toggle><sac-theme-toggle></sac-theme-toggle></div>
     <div slot="toolbar" class="toolbar">
         <button type="button" class="nav-icon-btn ol-act-pause" title="Pause">
             <sac-icon name="pause"></sac-icon>

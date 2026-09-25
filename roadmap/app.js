@@ -40,7 +40,7 @@
             this._nav.setAttribute("sections-nav", "wide");
             const ctxSlot = document.createElement("div");
             ctxSlot.slot = "context";
-            ctxSlot.appendChild(document.createElement("sac-theme-toggle"));
+            ctxSlot.append(document.createElement("sac-lang-toggle"), document.createElement("sac-theme-toggle"));
             this._nav.appendChild(ctxSlot);
 
             const layout = document.createElement("div");
@@ -351,7 +351,18 @@
                 <code>context.lang</code>, <code>sac.i18n.add(lang, table)</code> for app strings, a
                 <code>&lt;sac-lang-toggle&gt;</code>, every kit component re-rendering its strings.
                 EN + DE ship with the kit; the default is the system language as far as a page can
-                see it (the browser's language list). Language switching is kit work, not app work.</td>
+                see it (the browser's language list). Language switching is kit work, not app work. Driven by Pixel Atelier.</td>
+            <td><sac-chip label="done" color="green"></sac-chip></td>
+        </tr>
+        <tr data-item="open-with">
+            <td>File types · "Open with"</td>
+            <td>Apps declare the file types they open in their manifest (<code>"opens": [".svg", "image/svg+xml"]</code>);
+                the desktop reads it at install and keeps a type → apps registry. Then, step by step: "Open with …"
+                in the desktop's file space (a default app per type), a way to start an app with a file
+                (<code>context.files.initial</code> or params), and app → app hand-off
+                (<code>context.files.handoff(blob)</code>) — the one-click tool chains dream-tools had, in general
+                form. Parked on purpose: the shared file space bridges it today (Save → switch → Open). Proposed by
+                the dream-tools breakup (vectorizer, background-remover, mesh-optimizer, svg-to-3d as test cases).</td>
             <td><sac-chip label="open" color="gray"></sac-chip></td>
         </tr>
         <tr data-item="release-embeds">

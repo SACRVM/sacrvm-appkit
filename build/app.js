@@ -52,7 +52,7 @@
             this._nav.setAttribute("sections-nav", "wide");
             const ctxSlot = document.createElement("div");
             ctxSlot.slot = "context";
-            ctxSlot.appendChild(document.createElement("sac-theme-toggle"));
+            ctxSlot.append(document.createElement("sac-lang-toggle"), document.createElement("sac-theme-toggle"));
             this._nav.appendChild(ctxSlot);
 
             const layout = document.createElement("div");
@@ -160,6 +160,7 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
         ["<code>identity</code>", "Who is at this desktop: <code>get()</code> → <code>{ id, name, avatar }</code> or <code>null</code>, plus <code>onChange</code>. Read-only, and <b>not</b> authentication — see below."],
         ["<code>files</code>", "The <b>user's</b> files: <code>open()</code> and <code>save()</code> — Open… / Save as… wherever the host keeps them. See below."],
         ["<code>setDirty(flag)</code>", "Tell the host you hold unsaved work; leaving the page then asks first. Clear it after a successful save."],
+        ["<code>lang.get()</code><br><code>lang.onChange(cb)</code>", "The page's language (<code>\"en\"</code>, <code>\"de\"</code>, …) and a subscription. Read-only — the host owns the switch. See below."],
     ])}
 
     <h3>Storing things</h3>
@@ -237,6 +238,25 @@ async save(asNew) {
        on the first edit and <code>false</code> after a save, and nobody loses work
        to a closed tab.</p>
 
+    <h3>Speaking the user's language</h3>
+    <p>The language is one switch for the whole page, owned by the host like
+       the theme — never an app's own toggle. Write every string of yours
+       through <code>sac.t(key, "English")</code>, add your translations with
+       <code>sac.i18n.add()</code>, and repaint your strings when
+       <code>context.lang</code> changes. The kit's own components already
+       switch by themselves.</p>
+    ${code(`sac.i18n.add("de", { "notes.new": "Neue Notiz", "notes.empty": "Noch keine Notizen." });
+
+onMount(context) {
+    const paint = () => { this.newBtn.textContent = sac.t("notes.new", "New note"); };
+    paint();
+    this._offLang = context.lang && context.lang.onChange(paint);
+}
+onUnmount() { this._offLang && this._offLang(); }`)}
+    <p>Standalone, put a <code>&lt;sac-lang-toggle&gt;</code> next to the theme
+       toggle in your own nav; hosted, the desktop shows its own and you just
+       follow. Dates and numbers: format with <code>sac.lang.locale()</code>.</p>
+
     <h3>Knowing who is there</h3>
     <p><code>context.identity</code> is a name and a face, read-only, and
        <b>anonymous by default</b> — <code>get()</code> returns <code>null</code>
@@ -307,6 +327,7 @@ async save(asNew) {
         ["<code>width</code> / <code>height</code>", "<code>window</code> apps: the initial window size."],
         ["<code>resizable</code> / <code>controls</code>", "<code>window</code> apps: passed through to <code>&lt;sac-window&gt;</code>."],
         ["<code>nav</code>", "<code>view</code> apps: <code>false</code> keeps the app out of the host's nav panel."],
+        ["<code>palette</code>", "<code>view</code> apps: <code>false</code> keeps the app out of the Ctrl-K palette; otherwise it lists under <b>Apps</b>."],
         ["<code>tiles</code>", "Several launcher tiles for one app — a complex app deploys multiple entry points. Replaces the default tile; each entry may override <code>name</code>/<code>icon</code>/<code>description</code>/<code>badge</code>/<code>tile</code> and carry <code>route</code> (views), <code>params</code> (windows) and <code>accent</code> — the tile's color, which also becomes the app's highlight when opened through it. Give entries a stable <code>id</code>."],
     ])}
 

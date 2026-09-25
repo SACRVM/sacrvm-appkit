@@ -172,6 +172,8 @@
                    (rings, borders, icons — 3:1); a plane that carries text uses its <code>-fill</code>
                    with its ink (4.5:1); state-colored text uses the per-theme <code>-text</code>
                    variant. Every ratio is solved against the default seeds and worst-case plane —
+                   for <code>-text</code> that is the color's own 16% tint over <code>--bg</code> (an
+                   active item, a status wash), where it reaches at least 4.6:1 in both themes —
                    pouring in very different seeds means re-checking them.</p>
                 <div class="sg-swatches">
                     ${sw("--accent-fill", "text-carrying accent plane")}
@@ -291,7 +293,7 @@
             <div class="sg-page">
                 <h1>Components</h1>
                 <p class="lead">
-                    43 component files, 47 custom elements — Shadow DOM (<code>mode: 'open'</code>)
+                    44 component files, 48 custom elements — Shadow DOM (<code>mode: 'open'</code>)
                     except the one documented light-DOM case, <code>&lt;sac-launcher&gt;</code>.
                     All are classic deferred scripts self-registering via
                     <code>customElements.define()</code>, usable from classic and module scripts alike.
@@ -351,8 +353,9 @@
                    <a href="#/styleguide/patterns/responsive-ribbon">Phone ribbon →</a>`)}
                 <p><b>Toolbar overflow</b> (every width, ResizeObserver-driven): when the toolbar slot plus the host
                    tools do not fit, the trailing buttons hide behind a “…” <code>&lt;sac-menu&gt;</code> (label key
-                   <code>nav.more</code>); a menu item clicks the original button. <code>data-overflow="never"</code>
-                   pins a control. Needs <code>sac-menu.js</code>; without it nothing overflows.</p>
+                   <code>nav.more</code>); a menu item clicks the original button. A <code>&lt;sac-menu&gt;</code> in the
+                   toolbar folds as one item — its entries join the “…” menu as a group and fire the original menu's
+                   <code>sac:select</code>. <code>data-overflow="never"</code> pins a control. Needs <code>sac-menu.js</code>; without it nothing overflows.</p>
                 ${code(`<sac-nav brand="MY TOOLS" app-name="EDITOR" brand-icon="cube">
     <div slot="toolbar" class="toolbar">
         <button class="btn primary">Open</button>
@@ -582,6 +585,7 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
                     ["kind", "\"default\" | \"primary\" | \"destructive\"."],
                     ["armAfterMs", "Arm delay for the destructive button: it takes focus only after N ms, so a reflexive Enter can't confirm it early — and the timer cancels if the pointer visits another button first."],
                     ["disabled", "Start the button disabled — e.g. a Save that waits for a name. Toggle it later with <code>setDisabled()</code>."],
+                    ["labelKey", "Optional i18n key: the button shows <code>sac.t(labelKey, label)</code> and follows a language switch in place (<code>label</code> is the English fallback). Without it the label is the caller's and never changes."],
                 ])}
                 ${code(`const answer = await sac.dialog.confirm({
     title:   "Delete this item?",
@@ -662,7 +666,8 @@ sac.about.open({                          // or an explicit object (standalone)
                    the page sideways. No controls.`)}
 
                 <h2 id="sac-section">&lt;sac-section&gt;</h2>
-                <p>Sidebar group separator: uppercase title + thin border.</p>
+                <p>Sidebar group separator: uppercase title + thin border. With <code>collapsible</code> the title
+                   folds the group away — for rarely touched settings.</p>
                 <div class="sg-demo" style="max-width:280px;background:var(--panel);">
                     <sac-section title="Filters">
                         <sac-toggle label="Show hidden" checked></sac-toggle>
@@ -671,9 +676,20 @@ sac.about.open({                          // or an explicit object (standalone)
                     <sac-section title="Export">
                         <button class="btn">Export</button>
                     </sac-section>
+                    <sac-section title="View settings" collapsible collapsed>
+                        <sac-toggle label="Wireframe"></sac-toggle>
+                        <sac-toggle label="Flat shading" checked></sac-toggle>
+                        <sac-slider label="Light angle" min="0" max="360" value="45"></sac-slider>
+                    </sac-section>
                 </div>
-                ${table("Attribute", [["title", "Uppercase heading text — rendered at <code>--text</code> so a group heading stands out from the labels it heads (AA with room to spare; never the tertiary <code>--text-dim</code>, which failed AA at this size)."]])}
-                <p><b>CSS parts:</b> <code>title</code> (the heading) and <code>body</code> (the slotted content wrapper) — reach them from the light DOM, e.g. <code>sac-section::part(title) { … }</code>.</p>
+                ${table("Attribute", [
+                    ["title", "Uppercase heading text — rendered at <code>--text</code> so a group heading stands out from the labels it heads (AA with room to spare; never the tertiary <code>--text-dim</code>, which failed AA at this size)."],
+                    ["collapsible", "The title becomes a toggle: chevron, button semantics, Enter/Space, <code>aria-expanded</code>; 44px hit target on touch. Height transition, none under <code>prefers-reduced-motion</code>. A folded body leaves the tab order."],
+                    ["collapsed", "The folded state, reflected. Property <code>collapsed</code>, method <code>toggle(force?)</code>."],
+                    ["remember", "A key — the folded state survives a reload, per viewer (<code>localStorage</code> <code>sac-section:&lt;key&gt;</code>); a stored state wins over the markup. Leave it out when the app persists the state itself (listen to <code>sac:toggle</code>, set <code>collapsed</code>)."],
+                ])}
+                ${table("Event", [["sac:toggle", "<code>detail { collapsed }</code> — on a user toggle and on <code>toggle()</code>, not when the attribute is set from outside."]])}
+                <p><b>CSS parts:</b> <code>title</code> (the heading), <code>body</code> (the slotted content wrapper) and <code>chevron</code> — reach them from the light DOM, e.g. <code>sac-section::part(title) { … }</code>.</p>
 
                 <h3 id="sac-caption"><code>.sac-caption</code></h3>
                 <p>The section-title's type as a light-DOM utility — for a lone caption where a whole
@@ -697,17 +713,21 @@ sac.about.open({                          // or an explicit object (standalone)
                    <code>pointer: coarse</code>. The switch keeps its size.`)}
 
                 <h2 id="sac-slider">&lt;sac-slider&gt;</h2>
-                <p>Range slider with live value readout. <strong>All seven attributes are observed</strong>,
+                <p>Range slider with live value readout. <strong>All attributes are observed</strong>,
                    and value changes update the DOM in place — dragging never re-renders.</p>
                 <div class="sg-demo sg-col">
                     <sac-slider id="demo-slider" label="Depth" min="0" max="100" step="1" value="40" suffix="px"></sac-slider>
                     <sac-slider label="Quality" min="0" max="2" step="1" value="1" labels="Low,Medium,High"></sac-slider>
+                    <sac-slider label="Smoothing" min="0.01" max="4" step="0.01" value="1" ends="Crisp,Smooth"></sac-slider>
                     <span id="demo-slider-state" style="color:var(--text-muted);font-size:0.85rem;">value: 40</span>
                 </div>
                 ${table("Attribute", [
                     ["label / min / max / step / value / suffix", "The usual suspects. Property <code>.value</code> mirrors the attribute."],
                     ["labels", "Comma-separated texts mapped by integer value — turns the readout into discrete steps."],
+                    ["ends", "<code>\"Crisp,Smooth\"</code> — two captions under the track's ends, for a continuous range whose extremes need words. The readout keeps the number. Translate it like <code>label</code>: set the attribute again on a language switch."],
+                    ["disabled", "Inert and dimmed; fires nothing."],
                 ])}
+                <p><b>CSS parts:</b> <code>ends</code> (the caption row).</p>
                 ${table("Event", [["sac:input", "On drag; detail { value } (string)."], ["sac:change", "On release; detail { value } (string). Both bubble, not composed."]])}
                 ${compact(`a native range input, so dragging is the browser's own. Under <code>pointer: coarse</code> it is a
                    44px-tall hit strip with a 20px thumb, and <code>touch-action: pan-y</code> lets a vertical swipe
@@ -1177,6 +1197,7 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                 ])}
                 ${table("CSS custom property", [
                     ["--drop-zone-min-height", "Height of the surface. Default <code>140px</code>."],
+                    ["class=\"on-viewport\"", "On the <code>.viewport</code> ground (black in every theme) — a drop zone over an empty canvas — add the kit's <code>.on-viewport</code> class: it re-derives ink, lines and glass for that dark ground, so the light theme does not paint a light slab on black."],
                 ])}
                 ${table("CSS shadow part", [
                     ["zone", "The dashed surface itself, for the rare app that needs to reshape it."],
@@ -1566,6 +1587,7 @@ canvas.addEventListener("contextmenu", (e) => {
                     ["Filtering", "Case-insensitive subsequence match (<code>dg</code> finds “Delete Group”); exact substring matches rank first, shorter labels first within a rank."],
                     ["Keyboard", "<code>mod+k</code> toggles · <kbd>↑</kbd>/<kbd>↓</kbd> move (wrapping) · <kbd>Enter</kbd> runs then closes · <kbd>Esc</kbd> closes · <kbd>Tab</kbd> is trapped in the field."],
                     ["Events", "None. Running a row calls that entry's own <code>run</code> / <code>onClick</code>; a throwing command is logged and the palette still closes."],
+                    ["Groups", "Routes list under <code>\"Views\"</code> unless they name a group (<code>register(…, { palette })</code>); installed <code>sac.apps</code> view apps list under <code>\"Apps\"</code> — a host lists its window apps there too (<code>sac.commands</code> <code>group: sac.t(\"palette.group-apps\", \"Apps\")</code>), so the user sees one Apps section."],
                 ])}
                 ${table("sac.commands", [
                     ["register({ id, label, icon, group, hotkey, run })", "<code>id</code> is required and <strong>upserts</strong> — registering the same id twice replaces the row instead of duplicating it. Returns an unregister function."],
@@ -1577,13 +1599,14 @@ canvas.addEventListener("contextmenu", (e) => {
                 ${table("sac.hotkeys", [
                     ["register(combo, handler, opts)", "Returns an idempotent unregister function. On match: <code>preventDefault()</code>, then <code>handler(event)</code>. One document listener for the whole app, attached on first use."],
                     ["combo", "<code>ctrl</code> · <code>alt</code> · <code>shift</code> · <code>meta</code> · <code>mod</code> (Ctrl on Windows/Linux, ⌘ on macOS), in any order, then the key: <code>\"mod+k\"</code>, <code>\"ctrl+shift+p\"</code>, <code>\"alt+1\"</code>, <code>\"escape\"</code>. Matching is exact — <code>ctrl+k</code> does not fire while Shift is held."],
-                    ["opts.description", "Shown by <code>list()</code> (and any shortcuts help screen)."],
+                    ["opts.description", "Shown by <code>list()</code> (and any shortcuts help screen). A string, or a <b>function</b> returning one — resolved on every <code>list()</code>, so a description written with <code>sac.t()</code> follows the language."],
                     ["opts.group", "Heading the binding is listed under in <code>&lt;sac-shortcut-sheet&gt;</code> (\"Tools\", \"Edit\"). A listing aid only — it changes no matching."],
                     ["opts.allowInInput", "Combos without ctrl/alt/meta are ignored while the user types in an input, textarea, select or contenteditable — including inside Shadow DOM. This opts out (of the activation guard below too)."],
+                    ["hold(combo, onDown, onUp, opts)", "A key that is <b>held</b>: <code>onDown(event)</code> once on press (auto-repeat swallowed, and a held Space never scrolls the page), <code>onUp(event)</code> on release — “hold Space to pan”. A bare modifier works too (<code>\"alt\"</code> for a hold-Alt eyedropper). Released cleanly on focus loss (window blur, tab hidden → <code>onUp(null)</code>) and when unregistered mid-hold, so a tool never sticks. Same typing / activation guards and <code>description</code> / <code>group</code> / <code>allowInInput</code> as <code>register()</code>; returns an unregister function; a hold binding shadows a <code>register()</code> of the same combo. <code>list()</code> marks it <code>hold: true</code>."],
                     ["opts.skipInInput", "Combos <em>with</em> ctrl/alt/meta fire even while typing — nobody types Ctrl-K. For a combo that also edits text (<code>mod+a</code>, <code>mod+z</code>, <code>mod+c/x/v</code>) pass <code>skipInInput: true</code>: the canvas keeps its select-all, every input on the page keeps its own."],
                     ["Activation guard", "A plain <code>enter</code> or <code>space</code> binding does not fire while focus is on something those keys already press — a button, a link, a checkbox, a <code>[role=button]</code> / menuitem / tab / option. Enter on a focused button presses the button, not the page's “play”."],
                     ["Same combo twice", "A stack: the newest registration wins, unregistering it restores the previous one. That is what makes a modal's temporary binding safe."],
-                    ["list() / format(combo)", "<code>[{ combo, display, description, group }]</code> for every active binding · a platform-aware display string (<code>\"Ctrl+Shift+X\"</code> / <code>\"⌃⇧X\"</code>)."],
+                    ["list() / format(combo)", "<code>[{ combo, display, description, group, hold }]</code> for every active binding · a platform-aware display string (<code>\"Ctrl+Shift+X\"</code> / <code>\"⌃⇧X\"</code>). Key caps follow the language (German: <code>Strg+Umschalt+X</code>, <code>Entf</code>, <code>Leertaste</code>), so never cache <code>format()</code> across a switch or parse it back."],
                 ])}
                 ${code(`<!-- once, in the app shell -->
 <sac-command-palette></sac-command-palette>
@@ -1719,6 +1742,31 @@ canvas.addEventListener("contextmenu", (e) => {
                    dark → light → auto; its icon shows the current theme, its label says it (“Theme: Dark”, key
                    <code>theme-toggle.label</code>). The ribbon of this page shows it on a phone. The pill itself gets a
                    44px-tall hit halo per button under <code>pointer: coarse</code>; no hover tint sticks after a tap.`)}
+
+                <h2 id="sac-lang-toggle">&lt;sac-lang-toggle&gt;</h2>
+                <p>The page's language switch — the twin of the theme toggle, with the same ownership:
+                   <b>one</b> language for the whole page (<code>sac.lang</code>), so on a desktop the
+                   <b>host</b> shows it and a standalone app puts it in its own nav. Every kit component
+                   switches in place; apps follow through <code>context.lang</code>. One button per
+                   language that has a table, titled with the language's own name; <b>Auto</b> follows
+                   the system language as far as the browser shows it. Live below — try DE.</p>
+                <div class="sg-demo sg-col">
+                    <sac-lang-toggle id="demo-lang-toggle"></sac-lang-toggle>
+                </div>
+                ${table("Attribute", [
+                    ["collapse", "<code>\"never\"</code> keeps the pill even in a phone ribbon. Absent = the nav collapse below."],
+                    ["in-nav", "Set <b>by the component</b> when it sits inside a <code>&lt;sac-nav&gt;</code>."],
+                ])}
+                ${table("Property", [["value", "get/set <code>\"auto\"</code> or a language code. Setting applies (<code>sac.lang.set</code>) and fires nothing."]])}
+                ${table("Event", [["sac:change", "User click only; detail { value }. Bubbles, not composed."]])}
+                ${code(`<sac-nav …>
+    <div slot="context">
+        <sac-lang-toggle></sac-lang-toggle>
+        <sac-theme-toggle></sac-theme-toggle>
+    </div>
+</sac-nav>`)}
+                ${compact(`inside a <code>&lt;sac-nav&gt;</code> below 768px the pill collapses to one round button that cycles
+                   auto → en → de → … and shows the current code (a globe while on auto); its label names the language.`)}
 
                 <h2 id="sac-pixel-canvas">&lt;sac-pixel-canvas&gt;</h2>
                 <p>The pixel editor's viewport — a <em>view</em>, not an editor. It shows an image at an
@@ -2677,6 +2725,7 @@ sac.router.register("#/notes", "my-notes-view", { label: "Notes", icon: "note" }
                 <table class="sg">
                     <tr><th style="width:280px">sac.router API</th><th>Description</th></tr>
                     <tr><td><code>register(hash, tag, {label, icon})</code></td><td>Adds a route + fires <code>sac:route-registered</code> (this is what makes a self-registering view list work — nav components render before view scripts run). Pass <code>tag = null</code> for plain multi-page hrefs.</td></tr>
+                    <tr><td><code>options.palette</code></td><td>The Ctrl-K palette group the route lists under: a string, or a function returning one (resolved on every open — follows the language); <code>false</code> keeps it out of the palette. Default <code>"Views"</code>. <code>sac.apps</code> files app routes under <code>"Apps"</code>.</td></tr>
                     <tr><td><code>routes()</code></td><td>[{hash, tag, label, icon}] — what sac-nav renders.</td></tr>
                     <tr><td><code>current() / currentResource()</code></td><td>Raw hash / hash with any scope prefix stripped.</td></tr>
                     <tr><td><code>navigate(hash)</code></td><td>Sets location.hash.</td></tr>
@@ -3064,6 +3113,8 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                     <tr><td><code>.workspace / .main-layout</code></td><td>Tool-page frame; .main-layout carries the 50px nav padding.</td></tr>
                     <tr><td><code>.sidebar</code></td><td>260px panel column, thin scrollbar.</td></tr>
                     <tr><td><code>.viewport</code></td><td>flex:1 canvas area on --viewport-bg (was #canvas-container).</td></tr>
+                    <tr><td><code>.on-viewport</code></td><td>For any kit component placed ON the viewport ground (a drop zone over an empty canvas, a hint, a HUD-like panel): the viewport is <code>--viewport-bg</code> (black) in every theme, so the class re-seeds the neutrals from it and <code>--lift</code> and re-derives every token below — ink, lines, washes, glass, state-as-text read dark-ground correct even in the light theme. Seeds only, so a custom <code>--viewport-bg</code> still works.</td></tr>
+                    <tr><td><code>canvas</code> / <code>canvas.natural</code></td><td>Every <code>&lt;canvas&gt;</code> fills its box (<code>width/height: 100% !important</code>) — the right default for a viewport. A canvas shown at its own aspect (a source preview, a thumbnail) takes <code>class="natural"</code>: intrinsic size, capped at the box width.</td></tr>
                     <tr><td><code>.pz-layer</code></td><td>absolute inset:0, transform-origin 0 0 — the layer sac.setupPanZoom() transforms.</td></tr>
                     <tr><td><code>#app-root</code></td><td>SPA mount point, nav padding included.</td></tr>
                 </table>
@@ -3225,7 +3276,8 @@ list.addEventListener("click", (e) => { showItem(e.target); split.show = "end"; 
                    item clicks the original button, so its handlers run unchanged.</p>
                 <table class="sg">
                     <tr><th style="width:220px">Rule</th><th>Description</th></tr>
-                    <tr><td>Candidates</td><td><code>button</code> / <code>a</code> in the toolbar slot (or one wrapper deep) and the host tools, trailing first.</td></tr>
+                    <tr><td>Candidates</td><td><code>button</code> / <code>a</code> / <code>sac-menu</code> in the toolbar slot (or one wrapper deep) and the host tools, trailing first.</td></tr>
+                    <tr><td>A folded <code>&lt;sac-menu&gt;</code></td><td>Folds as ONE item: its entries join the “…” menu as a group behind a separator, and choosing one fires the original menu's <code>sac:select</code> — the app's listener runs unchanged. So a “More ▾” menu goes before the primary button does.</td></tr>
                     <tr><td><code>data-overflow="never"</code></td><td>Keeps a control in the ribbon.</td></tr>
                     <tr><td><code>[data-sac-overflow]</code></td><td>Marks a parked button (hidden by ui.css) — it is never moved in the DOM.</td></tr>
                     <tr><td>Needs</td><td><code>sac-menu.js</code> loaded; without it nothing overflows. Menu label: key <code>nav.more</code>.</td></tr>
@@ -3572,6 +3624,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>kind</code></td><td><code>"window"</code> (floating overlay, default), <code>"view"</code> (takes the stage at <code>#/&lt;id&gt;</code>) or <code>"page"</code> (plain link to <code>href</code>).</td></tr>
                     <tr><td><code>entry</code></td><td>Installed apps: the script path <em>relative to the manifest</em>. <code>inspect()</code> resolves it into <code>src</code>. A shell registering its own apps gives <code>src</code> directly.</td></tr>
                     <tr><td><code>nav</code></td><td>view only: <code>false</code> keeps the app out of the nav panel (it stays reachable by hash).</td></tr>
+                    <tr><td><code>palette</code></td><td>view only: <code>false</code> keeps the app out of the Ctrl-K palette. Otherwise it lists under <b>Apps</b> (not Views) — a host lists its window apps there too, so users see one Apps section.</td></tr>
                     <tr><td><code>tag</code>, <code>src</code></td><td>window + view: the app's single custom element + its classic script, injected once on first open. The script guards its definition with <code>customElements.get</code> and registers no other tags; the element fills its window (<code>height: 100%</code> is set for you).</td></tr>
                     <tr><td><code>width</code>, <code>height</code></td><td>window only: <code>sac-window</code> size (defaults 500px / 600px).</td></tr>
                     <tr><td><code>accent</code></td><td>window + view, optional: set as <code>--accent</code> on the window / view element — the per-app retheme. A tile's own accent (see <code>tiles</code>) wins for the open it triggers.</td></tr>
@@ -3602,6 +3655,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>fs</code></td><td>Storage scoped to this app — see <code>sac.fs</code> below. <code>null</code> when the host did not load <code>lib/fs.js</code>, so an app checks before reaching for it.</td></tr>
                     <tr><td><code>identity</code></td><td>Who is at this desktop — see <code>sac.identity</code> below. Read-only for apps, and <code>null</code> when the host granted none.</td></tr>
                     <tr><td><code>files</code></td><td>The <b>user's</b> files — <code>open()</code> / <code>save()</code> / <code>kind</code>, see <code>sac.files</code> below. Where they live is the host's decision; <code>null</code> when the host did not load <code>lib/files.js</code>.</td></tr>
+                    <tr><td><code>lang</code></td><td>The page's language: <code>get()</code> → <code>"en"</code>, <code>"de"</code>, … and <code>onChange(cb)</code> → unsubscribe. <b>Read-only</b> — the host owns the switch, like the theme. Render your strings with <code>sac.t()</code> and re-render them in the callback; see <code>sac.lang</code> below.</td></tr>
                     <tr><td><code>setDirty(flag)</code></td><td><code>true</code> while the app holds work that is not saved. Leaving or reloading the page then asks first, <code>sac.apps.isDirty(id)</code> answers for a host that is about to remove the app, and <code>document</code> gets <code>sac:dirty</code> <code>{ id, dirty }</code> (a taskbar dot). Closing a window never asks — the window stays in the DOM and loses nothing. Standalone it arms the same leave-page question.</td></tr>
                 </table>
                 ${code(`mount(context) {
@@ -3894,156 +3948,232 @@ sac.identity.clear();`)}
                 <p class="sg-note"><b>Convention:</b> tint your scope switcher with
                    <code>--accent-warm</code> — operating on shared state should be visually unmissable.</p>
 
-                <h2>sac.i18n / sac.t — kit UI strings</h2>
-                <p><code>sac.i18n</code> is a flat key table for the kit's few own UI strings
-                   (tooltips, aria-labels, button text); components read them via
-                   <code>sac.t(key, fallback)</code>, so with an empty table everything renders its
-                   inline English fallback — zero setup. Language is boot-time, like the browser
-                   locale that drives the Intl month names: assign the table in a deferred script
-                   loaded AFTER <code>globals.js</code> and BEFORE the component scripts.</p>
-                ${code(`<script defer src="kit/js/lib/globals.js"><\/script>
-<script defer>
-    Object.assign(sac.i18n, {
-        "window.close":        "Schließen",
-        "calendar.prev-month": "Voriger Monat",
-        "launcher.hide":       "{name} ausblenden",
-    });
-<\/script>
-<!-- component scripts after this -->`)}
+                <h2 id="sac-lang">sac.lang / sac.t — language</h2>
+                <p>One language for the whole page, switchable at runtime and owned by the host like the
+                   theme. Every string the kit shows goes through <code>sac.t(key, fallback)</code>, which
+                   answers in the <b>current</b> language — and every kit component re-renders its strings
+                   in place when it changes. English lives inline as the fallback; the kit ships a German
+                   table (<code>kit/js/i18n/de.js</code>, loaded by <code>all.js</code>).</p>
+                ${code(`// app side — your own strings, per language
+sac.i18n.add("de", { "atelier.save": "Speichern", "atelier.frames": "Frames" });
+const label = () => sac.t("atelier.save", "Save");
+button.textContent = label();
+this._offLang = context.lang.onChange(() => { button.textContent = label(); });
+
+// host side — the switch (or just drop a <sac-lang-toggle> in the nav)
+sac.lang.set("de");        // or "auto"`)}
                 <table class="sg">
-                    <tr><th style="width:260px">Key</th><th>English default</th><th style="width:160px">Component</th></tr>
-                    <tr><td><code>about.title</code></td><td><code>About {name}</code></td><td>sac.about</td></tr>
-                    <tr><td><code>calendar.prev-decade</code></td><td><code>Back 10 years</code></td><td>sac-calendar</td></tr>
-                    <tr><td><code>calendar.prev-year</code></td><td><code>Previous year</code></td><td>sac-calendar</td></tr>
-                    <tr><td><code>calendar.prev-month</code></td><td><code>Previous month</code></td><td>sac-calendar</td></tr>
-                    <tr><td><code>calendar.next-month</code></td><td><code>Next month</code></td><td>sac-calendar</td></tr>
-                    <tr><td><code>calendar.next-year</code></td><td><code>Next year</code></td><td>sac-calendar</td></tr>
-                    <tr><td><code>calendar.next-decade</code></td><td><code>Forward 10 years</code></td><td>sac-calendar</td></tr>
-                    <tr><td><code>chip.remove</code></td><td><code>Remove</code></td><td>sac-chip</td></tr>
-                    <tr><td><code>chip-input.add</code></td><td><code>Add</code></td><td>sac-chip-input</td></tr>
-                    <tr><td><code>chip-input.no-matches</code></td><td><code>no matches</code></td><td>sac-chip-input</td></tr>
-                    <tr><td><code>chip-input.create</code></td><td><code>Create "{name}"</code></td><td>sac-chip-input</td></tr>
-                    <tr><td><code>chip-input.pick-color</code></td><td><code>Pick color for "{name}"</code></td><td>sac-chip-input</td></tr>
-                    <tr><td><code>collapsible.more</code></td><td><code>more</code></td><td>sac-collapsible</td></tr>
-                    <tr><td><code>collapsible.less</code></td><td><code>less</code></td><td>sac-collapsible</td></tr>
-                    <tr><td><code>color-field.choose-color</code></td><td><code>Choose color</code></td><td>sac-color-field</td></tr>
-                    <tr><td><code>color-field.hex-color</code></td><td><code>Hex color</code></td><td>sac-color-field</td></tr>
-                    <tr><td><code>color-field.color-picker</code></td><td><code>Color picker</code></td><td>sac-color-field</td></tr>
-                    <tr><td><code>color-picker.title</code></td><td><code>Color picker</code></td><td>sac-color-picker</td></tr>
-                    <tr><td><code>color-picker.saturation-value</code></td><td><code>Saturation and value</code></td><td>sac-color-picker</td></tr>
-                    <tr><td><code>color-picker.saturation-value-text</code></td><td><code>saturation {s}%, value {v}%</code></td><td>sac-color-picker</td></tr>
-                    <tr><td><code>color-picker.hue</code></td><td><code>Hue</code></td><td>sac-color-picker</td></tr>
-                    <tr><td><code>color-picker.opacity</code></td><td><code>Opacity</code></td><td>sac-color-picker</td></tr>
-                    <tr><td><code>color-picker.red</code></td><td><code>Red</code></td><td>sac-color-picker</td></tr>
-                    <tr><td><code>color-picker.green</code></td><td><code>Green</code></td><td>sac-color-picker</td></tr>
-                    <tr><td><code>color-picker.blue</code></td><td><code>Blue</code></td><td>sac-color-picker</td></tr>
-                    <tr><td><code>color-picker.hex-color</code></td><td><code>Hex color</code></td><td>sac-color-picker</td></tr>
-                    <tr><td><code>copy-button.copy</code></td><td><code>Copy</code></td><td>sac-copy-button</td></tr>
-                    <tr><td><code>date-field.date</code></td><td><code>Date</code></td><td>sac-date-field</td></tr>
-                    <tr><td><code>date-field.placeholder</code></td><td><code>yyyy-mm-dd</code></td><td>sac-date-field</td></tr>
-                    <tr><td><code>date-field.choose-date</code></td><td><code>Choose date</code></td><td>sac-date-field</td></tr>
-                    <tr><td><code>date-field.calendar</code></td><td><code>Calendar</code></td><td>sac-date-field</td></tr>
-                    <tr><td><code>drop-zone.label</code></td><td><code>Drop files here</code></td><td>sac-drop-zone</td></tr>
-                    <tr><td><code>drop-zone.hint</code></td><td><code>or click to browse</code></td><td>sac-drop-zone</td></tr>
-                    <tr><td><code>drop-zone.label-touch</code></td><td><code>Choose files</code></td><td>sac-drop-zone</td></tr>
-                    <tr><td><code>drop-zone.hint-touch</code></td><td><code>Tap to browse</code></td><td>sac-drop-zone</td></tr>
-                    <tr><td><code>files.accept-description</code></td><td><code>Files</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.cancel</code></td><td><code>Cancel</code></td><td>sac.files, sac-file-browser</td></tr>
-                    <tr><td><code>files.delete</code></td><td><code>Delete</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.delete-message</code></td><td><code>will be permanently deleted.</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.delete-title</code></td><td><code>Delete this file?</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.delete-folder-title</code></td><td><code>Delete this folder?</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.delete-folder-message</code></td><td><code>and the {n} file(s) in it will be permanently deleted.</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.delete-folder-empty</code></td><td><code>is empty and will be removed.</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.empty</code></td><td><code>Nothing here yet.</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.empty-folder</code></td><td><code>This folder is empty.</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.from-device</code></td><td><code>Open from this device…</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.list</code></td><td><code>Files</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.location</code></td><td><code>Location</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.name</code></td><td><code>Name</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.new-folder</code></td><td><code>New folder</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.new-folder-name</code></td><td><code>Folder name</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.open</code></td><td><code>Open</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.open-title</code></td><td><code>Open</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.replace</code></td><td><code>Replace</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.replace-message</code></td><td><code>already exists. Saving replaces it.</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.replace-title</code></td><td><code>Replace this file?</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.root</code></td><td><code>Files</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>files.save</code></td><td><code>Save</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.save-title</code></td><td><code>Save as</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.to-device</code></td><td><code>Save to this device instead…</code></td><td>sac.files</td></tr>
-                    <tr><td><code>files.up</code></td><td><code>Up one folder</code></td><td>sac-file-browser</td></tr>
-                    <tr><td><code>footer.link</code></td><td><code>LINK</code></td><td>sac-footer</td></tr>
-                    <tr><td><code>help.load-failed</code></td><td><code>Failed to load documentation</code></td><td>help-loader</td></tr>
-                    <tr><td><code>help.check-console</code></td><td><code>Check console for details.</code></td><td>help-loader</td></tr>
-                    <tr><td><code>launcher.add-app</code></td><td><code>Add app</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.no-apps</code></td><td><code>No apps registered.</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.edit</code></td><td><code>Edit</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.done</code></td><td><code>Done</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.move-left</code></td><td><code>Move {name} left</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.move-right</code></td><td><code>Move {name} right</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.show</code></td><td><code>Show {name}</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.hide</code></td><td><code>Hide {name}</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.remove</code></td><td><code>Remove {name}</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.cancel</code></td><td><code>Cancel</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.add</code></td><td><code>Add</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.add-hint</code></td><td><code>The script is loaded on first open and must define the tag. Any URL works — including other sites.</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-name</code></td><td><code>Name</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-icon</code></td><td><code>Icon</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-tag</code></td><td><code>Tag</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-src</code></td><td><code>Script URL</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-width</code></td><td><code>Width</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-height</code></td><td><code>Height</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.placeholder-name</code></td><td><code>My App</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.placeholder-icon</code></td><td><code>shapes (a sac-icon name)</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.placeholder-tag</code></td><td><code>app-my-app</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.placeholder-src</code></td><td><code>apps/my-app.js or https://…</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.placeholder-width</code></td><td><code>500px</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.placeholder-height</code></td><td><code>600px</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.error-needs</code></td><td><code>An app needs {problems}.</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.error-name</code></td><td><code>a name</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.error-tag</code></td><td><code>a tag containing a dash</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.error-src</code></td><td><code>a script URL</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>loader.loading</code></td><td><code>Loading...</code></td><td>sac-loader</td></tr>
-                    <tr><td><code>log.header</code></td><td><code>LOG</code></td><td>sac-log</td></tr>
-                    <tr><td><code>log.copy</code></td><td><code>Copy</code></td><td>sac-log</td></tr>
-                    <tr><td><code>log.clear</code></td><td><code>Clear</code></td><td>sac-log</td></tr>
-                    <tr><td><code>log.copied</code></td><td><code>Copied!</code></td><td>sac-log</td></tr>
-                    <tr><td><code>nav.home</code></td><td><code>Home</code></td><td>sac-nav</td></tr>
-                    <tr><td><code>nav.host</code></td><td><code>Host</code></td><td>sac-nav</td></tr>
-                    <tr><td><code>nav.menu</code></td><td><code>Menu</code></td><td>sac-nav</td></tr>
-                    <tr><td><code>nav.more</code></td><td><code>More</code></td><td>sac-nav</td></tr>
-                    <tr><td><code>nav.no-sections</code></td><td><code>No sections yet.</code></td><td>sac-nav</td></tr>
-                    <tr><td><code>palette.title</code></td><td><code>Command palette</code></td><td>sac-command-palette</td></tr>
-                    <tr><td><code>palette.placeholder</code></td><td><code>Type a command…</code></td><td>sac-command-palette</td></tr>
-                    <tr><td><code>palette.search</code></td><td><code>Search commands</code></td><td>sac-command-palette</td></tr>
-                    <tr><td><code>palette.commands</code></td><td><code>Commands</code></td><td>sac-command-palette</td></tr>
-                    <tr><td><code>palette.group-views</code></td><td><code>Views</code></td><td>sac-command-palette</td></tr>
-                    <tr><td><code>palette.empty</code></td><td><code>No matching commands</code></td><td>sac-command-palette</td></tr>
-                    <tr><td><code>scene.color</code></td><td><code>Color</code></td><td>sac-scene-item</td></tr>
-                    <tr><td><code>scene.delete</code></td><td><code>Delete</code></td><td>sac-scene-item</td></tr>
-                    <tr><td><code>scene.expand</code></td><td><code>Expand / collapse</code></td><td>sac-scene-item</td></tr>
-                    <tr><td><code>scene.unnamed</code></td><td><code>Unnamed</code></td><td>sac-scene-item</td></tr>
-                    <tr><td><code>scene.visibility</code></td><td><code>Toggle visibility</code></td><td>sac-scene-item</td></tr>
-                    <tr><td><code>sidebar.label</code></td><td><code>Sections</code></td><td>sac-sidebar</td></tr>
-                    <tr><td><code>spinner.loading</code></td><td><code>Loading</code></td><td>sac-spinner</td></tr>
-                    <tr><td><code>split.back</code></td><td><code>Back</code></td><td>sac-split</td></tr>
-                    <tr><td><code>split.resize-panels</code></td><td><code>Resize panels</code></td><td>sac-split</td></tr>
-                    <tr><td><code>stepper.decrease</code></td><td><code>Decrease</code></td><td>sac-stepper</td></tr>
-                    <tr><td><code>stepper.increase</code></td><td><code>Increase</code></td><td>sac-stepper</td></tr>
-                    <tr><td><code>theme-toggle.label</code></td><td><code>Theme</code></td><td>sac-theme-toggle</td></tr>
-                    <tr><td><code>theme-toggle.dark</code></td><td><code>Dark</code></td><td>sac-theme-toggle</td></tr>
-                    <tr><td><code>theme-toggle.light</code></td><td><code>Light</code></td><td>sac-theme-toggle</td></tr>
-                    <tr><td><code>theme-toggle.auto</code></td><td><code>Auto</code></td><td>sac-theme-toggle</td></tr>
-                    <tr><td><code>toast.dismiss</code></td><td><code>Dismiss</code></td><td>sac-toast-stack</td></tr>
-                    <tr><td><code>toast.notifications</code></td><td><code>Notifications</code></td><td>sac-toast-stack</td></tr>
-                    <tr><td><code>window.minimize</code></td><td><code>Minimize</code></td><td>sac-window</td></tr>
-                    <tr><td><code>window.maximize</code></td><td><code>Maximize</code></td><td>sac-window</td></tr>
-                    <tr><td><code>window.close</code></td><td><code>Close</code></td><td>sac-window</td></tr>
-                    <tr><td><code>window.restore</code></td><td><code>Restore</code></td><td>sac-window</td></tr>
-                    <tr><td><code>window.default-title</code></td><td><code>Window</code></td><td>sac-window</td></tr>
+                    <tr><th style="width:260px">Member</th><th>Description</th></tr>
+                    <tr><td><code>sac.t(key, fallback)</code></td><td>The string in the current language; <code>fallback</code> (your English) when no table has the key. Placeholders like <code>{name}</code> are the caller's to substitute.</td></tr>
+                    <tr><td><code>sac.i18n.add(lang, table)</code></td><td>Merge a flat <code>{ key: string }</code> table for one language. Namespace app keys (<code>"atelier.save"</code>). A new table can change what Auto resolves to, and the switch follows.</td></tr>
+                    <tr><td><code>sac.lang.get()</code></td><td>The current code: the explicit choice, else the system language.</td></tr>
+                    <tr><td><code>sac.lang.mode()</code></td><td><code>"auto"</code> or the chosen code.</td></tr>
+                    <tr><td><code>sac.lang.set(code)</code> <b>(host)</b></td><td><code>"auto"</code> or a code. Persisted (localStorage <code>sac-lang</code>), mirrored onto <code>&lt;html lang&gt;</code>, announced — including to other tabs.</td></tr>
+                    <tr><td><code>sac.lang.onChange(cb)</code></td><td><code>cb(code)</code> on every change; returns an unsubscribe. Also <code>sac:lang</code> { lang } on <code>document</code>.</td></tr>
+                    <tr><td><code>sac.lang.available()</code></td><td>Codes with a table, <code>"en"</code> first.</td></tr>
+                    <tr><td><code>sac.lang.name(code)</code></td><td>The language's own name via Intl — <code>"Deutsch"</code>.</td></tr>
+                    <tr><td><code>sac.lang.locale()</code></td><td>A full locale for <code>Intl</code> date / number output: the browser's own entry for the current language (<code>"de-AT"</code>), else the code. Kit components format with it.</td></tr>
                 </table>
-                <p class="sg-note"><b>Placeholders:</b> <code>{name}</code>, <code>{problems}</code>, <code>{n}</code>,
+                <p class="sg-note"><b>Auto = the system language, as far as a page can see it.</b> No web API
+                   exposes the operating system's language: a page only gets the browser's language list
+                   (<code>navigator.languages</code>). Auto takes the first entry the kit has a table for,
+                   else English. If a browser shows English on a German Windows, its own language setting
+                   differs from the system — putting German first there fixes every page at once.</p>
+                <p class="sg-note"><b>Legacy:</b> a flat table assigned straight onto <code>sac.i18n</code>
+                   (<code>Object.assign(sac.i18n, {…})</code>, the boot-time model before 2.12) is still
+                   honoured for every language, after the current language's table.</p>
+                <h3>Kit keys</h3>
+                <table class="sg">
+                    <tr><th style="width:240px">Key</th><th>English</th><th>Deutsch</th><th style="width:150px">Used by</th></tr>
+                    <tr><td><code>about.this-app</code></td><td><code>This app</code></td><td><code>Diese App</code></td><td>sac.about</td></tr>
+                    <tr><td><code>about.title</code></td><td><code>About {name}</code></td><td><code>Über {name}</code></td><td>sac.about</td></tr>
+                    <tr><td><code>calendar.next-decade</code></td><td><code>Forward 10 years</code></td><td><code>10 Jahre vor</code></td><td>sac-calendar</td></tr>
+                    <tr><td><code>calendar.next-month</code></td><td><code>Next month</code></td><td><code>Nächster Monat</code></td><td>sac-calendar</td></tr>
+                    <tr><td><code>calendar.next-year</code></td><td><code>Next year</code></td><td><code>Nächstes Jahr</code></td><td>sac-calendar</td></tr>
+                    <tr><td><code>calendar.prev-decade</code></td><td><code>Back 10 years</code></td><td><code>10 Jahre zurück</code></td><td>sac-calendar</td></tr>
+                    <tr><td><code>calendar.prev-month</code></td><td><code>Previous month</code></td><td><code>Voriger Monat</code></td><td>sac-calendar</td></tr>
+                    <tr><td><code>calendar.prev-year</code></td><td><code>Previous year</code></td><td><code>Voriges Jahr</code></td><td>sac-calendar</td></tr>
+                    <tr><td><code>chip-input.add</code></td><td><code>Add</code></td><td><code>Hinzufügen</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-blue</code></td><td><code>Blue</code></td><td><code>Blau</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-gray</code></td><td><code>Gray</code></td><td><code>Grau</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-green</code></td><td><code>Green</code></td><td><code>Grün</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-indigo</code></td><td><code>Indigo</code></td><td><code>Indigo</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-orange</code></td><td><code>Orange</code></td><td><code>Orange</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-pink</code></td><td><code>Pink</code></td><td><code>Pink</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-purple</code></td><td><code>Purple</code></td><td><code>Lila</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-red</code></td><td><code>Red</code></td><td><code>Rot</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-teal</code></td><td><code>Teal</code></td><td><code>Petrol</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.color-yellow</code></td><td><code>Yellow</code></td><td><code>Gelb</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.create</code></td><td><code>Create "{name}"</code></td><td><code>„{name}“ anlegen</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.no-matches</code></td><td><code>no matches</code></td><td><code>keine Treffer</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.pick-color</code></td><td><code>Pick color for "{name}"</code></td><td><code>Farbe für „{name}“ wählen</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip.remove</code></td><td><code>Remove</code></td><td><code>Entfernen</code></td><td>sac-chip</td></tr>
+                    <tr><td><code>collapsible.less</code></td><td><code>less</code></td><td><code>weniger</code></td><td>sac-collapsible</td></tr>
+                    <tr><td><code>collapsible.more</code></td><td><code>more</code></td><td><code>mehr</code></td><td>sac-collapsible</td></tr>
+                    <tr><td><code>color-field.choose-color</code></td><td><code>Choose color</code></td><td><code>Farbe wählen</code></td><td>sac-color-field</td></tr>
+                    <tr><td><code>color-field.color-picker</code></td><td><code>Color picker</code></td><td><code>Farbwähler</code></td><td>sac-color-field</td></tr>
+                    <tr><td><code>color-field.hex-color</code></td><td><code>Hex color</code></td><td><code>Hex-Farbe</code></td><td>sac-color-field</td></tr>
+                    <tr><td><code>color-picker.blue</code></td><td><code>Blue</code></td><td><code>Blau</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>color-picker.green</code></td><td><code>Green</code></td><td><code>Grün</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>color-picker.hex-color</code></td><td><code>Hex color</code></td><td><code>Hex-Farbe</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>color-picker.hue</code></td><td><code>Hue</code></td><td><code>Farbton</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>color-picker.opacity</code></td><td><code>Opacity</code></td><td><code>Deckkraft</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>color-picker.red</code></td><td><code>Red</code></td><td><code>Rot</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>color-picker.saturation-value</code></td><td><code>Saturation and value</code></td><td><code>Sättigung und Helligkeit</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>color-picker.saturation-value-text</code></td><td><code>saturation {s}%, value {v}%</code></td><td><code>Sättigung {s} %, Helligkeit {v} %</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>color-picker.title</code></td><td><code>Color picker</code></td><td><code>Farbwähler</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>copy-button.copy</code></td><td><code>Copy</code></td><td><code>Kopieren</code></td><td>sac-copy-button</td></tr>
+                    <tr><td><code>date-field.calendar</code></td><td><code>Calendar</code></td><td><code>Kalender</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.choose-date</code></td><td><code>Choose date</code></td><td><code>Datum wählen</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.date</code></td><td><code>Date</code></td><td><code>Datum</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.placeholder</code></td><td><code>yyyy-mm-dd</code></td><td><code>jjjj-mm-tt</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>dialog.ok</code></td><td><code>OK</code></td><td><code>OK</code></td><td>sac.dialog</td></tr>
+                    <tr><td><code>drop-zone.hint</code></td><td><code>or click to browse</code></td><td><code>oder klicken zum Auswählen</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>drop-zone.hint-touch</code></td><td><code>Tap to browse</code></td><td><code>Tippen zum Auswählen</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>drop-zone.label</code></td><td><code>Drop files here</code></td><td><code>Dateien hier ablegen</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>drop-zone.label-touch</code></td><td><code>Choose files</code></td><td><code>Dateien auswählen</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>files.accept-description</code></td><td><code>Files</code></td><td><code>Dateien</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.cancel</code></td><td><code>Cancel</code></td><td><code>Abbrechen</code></td><td>sac.files, sac-file-browser</td></tr>
+                    <tr><td><code>files.delete</code></td><td><code>Delete</code></td><td><code>Löschen</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-folder-empty</code></td><td><code>is empty and will be removed.</code></td><td><code>ist leer und wird entfernt.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-folder-message</code></td><td><code>and the {n} file(s) in it will be permanently deleted.</code></td><td><code>und die {n} Datei(en) darin werden dauerhaft gelöscht.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-folder-title</code></td><td><code>Delete this folder?</code></td><td><code>Diesen Ordner löschen?</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-message</code></td><td><code>will be permanently deleted.</code></td><td><code>wird dauerhaft gelöscht.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-title</code></td><td><code>Delete this file?</code></td><td><code>Diese Datei löschen?</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.empty</code></td><td><code>Nothing here yet.</code></td><td><code>Noch nichts vorhanden.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.empty-folder</code></td><td><code>This folder is empty.</code></td><td><code>Dieser Ordner ist leer.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.from-device</code></td><td><code>Open from this device…</code></td><td><code>Von diesem Gerät öffnen…</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.list</code></td><td><code>Files</code></td><td><code>Dateien</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.location</code></td><td><code>Location</code></td><td><code>Speicherort</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.name</code></td><td><code>Name</code></td><td><code>Name</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.new-folder</code></td><td><code>New folder</code></td><td><code>Neuer Ordner</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.new-folder-name</code></td><td><code>Folder name</code></td><td><code>Ordnername</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.open</code></td><td><code>Open</code></td><td><code>Öffnen</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.open-title</code></td><td><code>Open</code></td><td><code>Öffnen</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.replace</code></td><td><code>Replace</code></td><td><code>Ersetzen</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.replace-message</code></td><td><code>already exists. Saving replaces it.</code></td><td><code>ist bereits vorhanden. Speichern ersetzt sie.</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.replace-title</code></td><td><code>Replace this file?</code></td><td><code>Diese Datei ersetzen?</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.root</code></td><td><code>Files</code></td><td><code>Dateien</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.save</code></td><td><code>Save</code></td><td><code>Speichern</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.save-title</code></td><td><code>Save as</code></td><td><code>Speichern unter</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.to-device</code></td><td><code>Save to this device instead…</code></td><td><code>Stattdessen auf diesem Gerät speichern…</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.up</code></td><td><code>Up one folder</code></td><td><code>Einen Ordner nach oben</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>filmstrip.add</code></td><td><code>Add frame</code></td><td><code>Frame hinzufügen</code></td><td>sac-filmstrip</td></tr>
+                    <tr><td><code>filmstrip.delete</code></td><td><code>Delete frame</code></td><td><code>Frame löschen</code></td><td>sac-filmstrip</td></tr>
+                    <tr><td><code>filmstrip.duplicate</code></td><td><code>Duplicate frame</code></td><td><code>Frame duplizieren</code></td><td>sac-filmstrip</td></tr>
+                    <tr><td><code>filmstrip.frame</code></td><td><code>Frame {i} of {n}</code></td><td><code>Frame {i} von {n}</code></td><td>sac-filmstrip</td></tr>
+                    <tr><td><code>filmstrip.frames</code></td><td><code>Frames</code></td><td><code>Frames</code></td><td>sac-filmstrip</td></tr>
+                    <tr><td><code>footer.link</code></td><td><code>LINK</code></td><td><code>LINK</code></td><td>sac-footer</td></tr>
+                    <tr><td><code>help.check-console</code></td><td><code>Check console for details.</code></td><td><code>Details in der Konsole.</code></td><td>help-loader</td></tr>
+                    <tr><td><code>help.load-failed</code></td><td><code>Failed to load documentation</code></td><td><code>Dokumentation konnte nicht geladen werden</code></td><td>help-loader</td></tr>
+                    <tr><td><code>hotkeys.alt</code></td><td><code>Alt</code></td><td><code>Alt</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.ctrl</code></td><td><code>Ctrl</code></td><td><code>Strg</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.del</code></td><td><code>Del</code></td><td><code>Entf</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.end</code></td><td><code>End</code></td><td><code>Ende</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.enter</code></td><td><code>Enter</code></td><td><code>Enter</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.esc</code></td><td><code>Esc</code></td><td><code>Esc</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.home</code></td><td><code>Home</code></td><td><code>Pos1</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.insert</code></td><td><code>Insert</code></td><td><code>Einfg</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.pgdn</code></td><td><code>PgDn</code></td><td><code>Bild↓</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.pgup</code></td><td><code>PgUp</code></td><td><code>Bild↑</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.shift</code></td><td><code>Shift</code></td><td><code>Umschalt</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.space</code></td><td><code>Space</code></td><td><code>Leertaste</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.tab</code></td><td><code>Tab</code></td><td><code>Tab</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>hotkeys.win</code></td><td><code>Win</code></td><td><code>Win</code></td><td>sac.hotkeys</td></tr>
+                    <tr><td><code>lang-toggle.auto</code></td><td><code>Auto</code></td><td><code>Auto</code></td><td>sac-lang-toggle</td></tr>
+                    <tr><td><code>lang-toggle.auto-title</code></td><td><code>Follow the system</code></td><td><code>Systemsprache folgen</code></td><td>sac-lang-toggle</td></tr>
+                    <tr><td><code>lang-toggle.label</code></td><td><code>Language</code></td><td><code>Sprache</code></td><td>sac-lang-toggle</td></tr>
+                    <tr><td><code>launcher.add</code></td><td><code>Add</code></td><td><code>Hinzufügen</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.add-app</code></td><td><code>Add app</code></td><td><code>App hinzufügen</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.add-hint</code></td><td><code>The script is loaded on first open and must define the tag. Any URL works — including other sites.</code></td><td><code>Das Skript wird beim ersten Öffnen geladen und muss das Tag definieren. Jede URL funktioniert – auch andere Websites.</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.cancel</code></td><td><code>Cancel</code></td><td><code>Abbrechen</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.done</code></td><td><code>Done</code></td><td><code>Fertig</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.edit</code></td><td><code>Edit</code></td><td><code>Bearbeiten</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.error-name</code></td><td><code>a name</code></td><td><code>einen Namen</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.error-needs</code></td><td><code>An app needs {problems}.</code></td><td><code>Eine App braucht {problems}.</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.error-src</code></td><td><code>a script URL</code></td><td><code>eine Skript-URL</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.error-tag</code></td><td><code>a tag containing a dash</code></td><td><code>ein Tag mit Bindestrich</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-height</code></td><td><code>Height</code></td><td><code>Höhe</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-icon</code></td><td><code>Icon</code></td><td><code>Icon</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-name</code></td><td><code>Name</code></td><td><code>Name</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-src</code></td><td><code>Script URL</code></td><td><code>Skript-URL</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-tag</code></td><td><code>Tag</code></td><td><code>Tag</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-width</code></td><td><code>Width</code></td><td><code>Breite</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.hide</code></td><td><code>Hide {name}</code></td><td><code>{name} ausblenden</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.move-left</code></td><td><code>Move {name} left</code></td><td><code>{name} nach links verschieben</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.move-right</code></td><td><code>Move {name} right</code></td><td><code>{name} nach rechts verschieben</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.no-apps</code></td><td><code>No apps registered.</code></td><td><code>Keine Apps registriert.</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.placeholder-height</code></td><td><code>600px</code></td><td><code>600px</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.placeholder-icon</code></td><td><code>shapes (a sac-icon name)</code></td><td><code>shapes (ein sac-icon-Name)</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.placeholder-name</code></td><td><code>My App</code></td><td><code>Meine App</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.placeholder-src</code></td><td><code>apps/my-app.js or https://…</code></td><td><code>apps/meine-app.js oder https://…</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.placeholder-tag</code></td><td><code>app-my-app</code></td><td><code>app-meine-app</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.placeholder-width</code></td><td><code>500px</code></td><td><code>500px</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.remove</code></td><td><code>Remove {name}</code></td><td><code>{name} entfernen</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.show</code></td><td><code>Show {name}</code></td><td><code>{name} einblenden</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>layer-list.add</code></td><td><code>Add layer</code></td><td><code>Ebene hinzufügen</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.delete</code></td><td><code>Delete layer</code></td><td><code>Ebene löschen</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.duplicate</code></td><td><code>Duplicate layer</code></td><td><code>Ebene duplizieren</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.hidden</code></td><td><code>hidden</code></td><td><code>ausgeblendet</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.hide</code></td><td><code>Hide layer</code></td><td><code>Ebene ausblenden</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.hide-named</code></td><td><code>Hide {name}</code></td><td><code>{name} ausblenden</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.layers</code></td><td><code>Layers</code></td><td><code>Ebenen</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.lock</code></td><td><code>Lock layer</code></td><td><code>Ebene sperren</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.lock-named</code></td><td><code>Lock {name}</code></td><td><code>{name} sperren</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.locked</code></td><td><code>locked</code></td><td><code>gesperrt</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.name</code></td><td><code>Layer name</code></td><td><code>Ebenenname</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.show</code></td><td><code>Show layer</code></td><td><code>Ebene einblenden</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.show-named</code></td><td><code>Show {name}</code></td><td><code>{name} einblenden</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.unlock</code></td><td><code>Unlock layer</code></td><td><code>Ebene entsperren</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>layer-list.unlock-named</code></td><td><code>Unlock {name}</code></td><td><code>{name} entsperren</code></td><td>sac-layer-list</td></tr>
+                    <tr><td><code>loader.loading</code></td><td><code>Loading...</code></td><td><code>Wird geladen …</code></td><td>sac-loader</td></tr>
+                    <tr><td><code>log.clear</code></td><td><code>Clear</code></td><td><code>Leeren</code></td><td>sac-log</td></tr>
+                    <tr><td><code>log.copied</code></td><td><code>Copied!</code></td><td><code>Kopiert!</code></td><td>sac-log</td></tr>
+                    <tr><td><code>log.copy</code></td><td><code>Copy</code></td><td><code>Kopieren</code></td><td>sac-log</td></tr>
+                    <tr><td><code>log.header</code></td><td><code>LOG</code></td><td><code>PROTOKOLL</code></td><td>sac-log</td></tr>
+                    <tr><td><code>nav.home</code></td><td><code>Home</code></td><td><code>Start</code></td><td>sac-nav</td></tr>
+                    <tr><td><code>nav.host</code></td><td><code>Host</code></td><td><code>Host</code></td><td>sac-nav</td></tr>
+                    <tr><td><code>nav.menu</code></td><td><code>Menu</code></td><td><code>Menü</code></td><td>sac-nav</td></tr>
+                    <tr><td><code>nav.more</code></td><td><code>More</code></td><td><code>Mehr</code></td><td>sac-nav</td></tr>
+                    <tr><td><code>nav.no-sections</code></td><td><code>No sections yet.</code></td><td><code>Noch keine Bereiche.</code></td><td>sac-nav</td></tr>
+                    <tr><td><code>palette.commands</code></td><td><code>Commands</code></td><td><code>Befehle</code></td><td>sac-command-palette</td></tr>
+                    <tr><td><code>palette.empty</code></td><td><code>No matching commands</code></td><td><code>Keine passenden Befehle</code></td><td>sac-command-palette</td></tr>
+                    <tr><td><code>palette.group-views</code></td><td><code>Views</code></td><td><code>Ansichten</code></td><td>sac-command-palette</td></tr>
+                    <tr><td><code>palette.group-apps</code></td><td><code>Apps</code></td><td><code>Apps</code></td><td>sac-command-palette (sac.apps routes)</td></tr>
+                    <tr><td><code>palette.placeholder</code></td><td><code>Type a command…</code></td><td><code>Befehl eingeben…</code></td><td>sac-command-palette</td></tr>
+                    <tr><td><code>palette.search</code></td><td><code>Search commands</code></td><td><code>Befehle durchsuchen</code></td><td>sac-command-palette</td></tr>
+                    <tr><td><code>palette.title</code></td><td><code>Command palette</code></td><td><code>Befehlspalette</code></td><td>sac-command-palette</td></tr>
+                    <tr><td><code>pixel-canvas.label</code></td><td><code>Pixel canvas</code></td><td><code>Pixel-Leinwand</code></td><td>sac-pixel-canvas</td></tr>
+                    <tr><td><code>scene.color</code></td><td><code>Color</code></td><td><code>Farbe</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.delete</code></td><td><code>Delete</code></td><td><code>Löschen</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.expand</code></td><td><code>Expand / collapse</code></td><td><code>Auf- / zuklappen</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.unnamed</code></td><td><code>Unnamed</code></td><td><code>Unbenannt</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.visibility</code></td><td><code>Toggle visibility</code></td><td><code>Sichtbarkeit umschalten</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>shortcuts.close</code></td><td><code>Close</code></td><td><code>Schließen</code></td><td>sac-shortcut-sheet</td></tr>
+                    <tr><td><code>shortcuts.empty</code></td><td><code>No keyboard shortcuts are registered.</code></td><td><code>Keine Tastenkürzel registriert.</code></td><td>sac-shortcut-sheet</td></tr>
+                    <tr><td><code>shortcuts.general</code></td><td><code>General</code></td><td><code>Allgemein</code></td><td>sac-shortcut-sheet</td></tr>
+                    <tr><td><code>shortcuts.help</code></td><td><code>Help</code></td><td><code>Hilfe</code></td><td>sac.shortcuts</td></tr>
+                    <tr><td><code>shortcuts.title</code></td><td><code>Keyboard shortcuts</code></td><td><code>Tastenkürzel</code></td><td>sac-shortcut-sheet</td></tr>
+                    <tr><td><code>sidebar.label</code></td><td><code>Sections</code></td><td><code>Bereiche</code></td><td>sac-sidebar</td></tr>
+                    <tr><td><code>spinner.loading</code></td><td><code>Loading</code></td><td><code>Lädt</code></td><td>sac-spinner</td></tr>
+                    <tr><td><code>split.back</code></td><td><code>Back</code></td><td><code>Zurück</code></td><td>sac-split</td></tr>
+                    <tr><td><code>split.resize-panels</code></td><td><code>Resize panels</code></td><td><code>Bereichsgröße ändern</code></td><td>sac-split</td></tr>
+                    <tr><td><code>stepper.decrease</code></td><td><code>Decrease</code></td><td><code>Verringern</code></td><td>sac-stepper</td></tr>
+                    <tr><td><code>stepper.increase</code></td><td><code>Increase</code></td><td><code>Erhöhen</code></td><td>sac-stepper</td></tr>
+                    <tr><td><code>theme-toggle.auto</code></td><td><code>Auto</code></td><td><code>Auto</code></td><td>sac-theme-toggle</td></tr>
+                    <tr><td><code>theme-toggle.dark</code></td><td><code>Dark</code></td><td><code>Dunkel</code></td><td>sac-theme-toggle</td></tr>
+                    <tr><td><code>theme-toggle.label</code></td><td><code>Theme</code></td><td><code>Design</code></td><td>sac-theme-toggle</td></tr>
+                    <tr><td><code>theme-toggle.light</code></td><td><code>Light</code></td><td><code>Hell</code></td><td>sac-theme-toggle</td></tr>
+                    <tr><td><code>toast.dismiss</code></td><td><code>Dismiss</code></td><td><code>Schließen</code></td><td>sac-toast</td></tr>
+                    <tr><td><code>toast.notifications</code></td><td><code>Notifications</code></td><td><code>Benachrichtigungen</code></td><td>sac-toast</td></tr>
+                    <tr><td><code>toolbox.group</code></td><td><code>Tools</code></td><td><code>Werkzeuge</code></td><td>sac-toolbox</td></tr>
+                    <tr><td><code>window.close</code></td><td><code>Close</code></td><td><code>Schließen</code></td><td>sac-window</td></tr>
+                    <tr><td><code>window.default-title</code></td><td><code>Window</code></td><td><code>Fenster</code></td><td>sac-window</td></tr>
+                    <tr><td><code>window.maximize</code></td><td><code>Maximize</code></td><td><code>Maximieren</code></td><td>sac-window</td></tr>
+                    <tr><td><code>window.minimize</code></td><td><code>Minimize</code></td><td><code>Minimieren</code></td><td>sac-window</td></tr>
+                    <tr><td><code>window.restore</code></td><td><code>Restore</code></td><td><code>Wiederherstellen</code></td><td>sac-window</td></tr>
+                </table>
+                <p class="sg-note"><b>Placeholders:</b> <code>{name}</code>, <code>{problems}</code>, <code>{n}</code>, <code>{i}</code>,
                    <code>{s}</code>/<code>{v}</code> are substituted by the component at render time —
                    keep them verbatim in a translation. Date and number OUTPUT is never in this table:
                    that is Intl's job, always in the browser's locale.</p>
@@ -4213,7 +4343,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             this._nav.setAttribute("sections-nav", "wide");
             const ctxSlot = document.createElement("div");
             ctxSlot.slot = "context";
-            ctxSlot.appendChild(document.createElement("sac-theme-toggle"));
+            ctxSlot.append(document.createElement("sac-lang-toggle"), document.createElement("sac-theme-toggle"));
             this._nav.appendChild(ctxSlot);
             // Pinned in the ribbon (data-overflow="never"): parked behind
             // "…" the switch would be one tap further from what it previews.
