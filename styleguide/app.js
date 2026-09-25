@@ -743,6 +743,7 @@ sac.about.open({                          // or an explicit object (standalone)
                     <div class="sg-row" style="gap:1.5rem;flex-wrap:wrap;">
                         <sac-stepper id="demo-stepper" value="3" min="1" max="99" step="1" unit="parts" label="Parts"></sac-stepper>
                         <sac-stepper id="demo-stepper-frac" value="0.5" min="0" max="1" step="0.1" label="Mix ratio"></sac-stepper>
+                        <sac-stepper value="1.25" min="0.01" max="100" step="0.01" unit="mm" label="Thickness"></sac-stepper>
                         <sac-stepper value="10" min="0" max="20" unit="px" label="Brush size" disabled></sac-stepper>
                     </div>
                     <span id="demo-stepper-state" style="color:var(--text-muted);font-size:0.85rem;">no change yet</span>
@@ -751,9 +752,15 @@ sac.about.open({                          // or an explicit object (standalone)
                     ["value", "Current number, reflected — clamped into <code>[min, max]</code> and snapped to the step grid (measured from <code>min</code>) on every change, so the attribute never carries an out-of-range or off-grid number. Defaults to <code>min</code>."],
                     ["min / max", "Bounds. Default <code>0</code> / <code>100</code>."],
                     ["step", "Increment, default <code>1</code>. Fractional steps (<code>0.1</code>) are supported; the displayed and reflected value keeps that many decimals."],
+                    ["decimals", "Minimum decimal places shown — <code>decimals=\"2\"</code> on a <code>0.5</code> step shows <code>1.50</code>. Never fewer than the step needs."],
                     ["unit", "Optional dim word next to the number (<code>parts</code>, <code>px</code>). Also feeds <code>aria-valuetext</code> (“3 parts”)."],
                     ["label", "Accessible name for the value field."],
                     ["disabled", "Disables both buttons and the value field."],
+                ])}
+                ${table("Styling", [
+                    ["Width", "The value field fits the widest value the range can show (<code>min</code>, <code>max</code>, at the shown precision), never below <code>3ch</code> — <code>100.00</code> is never cut off. Fractional ranges get the decimal keypad on touch."],
+                    ["--stepper-value-width", "Overrides the automatic width, e.g. <code>sac-stepper { --stepper-value-width: 6ch; }</code>."],
+                    ["::part(value)", "The value field itself."],
                 ])}
                 ${table("Property", [
                     ["value", "get/set (number). Setting updates everything in place and fires nothing — same contract as writing the attribute."],
