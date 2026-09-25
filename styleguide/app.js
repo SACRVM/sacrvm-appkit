@@ -1079,7 +1079,9 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                     ["label", "Label line above the row (kit form-label styling). Absent or empty renders no label line at all. Also becomes the input's accessible name."],
                     ["placeholder", "The input's placeholder. Default follows the format (<code>yyyy-mm-dd</code>, <code>dd.mm.yyyy</code>, …), translated."],
                     ["disabled", "Greys the row out, blocks the input and the button, and closes an open popover."],
+                    ["size", "<code>compact</code> (default — the small row for sidebars and settings panels) or <code>regular</code> — the metrics of a plain kit <code>&lt;input&gt;</code> (0.6rem padding, the UI font with tabular digits) for a normal form; the calendar button matches the field height. Give a date + time pair the same size and they stay one family. Touch sizing (44px, 16px type) is the same for both."],
                 ])}
+                <p><b>CSS parts:</b> <code>label</code>, <code>input</code> (the text box), <code>well</code> (the calendar button).</p>
                 ${table("Property", [
                     ["value", "get/set, normalized ISO or <code>\"\"</code>. Setting updates the input and an open popover in place and fires <em>nothing</em> — events mean “the user did this”. Never overwrites text mid-typing."],
                 ])}
@@ -1115,6 +1117,13 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     <sac-time-field label="12-hour" value="20:05" hour-cycle="h12"></sac-time-field>
                     <sac-time-field label="Office hours" min="08:00" max="18:00"></sac-time-field>
                     <sac-time-field label="Locked" value="09:00" disabled></sac-time-field>
+                    <div class="sg-col" style="order:10;width:100%;gap:8px;">
+                        <div class="sg-row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                            <sac-date-field size="regular" label="Due · regular" value="2026-09-25" format="dmy."></sac-date-field>
+                            <sac-time-field size="regular" label="Time" value="14:30"></sac-time-field>
+                        </div>
+                        <input type="text" value="A plain kit input — the regular size's reference" style="max-width:420px;">
+                    </div>
                     <div class="sg-col" style="flex:1;min-width:220px;gap:0;">
                         <label>Readout</label>
                         <div class="log" id="demo-time-field-out" style="height:auto;min-height:64px;"></div>
@@ -1128,6 +1137,7 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["label", "Label line above the field; also the group's accessible name."],
                     ["placeholder", "<code>\"hh:mm\"</code>-style — each half shows dim in its empty segment. Default <code>--:--</code>."],
                     ["disabled", "Greys the field out and takes it out of the tab order."],
+                    ["size", "<code>compact</code> (default — the small row for sidebars and settings panels) or <code>regular</code> — the metrics of a plain kit <code>&lt;input&gt;</code> (0.6rem padding, the UI font with tabular digits) for a normal form; the calendar button matches the field height. Give a date + time pair the same size and they stay one family. Touch sizing (44px, 16px type) is the same for both."],
                 ])}
                 ${table("Property", [
                     ["value", "get/set, <code>HH:MM</code> or <code>\"\"</code>. Setting updates the segments in place and fires nothing."],
@@ -1144,7 +1154,7 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["<kbd>Enter</kbd> / <kbd>Esc</kbd>", "Commit / revert to the last committed value."],
                     ["Wheel", "Steps the segment under the pointer while the field has focus — a field you merely scroll past never changes."],
                 ])}
-                <p><b>CSS parts:</b> <code>field</code> (the bordered box), <code>segment</code> (each segment), <code>separator</code>.</p>
+                <p><b>CSS parts:</b> <code>label</code>, <code>field</code> (the bordered box), <code>segment</code> (each segment), <code>separator</code>.</p>
                 ${code(`<sac-date-field label="Start" value="2026-09-25"></sac-date-field>
 <sac-time-field label="Time" value="14:30" step="15"></sac-time-field>
 
