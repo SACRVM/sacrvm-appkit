@@ -293,7 +293,7 @@
             <div class="sg-page">
                 <h1>Components</h1>
                 <p class="lead">
-                    44 component files, 48 custom elements — Shadow DOM (<code>mode: 'open'</code>)
+                    45 component files, 49 custom elements — Shadow DOM (<code>mode: 'open'</code>)
                     except the one documented light-DOM case, <code>&lt;sac-launcher&gt;</code>.
                     All are classic deferred scripts self-registering via
                     <code>customElements.define()</code>, usable from classic and module scripts alike.
@@ -1054,14 +1054,16 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                    wraps: the month label on its own line, the six paging buttons as 44px targets below it.`)}
 
                 <h2 id="sac-date-field">&lt;sac-date-field&gt;</h2>
-                <p>The compact form row for a sidebar or settings panel: an optional label, an ISO
-                   date input and a calendar button, with the
+                <p>The compact form row for a sidebar or settings panel: an optional label, a date
+                   input in the chosen <code>format</code> and a calendar button, with the
                    <a href="#sac-calendar"><code>&lt;sac-calendar&gt;</code></a> in a popover
                    instead of inline.</p>
                 <div class="sg-demo sg-row" style="align-items:flex-start;gap:2rem;flex-wrap:wrap;">
                     <sac-date-field id="demo-date-field" label="Due" value="2026-08-15"></sac-date-field>
                     <sac-date-field id="demo-date-field-bounded" label="This year" value="2026-08-15"
                                     min="2026-01-01" max="2026-12-31"></sac-date-field>
+                    <sac-date-field label="German" value="2026-08-15" format="dmy."></sac-date-field>
+                    <sac-date-field label="US" value="2026-08-15" format="mdy/"></sac-date-field>
                     <sac-date-field label="Locked" value="2026-08-15" disabled></sac-date-field>
                     <!-- gap:0 — see the color-field readout note. -->
                     <div class="sg-col" style="flex:1;min-width:220px;gap:0;">
@@ -1073,8 +1075,9 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                     ["value", "ISO date, tolerant in (whitespace, single-digit month/day: <code>2026-8-5</code>), reflected normalized <code>yyyy-mm-dd</code>. Empty or absent = no selection. An unparseable or impossible date (<code>2026-02-31</code>) is rejected — the last valid value is put back."],
                     ["min, max", "ISO bounds, inclusive, forwarded to the popover calendar (days outside render disabled there). A typed date outside the bounds counts as invalid and never commits."],
                     ["week-start", "<code>\"1\"</code> Monday (the calendar's default) or <code>\"0\"</code> Sunday, forwarded to the popover calendar."],
+                    ["format", "How the date is <b>shown and typed</b>: <code>iso</code> (<code>2026-09-25</code>), <code>dmy.</code> (<code>25.09.2026</code>), <code>dmy/</code> (<code>25/09/2026</code>), <code>mdy/</code> (<code>09/25/2026</code>). Absent = the page-wide <a href=\"#sac-regional\"><code>sac.regional</code></a> format, followed live. <code>value</code>, <code>min</code>/<code>max</code> and <code>sac:change</code> stay ISO whatever the format. Typing is tolerant — single-digit day/month, two-digit year (00–68 → 20xx), any of <code>. / -</code> between — and an ISO date is always accepted."],
                     ["label", "Label line above the row (kit form-label styling). Absent or empty renders no label line at all. Also becomes the input's accessible name."],
-                    ["placeholder", "The input's placeholder. Default <code>yyyy-mm-dd</code>."],
+                    ["placeholder", "The input's placeholder. Default follows the format (<code>yyyy-mm-dd</code>, <code>dd.mm.yyyy</code>, …), translated."],
                     ["disabled", "Greys the row out, blocks the input and the button, and closes an open popover."],
                 ])}
                 ${table("Property", [
@@ -1088,7 +1091,7 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                 ])}
                 ${table("Interaction", [
                     ["Calendar button", "Click drops the calendar below the field (built on first open); an outside click, a re-click, <kbd>Esc</kbd> or picking a day closes it, focus returning to the button. The popover is <code>position: fixed</code> on the dropdown layer and flips above the field when there is no room below."],
-                    ["Date input", "A tolerant ISO date (<code>2026-8-5</code>) + <kbd>Enter</kbd> commits and normalizes; invalid or out-of-range text is marked in <code>--danger</code> and reverts on blur or <kbd>Esc</kbd>."],
+                    ["Date input", "A tolerant date in the format, or ISO (<code>2026-8-5</code>) + <kbd>Enter</kbd> commits and normalizes; invalid or out-of-range text is marked in <code>--danger</code> and reverts on blur or <kbd>Esc</kbd>."],
                 ])}
                 ${code(`<sac-date-field label="Due" value="2026-08-15"></sac-date-field>
 <sac-date-field label="This year" value="2026-08-15" min="2026-01-01" max="2026-12-31"></sac-date-field>
@@ -1098,6 +1101,58 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                 ${compact(`the popover is at most <code>100vw - 16px</code> wide and the calendar shrinks to it. Under
                    <code>pointer: coarse</code> the input and the calendar button are 44px (the button 44 × 44), the input
                    uses 16px type, the calendar gets 44px day cells.`)}
+
+                <h2 id="sac-time-field">&lt;sac-time-field&gt;</h2>
+                <p>The time sibling of <code>&lt;sac-date-field&gt;</code>: one field of focusable segments —
+                   hour, minute, and AM/PM under <code>hour-cycle="h12"</code> — like the operating system's
+                   time pickers. Same height, border and radius as the date field, so the two sit in one row.
+                   <code>value</code> is always 24-hour <code>HH:MM</code>.</p>
+                <div class="sg-demo sg-row" style="align-items:flex-start;gap:2rem;flex-wrap:wrap;">
+                    <div class="sg-row" style="gap:8px;align-items:flex-end;">
+                        <sac-date-field label="Start" value="2026-09-25" format="dmy."></sac-date-field>
+                        <sac-time-field id="demo-time-field" label="Time" value="14:30" step="15"></sac-time-field>
+                    </div>
+                    <sac-time-field label="12-hour" value="20:05" hour-cycle="h12"></sac-time-field>
+                    <sac-time-field label="Office hours" min="08:00" max="18:00"></sac-time-field>
+                    <sac-time-field label="Locked" value="09:00" disabled></sac-time-field>
+                    <div class="sg-col" style="flex:1;min-width:220px;gap:0;">
+                        <label>Readout</label>
+                        <div class="log" id="demo-time-field-out" style="height:auto;min-height:64px;"></div>
+                    </div>
+                </div>
+                ${table("Attribute", [
+                    ["value", "<code>HH:MM</code>, 24-hour whatever the display. Tolerant in (<code>9:5</code> → <code>09:05</code>), reflected normalized. Empty or absent = no time; garbage is rejected and the last valid value put back."],
+                    ["hour-cycle", "<code>h23</code> (00–23) or <code>h12</code> (01–12 plus an AM/PM segment). Absent = the page-wide <a href=\"#sac-regional\"><code>sac.regional</code></a> hour cycle, followed live."],
+                    ["step", "Minutes the arrows and the wheel step the minute segment by (default <code>1</code>; <code>5</code>, <code>15</code> …) — snapped to that grid. Typed minutes are not snapped."],
+                    ["min, max", "<code>HH:MM</code> bounds, inclusive. A time outside shows <code>--danger</code> and never commits; focus leaving reverts it."],
+                    ["label", "Label line above the field; also the group's accessible name."],
+                    ["placeholder", "<code>\"hh:mm\"</code>-style — each half shows dim in its empty segment. Default <code>--:--</code>."],
+                    ["disabled", "Greys the field out and takes it out of the tab order."],
+                ])}
+                ${table("Property", [
+                    ["value", "get/set, <code>HH:MM</code> or <code>\"\"</code>. Setting updates the segments in place and fires nothing."],
+                ])}
+                ${table("Event", [
+                    ["sac:change", "detail { value } — <code>HH:MM</code>, or <code>\"\"</code> when the user cleared it. Fired when the user <b>commits</b>: focus leaving the field, or <kbd>Enter</kbd>. Stepping and typing update the segments live but fire once — the <code>&lt;sac-date-field&gt;</code> contract. A half-filled time reverts instead."],
+                ])}
+                ${table("Interaction", [
+                    ["↑ / ↓", "Step the focused segment (wraps; minutes by <code>step</code>). On an empty segment ↑ starts at the bottom of its range, ↓ at the top."],
+                    ["← / →", "Previous / next segment."],
+                    ["Digits", "Fill the segment and advance when it can take no more: <kbd>1</kbd> <kbd>4</kbd> → 14 → minute; <kbd>7</kbd> → 07 → minute."],
+                    ["<kbd>a</kbd> / <kbd>p</kbd>", "AM / PM (h12). Clicking the AM/PM segment toggles it."],
+                    ["<kbd>Backspace</kbd> / <kbd>Del</kbd>", "Clear the segment — the value becomes <code>\"\"</code>."],
+                    ["<kbd>Enter</kbd> / <kbd>Esc</kbd>", "Commit / revert to the last committed value."],
+                    ["Wheel", "Steps the segment under the pointer while the field has focus — a field you merely scroll past never changes."],
+                ])}
+                <p><b>CSS parts:</b> <code>field</code> (the bordered box), <code>segment</code> (each segment), <code>separator</code>.</p>
+                ${code(`<sac-date-field label="Start" value="2026-09-25"></sac-date-field>
+<sac-time-field label="Time" value="14:30" step="15"></sac-time-field>
+
+// one user setting drives every date and time field on the page
+sac.regional.set({ date: "dmy.", hourCycle: "h23" });`)}
+                ${compact(`each segment is a real text input with <code>inputmode="numeric"</code>: a tap opens the number
+                   pad and typed digits run through the same segment logic. Under <code>pointer: coarse</code> the field is
+                   44px tall, segments are at least 44px wide, and type is 16px.`)}
 
                 <h2 id="sac-collapsible">&lt;sac-collapsible&gt;</h2>
                 <p>Clamps content to a max height; when it actually overflows, a separator line with a
@@ -2339,6 +2394,17 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
                 row.textContent = `${name} → ${e.detail.value === "" ? "(cleared)" : e.detail.value}`;
                 dfOut.prepend(row);
                 while (dfOut.children.length > 6) dfOut.lastChild.remove();
+            });
+        });
+
+        // Time fields (only this section has them) — newest line on top.
+        const tfOut = root.querySelector("#demo-time-field-out");
+        root.querySelectorAll("sac-time-field").forEach((f) => {
+            f.addEventListener("sac:change", (e) => {
+                const row = document.createElement("div");
+                row.textContent = `${f.getAttribute("label")} → ${e.detail.value === "" ? "(cleared)" : e.detail.value}`;
+                tfOut.prepend(row);
+                while (tfOut.children.length > 6) tfOut.lastChild.remove();
             });
         });
 
@@ -3989,6 +4055,24 @@ sac.lang.set("de");        // or "auto"`)}
                 <p class="sg-note"><b>Legacy:</b> a flat table assigned straight onto <code>sac.i18n</code>
                    (<code>Object.assign(sac.i18n, {…})</code>, the boot-time model before 2.12) is still
                    honoured for every language, after the current language's table.</p>
+                <h2 id="sac-regional">sac.regional — date &amp; time format</h2>
+                <p>The page-wide date and time <b>format</b>, separate from the language — an English UI with
+                   German dates is a normal wish. Every <code>&lt;sac-date-field&gt;</code> and
+                   <code>&lt;sac-time-field&gt;</code> without its own <code>format</code> /
+                   <code>hour-cycle</code> follows it, live.</p>
+                ${code(`// on load, from the app's (or the host's) user setting
+sac.regional.set({ date: "dmy.", hourCycle: "h23" });   // iso · dmy. · dmy/ · mdy/  ·  h23 · h12
+sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
+                <table class="sg">
+                    <tr><th style="width:260px">Member</th><th>Description</th></tr>
+                    <tr><td><code>sac.regional.get()</code></td><td><code>{ date, hourCycle }</code>. Default <code>{ date: "iso", hourCycle: "h23" }</code>.</td></tr>
+                    <tr><td><code>sac.regional.set(partial)</code></td><td>Merge — <code>date</code>: <code>"iso"</code> | <code>"dmy."</code> | <code>"dmy/"</code> | <code>"mdy/"</code>; <code>hourCycle</code>: <code>"h23"</code> | <code>"h12"</code>. Unknown values are ignored. <b>Not persisted</b>: the app or host owns the user setting and calls this on load.</td></tr>
+                    <tr><td><code>sac.regional.onChange(cb)</code></td><td><code>cb({ date, hourCycle })</code>; returns an unsubscribe. Also <code>sac:regional</code> on <code>document</code>.</td></tr>
+                </table>
+                <p class="sg-note"><b>Why a setting and not detection:</b> browsers never expose the operating
+                   system's regional date / time format to a page (fingerprinting). <code>Intl</code> and the native
+                   date inputs follow the browser's <em>UI language</em>, so English Chrome on a German system shows
+                   <code>09/25/2026, 08:00 PM</code>. An explicit setting is the only reliable route.</p>
                 <h3>Kit keys</h3>
                 <table class="sg">
                     <tr><th style="width:240px">Key</th><th>English</th><th>Deutsch</th><th style="width:150px">Used by</th></tr>
@@ -4034,6 +4118,9 @@ sac.lang.set("de");        // or "auto"`)}
                     <tr><td><code>date-field.choose-date</code></td><td><code>Choose date</code></td><td><code>Datum wählen</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>date-field.date</code></td><td><code>Date</code></td><td><code>Datum</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>date-field.placeholder</code></td><td><code>yyyy-mm-dd</code></td><td><code>jjjj-mm-tt</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.placeholder-dmy-dot</code></td><td><code>dd.mm.yyyy</code></td><td><code>tt.mm.jjjj</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.placeholder-dmy-slash</code></td><td><code>dd/mm/yyyy</code></td><td><code>tt/mm/jjjj</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.placeholder-mdy-slash</code></td><td><code>mm/dd/yyyy</code></td><td><code>mm/tt/jjjj</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>dialog.ok</code></td><td><code>OK</code></td><td><code>OK</code></td><td>sac.dialog</td></tr>
                     <tr><td><code>drop-zone.hint</code></td><td><code>or click to browse</code></td><td><code>oder klicken zum Auswählen</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>drop-zone.hint-touch</code></td><td><code>Tap to browse</code></td><td><code>Tippen zum Auswählen</code></td><td>sac-drop-zone</td></tr>
@@ -4171,6 +4258,13 @@ sac.lang.set("de");        // or "auto"`)}
                     <tr><td><code>theme-toggle.dark</code></td><td><code>Dark</code></td><td><code>Dunkel</code></td><td>sac-theme-toggle</td></tr>
                     <tr><td><code>theme-toggle.label</code></td><td><code>Theme</code></td><td><code>Design</code></td><td>sac-theme-toggle</td></tr>
                     <tr><td><code>theme-toggle.light</code></td><td><code>Light</code></td><td><code>Hell</code></td><td>sac-theme-toggle</td></tr>
+                    <tr><td><code>time-field.am</code></td><td><code>AM</code></td><td><code>AM</code></td><td>sac-time-field</td></tr>
+                    <tr><td><code>time-field.empty</code></td><td><code>empty</code></td><td><code>leer</code></td><td>sac-time-field</td></tr>
+                    <tr><td><code>time-field.hours</code></td><td><code>Hours</code></td><td><code>Stunden</code></td><td>sac-time-field</td></tr>
+                    <tr><td><code>time-field.minutes</code></td><td><code>Minutes</code></td><td><code>Minuten</code></td><td>sac-time-field</td></tr>
+                    <tr><td><code>time-field.period</code></td><td><code>AM/PM</code></td><td><code>AM/PM</code></td><td>sac-time-field</td></tr>
+                    <tr><td><code>time-field.pm</code></td><td><code>PM</code></td><td><code>PM</code></td><td>sac-time-field</td></tr>
+                    <tr><td><code>time-field.time</code></td><td><code>Time</code></td><td><code>Uhrzeit</code></td><td>sac-time-field</td></tr>
                     <tr><td><code>toast.dismiss</code></td><td><code>Dismiss</code></td><td><code>Schließen</code></td><td>sac-toast</td></tr>
                     <tr><td><code>toast.notifications</code></td><td><code>Notifications</code></td><td><code>Benachrichtigungen</code></td><td>sac-toast</td></tr>
                     <tr><td><code>toolbox.group</code></td><td><code>Tools</code></td><td><code>Werkzeuge</code></td><td>sac-toolbox</td></tr>
