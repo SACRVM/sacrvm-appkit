@@ -44,13 +44,18 @@ Follow these steps exactly:
    `completed / success`, then `gh release view v$ARGUMENTS` and confirm the
    `sacrvm-appkit-$ARGUMENTS.zip` asset is attached. Report the release URL.
 
-6. **Notify every consumer app repo — standing policy, do this on EVERY release (patch
-   included).** A kit release does not reach a consumer until it re-vendors: until the
-   Tier-4 self-contained embed exists, a hosted app runs against the HOST's kit, so a
-   new version only lands once each repo pulls it. After the release verifies, send a
-   re-vendor "update now" message to every consumer via `firepit_send_to`; each repo
-   decides whether to act. Current consumers (keep this list current as they appear or
-   retire):
+6. **Notify consumer app repos — standing policy, on every release.** A kit release does
+   not reach a consumer until it re-vendors: until the Tier-4 self-contained embed
+   exists, a hosted app runs against the HOST's kit, so a new version only lands once
+   each repo pulls it. After the release verifies, send a re-vendor "update now" message
+   via `firepit_send_to`; each repo decides whether to act. **Who gets it:**
+   - **Small things** (a patch fixing a reported bug, a minor tweak): ONLY the repos that
+     reported / asked for it, plus the hosts and suites — `sacrvm-desktop` and
+     `umbrella-toolkit` — since they roll the kit out to everything they host. Don't
+     make the user walk 12 repos for almost nothing (2026-09-25).
+   - **Everything else** (a MINOR / MAJOR, or a patch that changes behavior everyone
+     sees): every consumer below.
+   Current consumers (keep this list current as they appear or retire):
    - `sacrvm-desktop` — the host; call out anything that changes hosted-app behavior.
    - `sacrvm-calculator`, `sacrvm-notes`, `color-bucket` — apps.
    - `sacrvm-app-template` — so new apps start on the current kit.
