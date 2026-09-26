@@ -410,7 +410,9 @@
                    the tile's look (<code>badge</code>, <code>tile</code> footprint,
                    <code>accent</code> — see sac.apps in Helpers); a tile's accent colors the
                    tile and rides into the app opened through it. A <code>storage</code> key
-                   adds the persisted user layer. Link tiles point at anything that already
+                   adds the persisted user layer — or the host owns it (<code>persist="none"</code>
+                   + the <code>layout</code> property, e.g. a server-side layout per workspace), and
+                   <code>readonly</code> shows an arrangement the viewer may not change. Link tiles point at anything that already
                    has an address (a <code>sac.router</code> route, another page) without an app
                    registration, a per-tile <code>menu</code> puts a “…” menu in the tile's corner,
                    and tiles reorder by drag as well as by the edit buttons. This demo is
@@ -420,9 +422,21 @@
                     <sac-launcher id="sg-launcher-plain"></sac-launcher>
                 </div>
                 ${table("Attribute", [
-                    ["storage", "Suffix of the localStorage key <code>sac.launcher.&lt;storage&gt;</code> holding <code>{ v: 1, order, hidden, custom }</code>. Persisted ids that no longer exist are ignored and only dropped from storage on the next user change. <code>custom</code> manifests are (re)registered into <code>sac.apps</code> on connect. Absent = pure registry render: no persistence, no edit mode."],
-                    ["edit", "Presence = edit mode (needs <code>storage</code>): move/hide controls on every tile, hidden tiles grayed with a show control, remove only on user-added apps. The dashed tile adds an app by tag + script URL — cross-origin included (classic scripts need no CORS); added apps are plain medium tiles."],
-                    ["drag", "Drag reorder (needs <code>storage</code> and <code>sac.sortable</code>): absent = in edit mode only, <code>always</code> = also outside edit mode, <code>none</code> = move buttons only. Mouse lifts after 4px, touch after a 250ms long-press, Escape puts the tile back; a dashed outline marks where it lands. A drop persists exactly like the move buttons and fires <code>sac:layout</code>. The buttons stay the keyboard path."],
+                    ["storage", "Suffix of the localStorage key <code>sac.launcher.&lt;storage&gt;</code> holding <code>{ v: 1, order, hidden, custom }</code> (plus <code>sizes</code> / <code>colors</code> once used). Persisted ids that no longer exist are ignored and only dropped from storage on the next user change. <code>custom</code> manifests are (re)registered into <code>sac.apps</code> on connect. Absent (and no <code>persist=\"none\"</code>) = pure registry render: no persistence, no edit mode."],
+                    ["persist", "<code>local</code> (default) = the <code>storage</code> key. <code>none</code> = the host owns persistence: localStorage is never read or written, the host feeds <code>layout</code> and saves what <code>sac:layout</code> reports. Edit mode, drag, hide, add/remove and menus keep working, with or without <code>storage</code>."],
+                    ["readonly", "Presence = view only: the arrangement renders (hidden tiles stay hidden, sizes and colors apply), but no Edit button, no drag, no move/hide/remove controls. Tile menus and launching still work — a shared space's member sees the owner's layout."],
+                    ["edit", "Presence = edit mode (needs <code>storage</code> or <code>persist=\"none\"</code>, and no <code>readonly</code>): move/hide controls on every tile, hidden tiles grayed with a show control, remove only on user-added apps. The dashed tile adds an app by tag + script URL — cross-origin included (classic scripts need no CORS); added apps are plain medium tiles."],
+                    ["drag", "Drag reorder (needs an editable launcher, see <code>edit</code>, and <code>sac.sortable</code>): absent = in edit mode only, <code>always</code> = also outside edit mode, <code>none</code> = move buttons only. Mouse lifts after 4px, touch after a 250ms long-press, Escape puts the tile back; a dashed outline marks where it lands. A drop persists exactly like the move buttons and fires <code>sac:layout</code>. The buttons stay the keyboard path."],
+                ])}
+                ${table("Property", [
+                    ["layout", "The user layer as one plain object, in and out: <code>{ order, hidden, sizes, colors, custom }</code> (see below). Setting it replaces the whole layer (a missing field = empty), re-syncs the grid in the same task — no flash — and swaps the custom apps in <code>sac.apps</code>. It never writes localStorage and never fires <code>sac:layout</code>. Set before the element upgrades, it wins over the stored layout. The getter returns a copy."],
+                ])}
+                ${table("Layout field", [
+                    ["order", "Tile keys in display order. Unlisted tiles follow in registration order; keys not (yet) registered are kept until the next user change."],
+                    ["hidden", "Tile keys the user hid."],
+                    ["sizes", "<code>{ key: \"medium\" | \"wide\" | \"large\" }</code> — overrides the entry's <code>tile</code> footprint (<code>medium</code> undoes a manifest's <code>wide</code>). Unknown values are ignored."],
+                    ["colors", "<code>{ key: slot }</code> — a data-palette slot name (<code>blue</code>, <code>teal</code>, … the ten <code>--palette-&lt;slot&gt;</code> tokens) overriding the entry's <code>accent</code>. The name is stored, never a hex, so a re-theme never rewrites saved layouts; the tile and the app opened through it take the slot's color. Unknown slots are ignored."],
+                    ["custom", "The user-added app manifests (the Add tile)."],
                 ])}
                 ${table("Method", [
                     ["refresh()", "Re-read <code>sac.apps.list()</code> and re-sync the grid in place. The component re-syncs itself on every <code>sac:apps-changed</code> the runtime emits, so late registration just works — call this only after mutating state outside <code>sac.apps</code>."],
@@ -431,7 +445,7 @@
                     ["setMenu(key, items)", "Sets one tile's corner menu, overriding the entry's own <code>menu</code>; <code>null</code> = no menu, <code>undefined</code> = back to the entry's. Prefer it over a manifest <code>menu</code>: it keeps functions out of manifests that come from JSON."],
                 ])}
                 ${table("Event", [
-                    ["sac:layout", "detail { order, hidden, customCount } after every user change (move / drag / hide / show / add / remove). Bubbles + composed."],
+                    ["sac:layout", "detail { order, hidden, customCount, layout } after every user change (move / drag / hide / show / add / remove). <code>layout</code> is the full object the <code>layout</code> property takes — save it as is; <code>order</code> is the effective order of every tile. Bubbles + composed."],
                     ["sac:tile-action", "detail { key, appId, action } when a tile-menu item is chosen — <code>action</code> is the item's <code>id</code>, else its index; <code>appId</code> is null for a link tile. Fires after the item's <code>onClick</code>. Bubbles + composed."],
                 ])}
                 <p>A <code>menu</code> array on a manifest, a <code>tiles</code> entry, a link or
@@ -475,6 +489,28 @@
     desk.setMenu("paint", [{ label: "Update available", icon: "download",
                              onClick: () => update("paint") }]);
     desk.addEventListener("sac:layout", (e) => save(e.detail.order, e.detail.hidden));
+<\/script>`)}
+                <p>Host-owned layout: the server holds one layout per workspace, it roams across devices,
+                   and in a shared space every member sees the owner's arrangement.</p>
+                ${code(`<!-- owner: editable; member: add readonly -->
+<sac-launcher persist="none"></sac-launcher>
+
+<script>
+    const desk = document.querySelector("sac-launcher");
+    desk.toggleAttribute("readonly", !space.isOwner);
+    // Boot and every workspace switch: apply what the server holds.
+    desk.layout = await api.get(\`/spaces/\${space.id}/layout\`);
+    // Every user change: save exactly what arrived.
+    desk.addEventListener("sac:layout", (e) =>
+        api.put(\`/spaces/\${space.id}/layout\`, e.detail.layout));
+    // Size and color are layout fields — a tile menu can change them.
+    desk.setMenu("notes", [{ label: "Wide and teal", icon: "palette", onClick: () => {
+        const l = desk.layout;
+        l.sizes.notes = "wide";
+        l.colors.notes = "teal";
+        desk.layout = l;                                  // no sac:layout —
+        api.put(\`/spaces/\${space.id}/layout\`, l);         // the host saves
+    } }]);
 <\/script>`)}
                 ${compact(`the grid is its own container: below ~584px of <em>its own</em> width it goes single-column, wide and
                    large tiles included; below a 480px viewport each tile is a row, icon beside the text (the <code>.tile</code>
