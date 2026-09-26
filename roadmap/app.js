@@ -297,6 +297,12 @@
             <td>The Fishbowl</td><td>L</td>
             <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>
+        <tr data-item="isolated-apps">
+            <td>Isolated apps</td>
+            <td>A host runs an app it does not trust: a sandboxed frame (no <code>allow-same-origin</code>) with a CSP built from the host's grant, the same <code>mount(context)</code> over a postMessage bridge, typed errors, payload cap and rate limit. Manifest capabilities (<code>permissions</code>, <code>connect</code>, <code>opens</code>, <code>isolated</code>) are the ask, the host's <code>grant</code> the answer (<code>context.granted</code>), identity optionally pseudonymous. Pinned installs via SRI (<code>entryIntegrity</code>, <code>integrity</code> vs <code>network</code>). The remote file-provider pattern. <code>sac-launcher</code>: link tiles, per-tile menu, drag reorder, <code>setBadge()</code>.</td>
+            <td>The Fishbowl</td><td>L</td>
+            <td><sac-chip label="done" color="green"></sac-chip></td>
+        </tr>
     </table>
 
     <h3>Parked — no consumer demands it yet</h3>
@@ -367,7 +373,8 @@
                 in the desktop's file space (a default app per type), a way to start an app with a file
                 (<code>context.files.initial</code> or params), and app → app hand-off
                 (<code>context.files.handoff(blob)</code>) — the one-click tool chains dream-tools had, in general
-                form. Parked on purpose: the shared file space bridges it today (Save → switch → Open). Proposed by
+                form. The manifest field ships (<code>opens</code>, carried through by <code>sac.apps</code>); the registry and the
+                wiring are parked on purpose: the shared file space bridges it today (Save → switch → Open). Proposed by
                 the dream-tools breakup (vectorizer, background-remover, mesh-optimizer, svg-to-3d as test cases).</td>
             <td><sac-chip label="open" color="gray"></sac-chip></td>
         </tr>

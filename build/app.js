@@ -161,6 +161,9 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
         ["<code>files</code>", "The <b>user's</b> files: <code>open()</code> and <code>save()</code> — Open… / Save as… wherever the host keeps them. See below."],
         ["<code>setDirty(flag)</code>", "Tell the host you hold unsaved work; leaving the page then asks first. Clear it after a successful save."],
         ["<code>lang.get()</code><br><code>lang.onChange(cb)</code>", "The page's language (<code>\"en\"</code>, <code>\"de\"</code>, …) and a subscription. Read-only — the host owns the switch. See below."],
+        ["<code>close()</code>", "Leave: your window closes, your view goes back to the host's home."],
+        ["<code>granted</code>", "<code>{ fs, files, identity, connect }</code> — what the host actually handed over, not what you asked for. An ungranted capability is <code>null</code> on context; this tells you why. <code>identity</code> may be <code>\"pseudonymous\"</code>."],
+        ["<code>isolated</code>", "<code>true</code> when you run in a sandboxed frame — see <a href=\"#/build/running-sandboxed\">Running sandboxed</a>."],
     ])}
 
     <h3>Storing things</h3>
@@ -329,6 +332,10 @@ onUnmount() { this._offLang && this._offLang(); }`)}
         ["<code>resizable</code> / <code>controls</code>", "<code>window</code> apps: passed through to <code>&lt;sac-window&gt;</code>."],
         ["<code>nav</code>", "<code>view</code> apps: <code>false</code> keeps the app out of the host's nav panel."],
         ["<code>palette</code>", "<code>view</code> apps: <code>false</code> keeps the app out of the Ctrl-K palette; otherwise it lists under <b>Apps</b>."],
+        ["<code>permissions</code>", "What you <b>ask</b> for beyond your own storage: <code>{ \"files\": true, \"identity\": true }</code>. The host shows it at install and decides; read <code>context.granted</code> for the answer."],
+        ["<code>connect</code>", "The https origins you talk to: <code>[\"https://api.example.com\"]</code> — origins only, no path. Sandboxed, these are the only ones your <code>fetch</code> can reach, and only if the host granted them."],
+        ["<code>opens</code>", "File types you open, <code>[\"image/png\", \".png\"]</code> — metadata for a host's “Open with…”."],
+        ["<code>isolated</code>", "<code>true</code> asks the host to run you sandboxed. It can only <b>raise</b> isolation: nothing in a manifest makes an app trusted."],
         ["<code>tiles</code>", "Several launcher tiles for one app — a complex app deploys multiple entry points. Replaces the default tile; each entry may override <code>name</code>/<code>icon</code>/<code>description</code>/<code>badge</code>/<code>tile</code> and carry <code>route</code> (views), <code>params</code> (windows) and <code>accent</code> — the tile's color, which also becomes the app's highlight when opened through it. Give entries a stable <code>id</code>."],
     ])}
 
@@ -389,6 +396,29 @@ _show(id) {
 }
 
 // 3. index.html — drop the .frame wrapper, put the element straight in <body>`)}
+
+    <h2>Running sandboxed</h2>
+    <p>A host may run your app in a sandboxed frame — its choice, or yours via
+       <code>"isolated": true</code>. You get the same <code>onMount(context)</code>
+       with the same shape; every call just goes to the host, and only what it
+       granted exists.</p>
+    ${table(["What changes", "Sandboxed"], [
+        ["The page around you", "Unreachable: no <code>parent</code>, no host DOM. You still get <code>context.host</code> as data and render it in your own nav."],
+        ["Storage", "Only <code>context.fs</code>. <code>localStorage</code>, IndexedDB and cookies are not the host's — do not rely on them at all."],
+        ["Network", "<code>fetch</code> reaches only the origins in <code>context.granted.connect</code>; everything else is blocked by the frame's CSP. Images: your own folder, <code>blob:</code> and <code>data:</code>."],
+        ["Files, identity", "Only when granted — else <code>null</code>. Files stay the host's: you hold an opaque handle, never a path."],
+        ["The kit", "The <b>host's</b> kit runs inside, as when you are hosted same-realm. Theme, language, your <code>sac.commands</code> (in the host's Ctrl-K) and a theme or language toggle in your nav all keep working — the toggles switch the host."],
+        ["Errors", "A capability call can reject with <code>err.code</code>: <code>denied</code>, <code>too-large</code>, <code>rate-limited</code>, <code>timeout</code>, … Catch them like any failed save."],
+    ])}
+    ${code(`onMount(context) {
+    if (!context.granted.files) this.openBtn.hidden = true;   // asked, not granted
+    this.cloud = context.granted.connect.includes("https://api.example.com");
+}`)}
+    <p class="bd-note"><b>Try it sandboxed.</b> Put <code>"isolated": true</code> in
+       your manifest and install it on a desktop — or on any page with the kit,
+       <code>sac.apps.add(url, { isolated: true, grant: { … } })</code>. Serve it
+       over http(s), not <code>file://</code>, from a server that sends
+       <code>Access-Control-Allow-Origin</code> (GitHub Pages does).</p>
 
     <h2>Publish it</h2>
     <p>Publishing is turning on GitHub Pages. There is no build, no release
@@ -453,6 +483,9 @@ sac.apps.add(manifest);      // registers it — the script is injected on
             desktop. Standalone-only is legitimate, and an app can even be a launcher
             itself — a tile dashboard with sub-apps via <code>sac.apps</code>.</li>
         <li><b>Both themes</b>, and a narrow window.</li>
+        <li><b>It survives the sandbox</b> — storage only through
+            <code>context.fs</code>, every <code>fetch</code> origin in
+            <code>connect</code>, a <code>null</code> capability handled.</li>
     </ul>
 
     <h2>Where to look next</h2>

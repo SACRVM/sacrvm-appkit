@@ -410,20 +410,42 @@
                    the tile's look (<code>badge</code>, <code>tile</code> footprint,
                    <code>accent</code> — see sac.apps in Helpers); a tile's accent colors the
                    tile and rides into the app opened through it. A <code>storage</code> key
-                   adds the persisted user layer. This demo is storage-less; the demo app's
-                   hub is the live one.</p>
+                   adds the persisted user layer. Link tiles point at anything that already
+                   has an address (a <code>sac.router</code> route, another page) without an app
+                   registration, a per-tile <code>menu</code> puts a “…” menu in the tile's corner,
+                   and tiles reorder by drag as well as by the edit buttons. This demo is
+                   storage-less (the first tile is a link, the Clock tile has a menu and a badge from <code>setBadge()</code>); the demo
+                   app's hub is the live one.</p>
                 <div class="sg-demo">
                     <sac-launcher id="sg-launcher-plain"></sac-launcher>
                 </div>
                 ${table("Attribute", [
                     ["storage", "Suffix of the localStorage key <code>sac.launcher.&lt;storage&gt;</code> holding <code>{ v: 1, order, hidden, custom }</code>. Persisted ids that no longer exist are ignored and only dropped from storage on the next user change. <code>custom</code> manifests are (re)registered into <code>sac.apps</code> on connect. Absent = pure registry render: no persistence, no edit mode."],
                     ["edit", "Presence = edit mode (needs <code>storage</code>): move/hide controls on every tile, hidden tiles grayed with a show control, remove only on user-added apps. The dashed tile adds an app by tag + script URL — cross-origin included (classic scripts need no CORS); added apps are plain medium tiles."],
+                    ["drag", "Drag reorder (needs <code>storage</code> and <code>sac.sortable</code>): absent = in edit mode only, <code>always</code> = also outside edit mode, <code>none</code> = move buttons only. Mouse lifts after 4px, touch after a 250ms long-press, Escape puts the tile back; a dashed outline marks where it lands. A drop persists exactly like the move buttons and fires <code>sac:layout</code>. The buttons stay the keyboard path."],
                 ])}
                 ${table("Method", [
                     ["refresh()", "Re-read <code>sac.apps.list()</code> and re-sync the grid in place. The component re-syncs itself on every <code>sac:apps-changed</code> the runtime emits, so late registration just works — call this only after mutating state outside <code>sac.apps</code>."],
+                    ["setLinks(list)", "Plain link tiles beside the <code>sac.apps</code> tiles: <code>[{ id, name, icon, description, href, badge, tile, accent, menu }]</code>. Each is a real <code>&lt;a href&gt;</code>, so <code>href: \"#/notes\"</code> is an in-SPA navigation, never a reload. The <code>id</code> is the tile key and shares the persisted order / hidden layout with the app tiles (an app tile wins a collision). Movable and hideable, never removable. Replaces the previous list; <code>launcher.links</code> reads or assigns it."],
+                    ["setBadge(key, value)", "Repaints ONE tile's corner pill and nothing else — no re-register, no layout change. A string or number shows it, <code>null</code> or <code>\"\"</code> clears it, <code>undefined</code> falls back to the manifest's own <code>badge</code>. May be called before the tile exists; survives re-syncs."],
+                    ["setMenu(key, items)", "Sets one tile's corner menu, overriding the entry's own <code>menu</code>; <code>null</code> = no menu, <code>undefined</code> = back to the entry's. Prefer it over a manifest <code>menu</code>: it keeps functions out of manifests that come from JSON."],
                 ])}
                 ${table("Event", [
-                    ["sac:layout", "detail { order, hidden, customCount } after every user change (move / hide / show / add / remove). Bubbles + composed."],
+                    ["sac:layout", "detail { order, hidden, customCount } after every user change (move / drag / hide / show / add / remove). Bubbles + composed."],
+                    ["sac:tile-action", "detail { key, appId, action } when a tile-menu item is chosen — <code>action</code> is the item's <code>id</code>, else its index; <code>appId</code> is null for a link tile. Fires after the item's <code>onClick</code>. Bubbles + composed."],
+                ])}
+                <p>A <code>menu</code> array on a manifest, a <code>tiles</code> entry, a link or
+                   <code>setMenu()</code> renders a <code>&lt;sac-menu&gt;</code> behind a “…” button in the
+                   tile's bottom-right corner, in and out of edit mode. <code>"-"</code> draws a separator.
+                   Tile keys: an app id, <code>appId::tileId</code> for a <code>tiles</code> entry, or a link's
+                   id — the keys <code>sac:layout</code> reports.</p>
+                ${table("Menu item", [
+                    ["id", "What <code>sac:tile-action</code> and <code>onClick</code> report as <code>action</code>. Default: the item's index."],
+                    ["label, labelKey", "The text. With <code>labelKey</code> it is <code>sac.t(labelKey, label)</code>, re-read on every language switch — add the key with <code>sac.i18n.add()</code>."],
+                    ["icon", "A sac-icon name before the label."],
+                    ["danger", "Red hover tint (a destructive action)."],
+                    ["disabled", "Shown, not choosable."],
+                    ["onClick(info)", "Called with <code>{ key, appId, action, launcher }</code>."],
                 ])}
                 ${code(`<sac-launcher storage="demo-hub"></sac-launcher>
 
@@ -436,11 +458,32 @@
                         kind: "page", href: "docs/", tile: "wide" });
     sac.apps.init();   // tiles handle their own clicks; init adds ?app= deep links
 <\/script>`)}
+                ${code(`<sac-launcher storage="my-desktop"></sac-launcher>
+
+<script>
+    const desk = document.querySelector("sac-launcher");
+    // Built-ins that are routes already: tiles, no sac.apps entry.
+    desk.setLinks([
+        { id: "notes", name: "Notes", icon: "note", href: "#/notes",
+          menu: [{ id: "new", label: "New note", labelKey: "desk.new-note",
+                   icon: "plus", onClick: () => sac.router.navigate("#/notes/new") }] },
+        { id: "calendar", name: "Calendar", icon: "calendar", href: "#/calendar" },
+    ]);
+    // A live count: one line, nothing else moves.
+    desk.setBadge("calendar", "3 due");
+    // An installed app's own actions, from the host.
+    desk.setMenu("paint", [{ label: "Update available", icon: "download",
+                             onClick: () => update("paint") }]);
+    desk.addEventListener("sac:layout", (e) => save(e.detail.order, e.detail.hidden));
+<\/script>`)}
                 ${compact(`the grid is its own container: below ~584px of <em>its own</em> width it goes single-column, wide and
                    large tiles included; below a 480px viewport each tile is a row, icon beside the text (the <code>.tile</code>
                    pattern). Under <code>pointer: coarse</code> the edit controls grow to a 36px look with a
                    44px hit halo; under <code>hover: none</code> the Add tile's hover tint is off. The windows it opens
-                   maximize themselves on compact.`)}
+                   maximize themselves on compact. Drag on touch starts after a 250ms long-press, so a swipe over the
+                   grid still scrolls. The tile-menu button has the edit controls' 36px look and 44px halo; on a 480px
+                   viewport it centres on the right edge, the badge steps left of it, and while editing the controls
+                   take that edge alone.`)}
 
                 <h2 id="sac-window">&lt;sac-window&gt;</h2>
                 <p>Draggable, resizable, glassmorphic floating window. Content = light-DOM children.
@@ -1781,7 +1824,7 @@ group.active = "two";   // programmatic switch — no event`)}
                     </sac-menu>
                 </div>
                 ${table("Slot", [
-                    ["trigger", "The element that opens the menu (a <code>.btn</code>, an icon button, …). Kept in sync with <code>aria-haspopup</code> / <code>aria-expanded</code>."],
+                    ["trigger", "The element that opens the menu (a <code>.btn</code>, an icon button, …). Kept in sync with <code>aria-haspopup</code> / <code>aria-expanded</code>. It keeps its own look: the item styles below apply only to buttons in the panel."],
                     ["(default)", "Menu items: <code>&lt;button data-action=\"…\"&gt;</code>. An <code>&lt;hr&gt;</code> draws a separator; <code>data-danger</code> tints the hover state with <code>--danger</code>. Icons inside items inherit <code>--icon-size: 16px</code> from the panel."],
                 ])}
                 ${table("Attribute / Method", [
@@ -1834,7 +1877,7 @@ canvas.addEventListener("contextmenu", (e) => {
                     ["Filtering", "Case-insensitive subsequence match (<code>dg</code> finds “Delete Group”); exact substring matches rank first, shorter labels first within a rank."],
                     ["Keyboard", "<code>mod+k</code> toggles · <kbd>↑</kbd>/<kbd>↓</kbd> move (wrapping) · <kbd>Enter</kbd> runs then closes · <kbd>Esc</kbd> closes · <kbd>Tab</kbd> is trapped in the field."],
                     ["Events", "None. Running a row calls that entry's own <code>run</code> / <code>onClick</code>; a throwing command is logged and the palette still closes."],
-                    ["Groups", "Routes list under <code>\"Views\"</code> unless they name a group (<code>register(…, { palette })</code>); installed <code>sac.apps</code> view apps list under <code>\"Apps\"</code> — a host lists its window apps there too (<code>sac.commands</code> <code>group: sac.t(\"palette.group-apps\", \"Apps\")</code>), so the user sees one Apps section."],
+                    ["Groups", "Routes list under <code>\"Views\"</code> unless they name a group (<code>register(…, { palette })</code>); installed <code>sac.apps</code> view apps list under <code>\"Apps\"</code> — a host lists its window apps there too (<code>sac.commands</code> <code>group: sac.t(\"palette.group-apps\", \"Apps\")</code>), so the user sees one Apps section. An isolated app's own commands list under its name (see sac.apps → Isolated apps)."],
                 ])}
                 ${table("sac.commands", [
                     ["register({ id, label, icon, group, hotkey, run })", "<code>id</code> is required and <strong>upserts</strong> — registering the same id twice replaces the row instead of duplicating it. Returns an unregister function."],
@@ -1973,7 +2016,9 @@ canvas.addEventListener("contextmenu", (e) => {
                    <code>"sac-theme"</code> localStorage key and flips <code>&lt;html data-theme&gt;</code>
                    itself — one instance anywhere (typically the <code>sac-nav</code> context slot) themes
                    the whole page, no wiring required. The instance below is live and persists: reload this
-                   page after clicking it.</p>
+                   page after clicking it. Storage that refuses (private mode, a sandbox) only means no stored
+                   choice. Inside an <a href="#/styleguide/helpers/sac-apps-isolated">isolated app</a> a click
+                   switches the host, never the frame alone.</p>
                 <div class="sg-demo sg-col">
                     <sac-theme-toggle id="demo-theme-toggle"></sac-theme-toggle>
                     <span id="demo-theme-toggle-state" style="color:var(--text-muted);font-size:0.85rem;">theme: dark</span>
@@ -1996,7 +2041,8 @@ canvas.addEventListener("contextmenu", (e) => {
                    <b>host</b> shows it and a standalone app puts it in its own nav. Every kit component
                    switches in place; apps follow through <code>context.lang</code>. One button per
                    language that has a table, titled with the language's own name; <b>Auto</b> follows
-                   the system language as far as the browser shows it. Live below — try DE.</p>
+                   the system language as far as the browser shows it. Inside an isolated app a click
+                   switches the host, like the theme toggle. Live below — try DE.</p>
                 <div class="sg-demo sg-col">
                     <sac-lang-toggle id="demo-lang-toggle"></sac-lang-toggle>
                 </div>
@@ -2400,6 +2446,20 @@ bar.items = [
             sac.apps.register({ id: "sg-demo-docs", name: "Docs", icon: "document",
                                 description: "A page app — the tile is a plain link. tile: \"wide\" spans two grid columns.",
                                 kind: "page", href: "#/styleguide/components", tile: "wide" });
+            // Host-side extras on the same launcher: a link tile (no
+            // registration), a corner menu and a live badge on the Clock tile.
+            const hub = root.querySelector("#sg-launcher-plain");
+            if (hub) customElements.whenDefined("sac-launcher").then(() => {
+                hub.setLinks([{ id: "sg-demo-link", name: "Link tile", icon: "link",
+                                description: "setLinks() — a plain link, no app registration. Goes to the sac-menu section.",
+                                href: "#/styleguide/components/sac-menu" }]);
+                hub.setMenu("sg-demo-clock", [
+                    { id: "open", label: "Open", icon: "clock", onClick: () => sac.apps.open("sg-demo-clock") },
+                    "-",
+                    { id: "remove", label: "Remove", icon: "trash", danger: true, disabled: true },
+                ]);
+                hub.setBadge("sg-demo-clock", 3);
+            });
         }
 
         // Window
@@ -3090,6 +3150,10 @@ sac.apps.init();   // ?app=foo deep links (+ hand-written [data-app] tiles)`)}
                    <code>&lt;a class="tile" data-app="foo"&gt;</code> — and
                    <code>sac.apps.init()</code> binds them. Template:
                    <code>kit/templates/launcher.html</code>.</p>
+                <p>A launcher can hold more than apps: <code>setLinks()</code> gives a route (or any URL)
+                   a tile with no registration, and <code>setBadge()</code> keeps a count live without
+                   touching the registry. Load <code>kit/js/lib/sortable.js</code> for drag reorder; the
+                   move buttons work without it.</p>
 
                 <h2>SPA app shell + router</h2>
                 <p>A 60-line shell: views as custom elements that self-register routes,
@@ -3818,6 +3882,7 @@ list.addEventListener("click", (e) => { showItem(e.target); split.show = "end"; 
 <script defer src="kit/js/lib/dialog.js"><\/script>     <!-- optional: confirm helper -->
 <script defer src="kit/js/lib/pan-zoom.js"><\/script>   <!-- optional: viewports -->
 <script defer src="kit/js/lib/apps.js"><\/script>       <!-- optional: app runtime + hub pages -->
+<script defer src="kit/js/lib/app-bridge.js"><\/script> <!-- optional: isolated apps (apps.js also loads it on demand) -->
 <script defer src="kit/js/lib/hotkeys.js"><\/script>    <!-- optional: shortcuts + Ctrl-K palette -->
 <script defer src="kit/js/lib/sortable.js"><\/script>   <!-- required by filmstrip + layer list -->
 <script defer src="kit/js/lib/color.js"><\/script>      <!-- required by the color components -->
@@ -3973,17 +4038,19 @@ sac.apps.init();                   // [data-app] tiles + ?app= deep links
 sac.apps.open("color-bucket");     // or open programmatically`)}
                 <table class="sg">
                     <tr><th style="width:260px">Method</th><th>Description</th></tr>
-                    <tr><td><code>register(manifest)</code></td><td>Upsert by <code>id</code> — re-register replaces, first registration fixes list order. Emits <code>sac:apps-changed</code> on <code>document</code>.</td></tr>
+                    <tr><td><code>register(manifest, opts?)</code></td><td>Upsert by <code>id</code> — re-register replaces, first registration fixes list order. Emits <code>sac:apps-changed</code> on <code>document</code>. <code>opts { isolated, grant }</code> is the <b>host's</b> decision (see <a href="#/styleguide/helpers/sac-apps-isolated">Isolated apps</a>); omitted on a re-register, the previous choice stays, so recoloring a tile never turns a sandboxed app trusted. A malformed capability field is dropped with a warning.</td></tr>
                     <tr><td><code>list()</code></td><td>Array of manifest copies, registration order.</td></tr>
                     <tr><td><code>get(id)</code></td><td>Manifest copy or <code>null</code>.</td></tr>
                     <tr><td><code>open(id, params?, opts?)</code></td><td><code>Promise&lt;HTMLElement&gt;</code> (the app element). <code>opts { route, accent }</code> is what a launcher tile carries: <code>route</code> opens a view at <code>#/&lt;id&gt;/&lt;route&gt;</code>, <code>accent</code> seeds the app's <code>--accent</code> (tile color = app highlight). <code>kind:"page"</code> navigates to <code>href</code> (params appended, promise never resolves). <code>kind:"window"</code> injects <code>src</code> once (keyed by src), awaits <code>customElements.whenDefined(tag)</code>, shows the app in a centered, cascaded <code>&lt;sac-window&gt;</code> that stays in the DOM and is re-opened later (minimized → restored). Rejects on script-load failure (console.error + error toast).</td></tr>
-                    <tr><td><code>close(id)</code></td><td>Closes the window — element and window stay in the DOM.</td></tr>
+                    <tr><td><code>close(id)</code></td><td>Closes the window — element and window stay in the DOM. A view leaves the stage, back to the home section.</td></tr>
                     <tr><td><code>remove(id)</code></td><td>Unregister; calls the app's <code>unmount()</code> if present and removes its window. Emits <code>sac:apps-changed</code>.</td></tr>
                     <tr><td><code>isOpen(id)</code></td><td><code>true</code> if the app's window exists and is open.</td></tr>
                     <tr><td><code>active()</code></td><td>The id of the view app currently on the stage, or <code>null</code> at home.</td></tr>
                     <tr><td><code>init(options?)</code></td><td>Delegated click binding for <code>[data-app="&lt;id&gt;"]</code> tiles + the <code>?app=&lt;id&gt;</code> deep link (URL cleaned via replaceState), and — with <code>{ viewHost, home }</code> — the hash router for view apps. Legacy: <code>[data-overlay]</code> and <code>?tool=</code> honored the same way.</td></tr>
-                    <tr><td><code>inspect(url)</code></td><td><code>Promise&lt;manifest&gt;</code>. Fetches and validates a manifest from a repository URL, an origin or a direct <code>app.json</code>; <code>github.com/owner/repo</code> resolves to <code>owner.github.io/repo/app.json</code>. <b>Reads only</b> — nothing is registered and no app code runs, so a host can show name, version and origin before deciding. Adds <code>src</code>, <code>origin</code> and <code>manifestUrl</code>.</td></tr>
-                    <tr><td><code>add(manifest|url)</code></td><td><code>Promise&lt;manifest&gt;</code>. Registers an inspected manifest (or inspects a URL first). Registering still does not run the app: its script is injected on first open, exactly like an app the shell declared itself.</td></tr>
+                    <tr><td><code>inspect(url)</code></td><td><code>Promise&lt;manifest&gt;</code>. Fetches and validates a manifest from a repository URL, an origin or a direct <code>app.json</code>; <code>github.com/owner/repo</code> resolves to <code>owner.github.io/repo/app.json</code>. <b>Reads only</b> — nothing is registered and no app code runs, so a host can show name, version and origin before deciding. Adds <code>src</code>, <code>origin</code>, <code>manifestUrl</code> and <code>entryIntegrity</code> (<code>sha256-…</code> of the entry's bytes; <code>null</code> when the entry cannot be read here or <code>crypto.subtle</code> is missing). Rejects a malformed <code>connect</code> / <code>permissions</code> / <code>opens</code>; unknown keys pass through. A manifest's own <code>integrity</code> is dropped — the pin is the host's record.</td></tr>
+                    <tr><td><code>add(manifest|url, opts?)</code></td><td><code>Promise&lt;manifest&gt;</code>. Registers an inspected manifest (or inspects a URL first). Registering still does not run the app: its script is injected on first open, exactly like an app the shell declared itself. <code>opts { isolated, grant, integrity }</code>; the result carries the pin as <code>integrity</code> — store it with the install record (see <a href="#/styleguide/helpers/sac-apps-pinning">Pinned installs</a>).</td></tr>
+                    <tr><td><code>policy(id)</code></td><td><code>{ isolated, granted }</code> — what the host decided for an installed app (a settings page). <code>null</code> for an unknown id.</td></tr>
+                    <tr><td><code>frameOf(id)</code></td><td>The <code>&lt;iframe&gt;</code> of an isolated app once created, else <code>null</code>.</td></tr>
                 </table>
                 <h3>Hosting view apps</h3>
                 <p>A shell that wants full-stage apps hands <code>init()</code> two elements — the
@@ -4036,6 +4103,11 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>tiles</code></td><td>Optional: an array of launcher tiles for ONE app — complex apps deploy several entry points. When present it <b>replaces</b> the default tile. Each entry may override <code>name</code>/<code>icon</code>/<code>description</code>/<code>badge</code>/<code>tile</code> and adds <code>route</code> (views: opens <code>#/&lt;id&gt;/&lt;route&gt;</code>), <code>params</code> (windows), and <code>accent</code> — the tile's color, which also becomes the app's highlight when opened through that tile (tile color = app identity, the Windows-Phone move). Give entries a stable <code>id</code> so user layouts survive reordering.</td></tr>
                     <tr><td><code>controls</code>, <code>resizable</code></td><td>window only, optional: <code>controls</code> = space-separated subset of <code>min max close</code> (window chrome); <code>resizable: false</code> sets <code>no-resize</code>. Absent = all three dots, resizable.</td></tr>
                     <tr><td><code>href</code></td><td>page only: the tile becomes a normal link.</td></tr>
+                    <tr><td><code>permissions</code></td><td>The app's <b>ask</b>, beyond the always-on <code>fs</code>: <code>{ files: true, identity: true }</code>. Known keys must be booleans; unknown keys are ignored. What the app gets is the host's grant.</td></tr>
+                    <tr><td><code>connect</code></td><td>The ask: origins the app talks to, <code>["https://api.example.com"]</code>. Each an https origin — no path, query or credentials (http only on localhost / 127.0.0.1).</td></tr>
+                    <tr><td><code>opens</code></td><td>"Open with…" metadata, <code>["image/png", ".png"]</code> — carried through untouched; wiring it is the host's business.</td></tr>
+                    <tr><td><code>isolated</code></td><td><code>true</code> asks to be sandboxed. Can only <b>raise</b> isolation, never lower it.</td></tr>
+                    <tr><td><code>integrity</code></td><td>The pin, <code>sha256-…</code> (sha384 / sha512 accepted) — set by the host's <code>add()</code>, never taken from the author's <code>app.json</code>.</td></tr>
                 </table>
                 <h3>mount(context) — the capability handshake</h3>
                 <p>The host calls <code>el.mount(context)</code> IF the method exists — exactly once
@@ -4058,10 +4130,13 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>theme.set(mode)</code></td><td>Same values; routes through <code>&lt;sac-theme-toggle&gt;</code> when present (one source of truth: <code>data-theme</code> on <code>&lt;html&gt;</code> + the <code>sac-theme</code> localStorage key).</td></tr>
                     <tr><td><code>theme.onChange(cb)</code></td><td><code>cb(resolved)</code> with <code>"dark"</code>/<code>"light"</code> on every effective change, incl. OS flips in auto. Returns an unsubscribe function.</td></tr>
                     <tr><td><code>fs</code></td><td>Storage scoped to this app — see <code>sac.fs</code> below. <code>null</code> when the host did not load <code>lib/fs.js</code>, so an app checks before reaching for it.</td></tr>
-                    <tr><td><code>identity</code></td><td>Who is at this desktop — see <code>sac.identity</code> below. Read-only for apps, and <code>null</code> when the host granted none.</td></tr>
+                    <tr><td><code>identity</code></td><td>Who is at this desktop — see <code>sac.identity</code> below. Read-only for apps, and <code>null</code> when the host granted none. With a <code>"pseudonymous"</code> grant only <code>{ id, name, avatar }</code>, the id derived per app.</td></tr>
                     <tr><td><code>files</code></td><td>The <b>user's</b> files — <code>open()</code> / <code>save()</code> / <code>kind</code>, see <code>sac.files</code> below. Where they live is the host's decision; <code>null</code> when the host did not load <code>lib/files.js</code>.</td></tr>
                     <tr><td><code>lang</code></td><td>The page's language: <code>get()</code> → <code>"en"</code>, <code>"de"</code>, … and <code>onChange(cb)</code> → unsubscribe. <b>Read-only</b> — the host owns the switch, like the theme. Render your strings with <code>sac.t()</code> and re-render them in the callback; see <code>sac.lang</code> below.</td></tr>
                     <tr><td><code>setDirty(flag)</code></td><td><code>true</code> while the app holds work that is not saved. Leaving or reloading the page then asks first, <code>sac.apps.isDirty(id)</code> answers for a host that is about to remove the app, and <code>document</code> gets <code>sac:dirty</code> <code>{ id, dirty }</code> (a taskbar dot). Closing a window never asks — the window stays in the DOM and loses nothing. Standalone it arms the same leave-page question.</td></tr>
+                    <tr><td><code>close()</code></td><td>Leave: a window closes, a view goes home (<code>sac.apps.close</code> of the app's own id).</td></tr>
+                    <tr><td><code>granted</code></td><td><code>{ fs, files, identity, connect }</code> — what the host actually handed over, not what the manifest asked. <code>identity</code> is <code>true</code>, <code>"pseudonymous"</code> or <code>false</code>. An ungranted capability is <code>null</code> on context; this says why.</td></tr>
+                    <tr><td><code>isolated</code></td><td><code>true</code> inside a sandboxed frame, <code>false</code> same-realm. The only other difference an app can see.</td></tr>
                 </table>
                 ${code(`mount(context) {
     this._ctx = context;                         // once per element lifetime
@@ -4069,6 +4144,115 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
     this._offTheme = context.theme.onChange((resolved) => { /* dark|light */ });
 }
 unmount() { this._offTheme?.(); }                // called by sac.apps.remove()`)}
+                <h3 id="sac-apps-isolated">Isolated apps</h3>
+                <p>A host runs an app it does not trust in a sandboxed frame:
+                   <code>sac.apps.add(url, { isolated: true, grant })</code>. The app gets the same
+                   <code>mount(context)</code> it gets same-realm, but every capability becomes a call to
+                   the host, and only what the host granted exists. Isolation is the <b>host's</b>
+                   decision — a manifest can ask to be sandboxed, never make itself trusted.</p>
+                ${code(`// Install: read first, show the ask, then commit with the host's decision.
+const m = await sac.apps.inspect("github.com/owner/photo-tool");
+// m.permissions / m.connect / m.opens → list them in the confirm dialog
+// m.entryIntegrity → "sha256-…", the pin
+const installed = await sac.apps.add(m, {
+    isolated: true,
+    grant: { files: true, identity: "pseudonymous", connect: ["https://api.example.com"] },
+});
+save(installed);            // keep installed.integrity with the record
+
+// Next boot: hand the same decision back.
+sac.apps.register(record, { isolated: true, grant: record.grant });
+
+// Inside the app — unchanged, plus a check:
+mount(context) {
+    if (!context.granted.files) this.hideOpenButton();
+}`)}
+                <table class="sg">
+                    <tr><th style="width:260px">Isolation and grants</th><th>Description</th></tr>
+                    <tr><td><code>isolated</code></td><td><code>opts.isolated === true || manifest.isolated === true</code>. Default: not isolated — the same-realm behavior every existing host relies on.</td></tr>
+                    <tr><td>The frame</td><td><code>&lt;iframe sandbox="allow-scripts allow-forms allow-popups allow-downloads"&gt;</code> — never <code>allow-same-origin</code>, never <code>allow-top-navigation</code>. Opaque origin: no parent DOM, no host localStorage / IndexedDB / cookies. The host accepts only messages from its own frame's window carrying the per-frame token, and evaluates nothing the guest sends.</td></tr>
+                    <tr><td>Where it shows</td><td>A view: a <code>.sac-app-view.sac-app-frame</code> wrapper on the stage holds the frame. A window: the frame sits inside its <code>&lt;sac-window&gt;</code>. <code>open()</code> resolves to the iframe.</td></tr>
+                    <tr><td><code>grant.files</code></td><td>Isolated default <code>false</code>. <code>true</code>: <code>context.files</code> proxies to the host's provider — the picker opens in the top window, the app only ever holds an opaque handle (see <a href="#/styleguide/helpers/sac-files-remote">the remote provider pattern</a>).</td></tr>
+                    <tr><td><code>grant.identity</code></td><td><code>true</code> — the host's profile as is (read-only, kept current). <code>"pseudonymous"</code> — only <code>{ id, name, avatar }</code>, where <code>id</code> is <code>p-</code> + SHA-256 over the host's salt, the user's id and the app's id: stable for one person in one app, useless to reverse, different in every other app, so two apps cannot correlate a user. Works same-realm too; needs <code>crypto.subtle</code> (a secure context), else <code>null</code>. <code>false</code> — none. Isolated default <code>false</code>, same-realm default <code>true</code>.</td></tr>
+                    <tr><td><code>grant.connect</code></td><td>Isolated default <code>[]</code>. The origins the frame's CSP <code>connect-src</code> allows — https, or http on localhost / 127.0.0.1 for development. <code>blob:</code> and <code>data:</code> are always allowed (not network).</td></tr>
+                    <tr><td><code>fs</code></td><td>Always granted when the host loaded <code>fs.js</code>: the app's own drawer, over the bridge.</td></tr>
+                    <tr><td>Not isolated</td><td>Everything the page loaded, as before; <code>grant.files</code> / <code>grant.identity: false</code> still withhold. <code>connect</code> = the manifest's ask, advisory only — same-realm code shares the page's <code>fetch</code>.</td></tr>
+                    <tr><td>Kit in the frame</td><td>The <b>host's</b> kit (<code>kitUrl</code>) — a hosted app runs on the host's kit, exactly as in same-realm hosting.</td></tr>
+                </table>
+                <table class="sg">
+                    <tr><th style="width:260px">Host setting</th><th>Description</th></tr>
+                    <tr><td><code>sac.apps.frameUrl</code></td><td>Unset: the kit builds a <code>srcdoc</code> harness with a CSP from the grant. Set it (a URL, or <code>(manifest, granted) → URL</code>) when the host serves its own harness with a real CSP header — see the harness contract below.</td></tr>
+                    <tr><td><code>sac.apps.kitUrl</code></td><td>The kit folder the frame loads (<code>…/kit/</code>). Default: derived from the URL <code>apps.js</code> was loaded from.</td></tr>
+                    <tr><td><code>sac.apps.limits</code></td><td><code>{ timeout: 30000, maxBytes: 64 MiB, rate: 200 }</code>. <b>timeout</b>: a call with no answer (and no progress pulse from the host) rejects <code>timeout</code>. <b>maxBytes</b>: one payload — a Blob's size, or a structured-clone estimate of any other value — above it rejects <code>too-large</code>, either direction. <b>rate</b>: calls per second per frame (token bucket, bursts up to <code>rate</code>), beyond it <code>rate-limited</code>; <code>0</code> turns it off.</td></tr>
+                    <tr><td><code>sac.apps.identitySalt</code></td><td>The host's secret for pseudonymous ids. Default: generated once and kept in localStorage (<code>sac.apps.identity-salt</code>). Set it — per account, from the server — to keep ids stable across devices.</td></tr>
+                </table>
+                <h3 id="sac-apps-frame">Inside the frame</h3>
+                <p>What keeps a sandboxed app looking and behaving like a same-realm one. The app does
+                   nothing for any of it.</p>
+                <table class="sg">
+                    <tr><th style="width:260px">Synced</th><th>Description</th></tr>
+                    <tr><td>Theme</td><td>The host's <code>data-theme</code> flag, its seed values (computed on <code>&lt;html&gt;</code>), any inline custom property on <code>&lt;html&gt;</code> and the app's own accent seed are replayed on the frame's root, on every change. Derived tokens a brand pins directly on <code>:root</code> are not replayed.</td></tr>
+                    <tr><td>Language, regional</td><td><code>sac.lang</code> and <code>sac.regional</code> follow the host's; the kit's components in the frame relabel themselves.</td></tr>
+                    <tr><td>Theme / language toggles</td><td>Both belong to the host. A click on a <code>&lt;sac-theme-toggle&gt;</code> or <code>&lt;sac-lang-toggle&gt;</code> inside the app switches the <b>host</b> — as the same toggle does same-realm — and the frame follows the host's answer. A toggle never switches the frame alone.</td></tr>
+                    <tr><td>Commands</td><td>The app's own <code>sac.commands</code> registrations reach the host's Ctrl-K palette as proxies, grouped under the app's name (<code>App · group</code> when the app gave one); running one runs the real command in the frame. Labels are text. They follow every register / unregister, leave while the app's window is closed and when the app is removed.</td></tr>
+                    <tr><td>Images from the host</td><td>The frame's <code>img-src</code> allows only the entry's folder, <code>blob:</code> and <code>data:</code>. Image URLs the host hands over — a host toolbar avatar's <code>src</code>, the identity's <code>avatar</code> — are fetched by the host and arrive as Blobs; the frame gets object URLs, revoked on change and unmount.</td></tr>
+                    <tr><td>Links, Ctrl-K</td><td>Clicks on the host's declared hrefs and on the view's own route space go to the host, which follows only those; <code>javascript:</code> / <code>data:</code> never. Ctrl-K opens the host's palette.</td></tr>
+                </table>
+                <h3 id="sac-apps-pinning">Pinned installs</h3>
+                <p>A pinned install runs the bytes the host hashed at install time, not whatever the origin
+                   serves today. The browser enforces it (SRI), and a failed load says whether the author
+                   changed the file or the server is just unreachable.</p>
+                <table class="sg">
+                    <tr><th style="width:260px">Pinning</th><th>Description</th></tr>
+                    <tr><td>Pin</td><td><code>manifest.integrity</code> — <code>sha256-…</code> (sha384 / sha512 accepted). The entry script gets <code>integrity</code> + <code>crossorigin="anonymous"</code>, same-realm and in the frame.</td></tr>
+                    <tr><td><code>add() default</code></td><td>An isolated install pins itself from <code>entryIntegrity</code>. A same-realm install stays unpinned unless <code>{ integrity: true }</code> (pin to <code>entryIntegrity</code>) or a hash string; <code>{ integrity: false }</code> drops a pin.</td></tr>
+                    <tr><td><code>err.code "integrity"</code></td><td>The entry is reachable but its bytes no longer match — “the author changed it; update or remove”. Also toasted (<code>apps.changed</code>).</td></tr>
+                    <tr><td><code>err.code "network"</code></td><td>The entry could not be loaded at all (toast: <code>apps.load-failed</code>).</td></tr>
+                    <tr><td>How they are told apart</td><td>After the script tag fails, the kit fetches the entry (credentials omitted) and hashes it: reachable and different → <code>integrity</code>, anything else → <code>network</code>.</td></tr>
+                    <tr><td>Updates</td><td>Re-run <code>inspect(manifestUrl)</code>, compare its <code>entryIntegrity</code> with the stored <code>integrity</code>, and re-pin with <code>add(m, { integrity: m.entryIntegrity })</code> after the user confirms.</td></tr>
+                    <tr><td>CORS</td><td>SRI needs a CORS response: the entry's server must send <code>Access-Control-Allow-Origin</code> (GitHub Pages does).</td></tr>
+                </table>
+                <h3 id="sac-apps-errors">Typed errors</h3>
+                <p>Every bridge call and every failed load rejects with an <code>Error</code> whose
+                   <code>code</code> a host or app can switch on.</p>
+                <table class="sg">
+                    <tr><th style="width:260px">err.code</th><th>Description</th></tr>
+                    <tr><td><code>denied</code></td><td>Not granted (identity, files), a provider refusing a save (read-only), a link the host does not offer.</td></tr>
+                    <tr><td><code>not-found</code></td><td>A path that does not exist, an unknown file handle, an unknown toolbar action.</td></tr>
+                    <tr><td><code>bad-request</code></td><td>Malformed arguments, an unknown method, a value that cannot be cloned, a target that already exists.</td></tr>
+                    <tr><td><code>too-large</code></td><td>A payload above <code>limits.maxBytes</code>.</td></tr>
+                    <tr><td><code>rate-limited</code></td><td>More calls per second than <code>limits.rate</code> allows for one frame.</td></tr>
+                    <tr><td><code>timeout</code></td><td>No answer within <code>limits.timeout</code> (the host pulses slow calls, e.g. an open picker), or the frame did not start.</td></tr>
+                    <tr><td><code>integrity</code></td><td>A pinned entry whose bytes changed.</td></tr>
+                    <tr><td><code>network</code></td><td>An entry that could not be loaded.</td></tr>
+                    <tr><td><code>internal</code></td><td>Anything else the host threw; the app's tag never defined.</td></tr>
+                </table>
+                <h3 id="sac-apps-harness">The harness and the protocol</h3>
+                <p>A host that serves its own frame document (<code>sac.apps.frameUrl</code>, for a real CSP
+                   header or <code>frame-ancestors</code>) must keep this shape. The kit sandboxes the
+                   iframe either way.</p>
+                <table class="sg">
+                    <tr><th style="width:260px">Harness</th><th>Description</th></tr>
+                    <tr><td><code>&lt;html data-sac-guest&gt;</code></td><td>The guest runtime (<code>lib/app-guest.js</code>) runs only in such a document, inside a frame.</td></tr>
+                    <tr><td>Load order</td><td><code>&lt;kit&gt;/css/ui.css</code>, <code>&lt;kit&gt;/js/all.js</code>, then <code>&lt;kit&gt;/js/lib/app-guest.js</code>. <code>app-guest.js</code> is never part of <code>all.js</code>.</td></tr>
+                    <tr><td>No entry tag</td><td>Do not load the app's entry: it arrives in the boot message and the guest injects it once the kit is ready, with its pin.</td></tr>
+                    <tr><td>CSP</td><td>Allow the kit (<code>js/</code>, <code>css/</code>, <code>fonts/</code>), the entry's folder (script, style, font, img, media), <code>'unsafe-inline'</code> styles (the kit's Shadow-DOM styles), <code>blob:</code> + <code>data:</code> for img / media / connect, and the granted connect origins only. The kit's own adds <code>default-src 'none'; base-uri 'none'; form-action 'none'</code>.</td></tr>
+                    <tr><td>CORS</td><td>The kit's fonts and a pinned entry are CORS loads from an opaque origin — their server must send <code>Access-Control-Allow-Origin</code>.</td></tr>
+                </table>
+                <p>Envelope <code>{ sac: "app-bridge", v: 1, type, … }</code>. Host → guest messages use
+                   targetOrigin <code>"*"</code> (the only way to address an opaque origin); the host
+                   accepts only its own frame's window, and after hello only with the per-frame token.</p>
+                <table class="sg">
+                    <tr><th style="width:260px">Message</th><th>Description</th></tr>
+                    <tr><td><code>hello</code></td><td>Guest → host: the kit is ready. Once per document; a second hello is ignored.</td></tr>
+                    <tr><td><code>boot</code></td><td>Host → guest: <code>token</code>, <code>entry { src, integrity, tag }</code>, theme, accent, lang, regional, limits.</td></tr>
+                    <tr><td><code>ready / load-error</code></td><td>The tag is defined / the entry failed (<code>"script"</code>) or never defined its tag (<code>"undefined"</code>).</td></tr>
+                    <tr><td><code>mount</code></td><td>Host → guest: the JSON-safe context snapshot (appId, kind, manifest, params, route, base, host with toolbar <code>onClick</code> → action id, theme, accent, lang, regional, identity, filesKind, granted). Views mount when first shown.</td></tr>
+                    <tr><td><code>call → result</code></td><td><code>{ id, method, args }</code> → <code>{ id, ok: true, result }</code> or <code>{ id, ok: false, error: { code, message } }</code>. Methods: <code>fs.*</code> (read, write, remove, list, stat, entries, move, copy, rename, clear, usage, watch, unwatch), <code>identity.get</code>, <code>files.open</code> / <code>save</code>, <code>theme.set</code>, <code>lang.set</code>, <code>commands.set</code>, <code>setDirty</code>, <code>deepLink.set</code>, <code>toolbar-action</code>, <code>navigate</code>, <code>palette</code>, <code>close</code>.</td></tr>
+                    <tr><td><code>alive</code></td><td>Host → guest: pulses pending call ids, so a slow call (a picker the user is still looking at) does not time out.</td></tr>
+                    <tr><td><code>event</code></td><td>Host → guest: theme, accent, lang, regional, route, host, identity, fs (watch), progress, command (run a forwarded command).</td></tr>
+                    <tr><td><code>unmount / unmounted</code></td><td><code>remove()</code> calls the app's <code>unmount()</code> over the wire; the frame goes when it answered or after 1 s.</td></tr>
+                </table>
                 <p class="sg-note"><b>Deprecated:</b> <code>sac.launcher</code>, the former name of
                    this API, survives as a thin alias — <code>register</code>/<code>open</code>/<code>init</code>
                    forward to <code>sac.apps</code> unchanged, legacy specs (<code>title</code>,
@@ -4286,6 +4470,33 @@ sac.files.use(sac.files.virtual({ label: "Desktop" }));`)}
                 <p class="sg-note"><b>Pair it with <code>context.setDirty()</code>.</b> An editor
                    that marks unsaved work and clears the mark after a successful save gets the
                    leave-page question for free, standalone and hosted alike.</p>
+                <h3 id="sac-files-remote">The remote provider pattern</h3>
+                <p>A provider whose picker the <b>host</b> draws and whose handles only the host can read —
+                   the same <code>{ kind, open(opts), save(blob, opts) }</code> shape, like
+                   <code>sac.files.virtual</code>. An <a href="#/styleguide/helpers/sac-apps-isolated">isolated app</a>
+                   reaches it through the bridge without ever seeing a path.</p>
+                ${code(`const remote = {
+    kind: "cloud",
+    async open(opts) {
+        const pick = await myPicker(opts);                      // host UI
+        return pick && { name: pick.name, file: pick.file,
+                         handle: { owner: remote, id: pick.id, etag: pick.etag } };
+    },
+    async save(blob, opts) {
+        const h = opts.handle;
+        if (h && h.owner === remote) { /* write, If-Match h.etag */ return ref; }  // Save
+        /* … else a save-as picker … */
+    },
+};
+sac.files.use(remote);`)}
+                <table class="sg">
+                    <tr><th style="width:260px">Rule</th><th>Description</th></tr>
+                    <tr><td>Host-drawn picker</td><td><code>open()</code> / <code>save()</code> draw their UI in the host's page; the caller only ever gets a FileRef.</td></tr>
+                    <tr><td>Opaque handle</td><td><code>FileRef.handle</code> is whatever the provider needs to write back (a path, a file id + etag). <code>save({ handle })</code> with its own handle = Save, no dialog.</td></tr>
+                    <tr><td>Across the bridge</td><td>The real handle stays in a per-frame table on the host; the app holds a random id, hands it back on the next <code>save()</code> and the host resolves it. Path, etag and provider never cross.</td></tr>
+                    <tr><td>Bytes</td><td>Cross as structured-cloned File / Blob, capped by <code>sac.apps.limits.maxBytes</code> (<code>too-large</code>); file calls count toward <code>limits.rate</code> like every other call.</td></tr>
+                    <tr><td>Refusing a save</td><td>Throw an <code>Error</code> with <code>code: "denied"</code> (a read-only space); the app sees that code. Other errors arrive as <code>internal</code>.</td></tr>
+                </table>
 
                 <h2>sac.identity — who is at this desktop</h2>
                 <p><b>Not authentication.</b> There is no server, no password, no verification and no
@@ -4310,6 +4521,11 @@ sac.identity.clear();`)}
                     <tr><td><code>use(provider)</code> <b>(host)</b></td><td>Hand the source to a host that has a real one — see below. <code>null</code> restores the local profile.</td></tr>
                     <tr><td><code>changed()</code> <b>(host)</b></td><td>With a provider installed: announce that the answer changed (a sign-in resolved, a session expired).</td></tr>
                 </table>
+                <p class="sg-note"><b>Less than the whole profile.</b> A host decides per app how much of it an
+                   app sees: <code>grant.identity</code> <code>true</code>, <code>false</code> or
+                   <code>"pseudonymous"</code> — <code>{ id, name, avatar }</code> with an id derived per app, so two
+                   apps cannot correlate one person. See <a href="#/styleguide/helpers/sac-apps-isolated">Isolated apps</a>;
+                   it works same-realm too.</p>
                 <h3>When the host has a real identity</h3>
                 <p>The kit's local profile is right for a desktop, where there is nothing to be
                    authenticated against. A host that <em>does</em> have accounts — an app with a
@@ -4450,6 +4666,8 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><th style="width:240px">Key</th><th>English</th><th>Deutsch</th><th style="width:150px">Used by</th></tr>
                     <tr><td><code>about.this-app</code></td><td><code>This app</code></td><td><code>Diese App</code></td><td>sac.about</td></tr>
                     <tr><td><code>about.title</code></td><td><code>About {name}</code></td><td><code>Über {name}</code></td><td>sac.about</td></tr>
+                    <tr><td><code>apps.changed</code></td><td><code>has changed since it was installed — update or remove it.</code></td><td><code>wurde seit der Installation verändert — aktualisieren oder entfernen.</code></td><td>sac.apps</td></tr>
+                    <tr><td><code>apps.load-failed</code></td><td><code>could not be loaded.</code></td><td><code>konnte nicht geladen werden.</code></td><td>sac.apps</td></tr>
                     <tr><td><code>calendar.next-decade</code></td><td><code>Forward 10 years</code></td><td><code>10 Jahre vor</code></td><td>sac-calendar</td></tr>
                     <tr><td><code>calendar.next-month</code></td><td><code>Next month</code></td><td><code>Nächster Monat</code></td><td>sac-calendar</td></tr>
                     <tr><td><code>calendar.next-year</code></td><td><code>Next year</code></td><td><code>Nächstes Jahr</code></td><td>sac-calendar</td></tr>
@@ -4591,6 +4809,7 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>launcher.placeholder-width</code></td><td><code>500px</code></td><td><code>500px</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.remove</code></td><td><code>Remove {name}</code></td><td><code>{name} entfernen</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.show</code></td><td><code>Show {name}</code></td><td><code>{name} einblenden</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.tile-menu</code></td><td><code>Actions for {name}</code></td><td><code>Aktionen für {name}</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>layer-list.add</code></td><td><code>Add layer</code></td><td><code>Ebene hinzufügen</code></td><td>sac-layer-list</td></tr>
                     <tr><td><code>layer-list.delete</code></td><td><code>Delete layer</code></td><td><code>Ebene löschen</code></td><td>sac-layer-list</td></tr>
                     <tr><td><code>layer-list.duplicate</code></td><td><code>Duplicate layer</code></td><td><code>Ebene duplizieren</code></td><td>sac-layer-list</td></tr>

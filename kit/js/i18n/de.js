@@ -11,6 +11,9 @@
         "about.this-app": "Diese App",
         "about.title": "Über {name}",
 
+        "apps.changed": "wurde seit der Installation verändert — aktualisieren oder entfernen.",
+        "apps.load-failed": "konnte nicht geladen werden.",
+
         "calendar.next-decade": "10 Jahre vor",
         "calendar.next-month": "Nächster Monat",
         "calendar.next-year": "Nächstes Jahr",
@@ -168,6 +171,7 @@
         "launcher.placeholder-width": "500px",
         "launcher.remove": "{name} entfernen",
         "launcher.show": "{name} einblenden",
+        "launcher.tile-menu": "Aktionen für {name}",
 
         "layer-list.add": "Ebene hinzufügen",
         "layer-list.delete": "Ebene löschen",
