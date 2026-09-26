@@ -95,7 +95,7 @@ table.rm code {
     border-radius: var(--radius-s);
     padding: 1px 5px;
     font-size: 0.85em;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-family: var(--font-mono);
 }
 
 /* Feature matrix */

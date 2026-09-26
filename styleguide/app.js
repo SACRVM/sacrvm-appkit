@@ -233,7 +233,15 @@
                 <div class="sg-demo">
                     <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.8rem;">Outfit 600/700/800 — display</div>
                     <div style="font-family:'Inter',sans-serif;font-size:1rem;margin-top:0.5rem;">Inter 400/500/600 — body and UI. Self-hosted woff2 (latin + latin-ext), <code>font-display: swap</code>, no CDN, works offline.</div>
+                    <div style="font-family:var(--font-mono);font-size:0.9rem;margin-top:0.5rem;"><kbd>Ctrl</kbd> <kbd>K</kbd> · lease.pdf · 48.2 KB · 2026-09-26 20:00 — the system monospace</div>
                 </div>
+                <p>One monospace stack for every fixed-width surface — <code>kbd</code>, <code>.log</code>, hex /
+                   date / time readouts, file names and sizes. Custom properties inherit into shadow roots, so a
+                   component writes <code>font-family: var(--font-mono)</code> too.</p>
+                <table class="sg">
+                    <tr><th>Token</th><th>Value</th><th>Use for</th></tr>
+                    <tr><td><code>--font-mono</code></td><td>ui-monospace, SFMono-Regular, Menlo, Consolas, monospace</td><td>kbd, logs, readouts (hex, dates, times), file names and sizes</td></tr>
+                </table>
 
                 <h2>How to theme an app</h2>
                 <h3>1 — Per-app accent (the classic retheme)</h3>
@@ -293,7 +301,7 @@
             <div class="sg-page">
                 <h1>Components</h1>
                 <p class="lead">
-                    45 component files, 49 custom elements — Shadow DOM (<code>mode: 'open'</code>)
+                    47 component files, 51 custom elements — Shadow DOM (<code>mode: 'open'</code>)
                     except the one documented light-DOM case, <code>&lt;sac-launcher&gt;</code>.
                     All are classic deferred scripts self-registering via
                     <code>customElements.define()</code>, usable from classic and module scripts alike.
@@ -338,6 +346,7 @@
                 ])}
                 ${table("Method / event", [
                     ["open() / close() / toggle()", "What the burger does: the rail drawer on compact (stacked under the panel's entries), otherwise the panel. <code>open()</code> is a no-op when there is nothing to open."],
+                    ["setOverflowGroup(owner, entries)", "Contribute a group to the “…” menu from anywhere: <code>entries</code> = <code>[{ label, icon?, disabled?, danger?, run(e) }]</code>, <code>null</code>/<code>[]</code> withdraws it. <code>owner</code> is the key (normally the contributing element; dropped when it leaves the DOM). Groups follow the folded toolbar controls behind a separator and keep the “…” visible at every width. <a href=\"#/styleguide/components/sac-shortcut-bar\"><code>&lt;sac-shortcut-bar&gt;</code></a> folds into the nav with it."],
                     ["sac:nav-open / sac:nav-close", "<code>detail { drawer }</code> — the panel and/or the rail drawer came out / went away. Bubbles, composed."],
                 ])}
                 ${compact(`the ribbon is the burger, the app's <b>name as text</b> (<code>compact-title</code>) and the app's
@@ -570,13 +579,15 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
                 <p>Modal confirm with focus trap, Escape = cancel, and <strong>armed destructive
                    buttons</strong>. Use the <code>sac.dialog.confirm()</code> promise wrapper — or
                    <code>sac.dialog.info()</code> for the one-button "read, dismiss" case (an About
-                   panel, the licence notice an app with vendored code owes). <code>message</code>
+                   panel, the licence notice an app with vendored code owes), or
+                   <code>sac.dialog.prompt()</code> for one line of text (a rename). <code>message</code>
                    takes a string or an <em>array of paragraphs</em>, always rendered via
                    <code>textContent</code>. A dialog with more content than the viewport caps out
                    and scrolls its body; title and buttons stay put.</p>
                 <div class="sg-demo sg-row">
                     <button class="btn danger" style="width:auto" id="demo-dialog">Delete something…</button>
                     <button class="btn" style="width:auto" id="demo-dialog-info">About…</button>
+                    <button class="btn" style="width:auto" id="demo-prompt">Rename…</button>
                     <span id="demo-dialog-result" style="color:var(--text-muted);font-size:0.85rem;"></span>
                 </div>
                 ${table("Button spec", [
@@ -601,7 +612,29 @@ await sac.dialog.info({
     message: ["One paragraph per array entry.", "Licence text lives well here."],
     label:   "Got it",          // default "OK"
 });   // announce, not ask — the resolution carries no information`)}
-                <p>The wrapper above is the everyday path. The element underneath it is public too —
+                <h3 id="sac-dialog-prompt"><code>sac.dialog.prompt(opts)</code></h3>
+                <p><code>confirm()</code> with one text field: it resolves with the entered string, or
+                   <code>null</code> on Cancel, Escape or the backdrop. It pre-selects the name's stem —
+                   “lease” of “lease.pdf” — because a rename is what it is for.</p>
+                ${table("Option", [
+                    ["title", "Dialog title (also the field's accessible name when there is no <code>label</code>)."],
+                    ["message", "Optional string or array of paragraphs above the field — <code>textContent</code>, like <code>confirm()</code>."],
+                    ["label", "Field label (the kit's form-label style)."],
+                    ["value", "Pre-filled text. Default <code>\"\"</code>."],
+                    ["placeholder", "Field placeholder."],
+                    ["validate(value)", "Returns an error string, or <code>null</code> when valid. While invalid the primary button is disabled, Enter does nothing, and the error shows under the field — from the first keystroke on; a pre-filled invalid value says why at once. Re-runs on a language switch, so a <code>sac.t()</code> error follows it."],
+                    ["select", "What is selected on open: <code>\"stem\"</code> (default — up to the last dot), <code>\"all\"</code>, <code>\"end\"</code> (caret after the text)."],
+                    ["buttons", "Optional, the <code>confirm()</code> shape. Default Cancel + OK, both with <code>labelKey</code> (<code>dialog.cancel</code>, <code>dialog.ok</code>) so an open prompt relabels on a language switch. The primary button (<code>kind: \"primary\"</code>, else the last) resolves the text; every other button resolves <code>null</code>."],
+                ])}
+                ${code(`const name = await sac.dialog.prompt({
+    title: "Rename",
+    label: "New name",
+    value: "lease.pdf",
+    validate: (v) => !v.trim() ? "A name is required"
+                  : v.includes("/") ? "No slashes in a name" : null,
+});
+if (name != null) await sac.fs.ops.rename(store, path, name.trim());`)}
+                <p>The wrappers above are the everyday path. The element underneath it is public too —
                    reach for it when you need slotted interactive content (a form, links) in the body,
                    as <code>&lt;sac-launcher&gt;</code>'s add-app dialog does:</p>
                 ${table("Element API", [
@@ -619,7 +652,8 @@ await sac.dialog.info({
                 ${compact(`a bottom sheet — full width, anchored above the home-bar inset, at most 85dvh with the body
                    scrolling; the actions go full-width and stack, the last one (usually the primary) on top. Focus
                    trap and Escape unchanged. Arming cancels on a finger touching another button, not just a
-                   pointer entering it.`)}
+                   pointer entering it. A <code>prompt()</code> field gets 16px type (no iOS zoom) and
+                   <code>enterkeyhint="done"</code>; focusing it on open brings up the keyboard.`)}
 
                 <h3 id="sac-about"><code>sac.about.open(data)</code></h3>
                 <p>The shared About surface — a <code>&lt;sac-window&gt;</code>, not a dialog, because credits and
@@ -1240,7 +1274,9 @@ sac.regional.set({ date: "dmy.", hourCycle: "h23" });`)}
                 <h2 id="sac-drop-zone">&lt;sac-drop-zone&gt;</h2>
                 <p>One surface for both ways files arrive: drag files onto it, click it, or focus it and
                    press <kbd>Enter</kbd> — every gesture ends in the same <code>sac:files</code> event,
-                   so an app wires one listener and never asks which gesture the user chose.</p>
+                   so an app wires one listener and never asks which gesture the user chose. Drop a folder and
+                   every file inside arrives, each with its <code>relativePath</code>; with <code>overlay</code> the
+                   zone hides until a file drag enters its parent, then covers exactly that parent.</p>
                 <div class="sg-demo sg-col" style="max-width:520px;">
                     <sac-drop-zone id="demo-drop" accept=".svg,.png,image/*" multiple
                                    label="Drop images here" hint="or click to browse"
@@ -1250,6 +1286,10 @@ sac.regional.set({ date: "dmy.", hourCycle: "h23" });`)}
                     </ul>
                     <sac-drop-zone label="Import is locked" hint="finish the current run first"
                                    disabled style="--drop-zone-min-height:100px;"></sac-drop-zone>
+                    <div id="demo-drop-overlay" style="height:140px;padding:10px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-l);color:var(--text-muted);font-size:0.85rem;">
+                        <code>overlay</code>: drag files or a folder from your desktop anywhere onto this box.
+                        <sac-drop-zone overlay multiple label="Drop to add"></sac-drop-zone>
+                    </div>
                 </div>
                 ${table("Attribute", [
                     ["accept", "Mirrored verbatim into the hidden input, and applied to dropped files with the same semantics: <code>.svg</code> = name suffix (case-insensitive), <code>image/*</code> = MIME prefix, <code>image/png</code> = exact MIME. Absent = take anything."],
@@ -1259,12 +1299,17 @@ sac.regional.set({ date: "dmy.", hourCycle: "h23" });`)}
                     ["touch-label / touch-hint", "The two lines on a touch-only device (<code>hover: none</code> and <code>pointer: coarse</code>), where nothing can be dragged in. Defaults <code>Choose files</code> / <code>Tap to browse</code> — used only when the matching <code>label</code> / <code>hint</code> is not set, so an app that sets <code>label</code> sets <code>touch-label</code> too."],
                     ["disabled", "Dims the surface and blocks click, keyboard <em>and</em> drop — the drag is not accepted, so the browser shows the “no drop” cursor rather than a lie."],
                     ["over", "Set by the component while a file drag hovers — an accent wash + accent icon and label, never a thicker border or a scale that would move the target while the user aims at it. Drags carrying no files never set it. Read it, don't write it."],
+                    ["overlay", "The zone is invisible at rest and its <em>parent</em> is the drop surface: a file drag entering the parent shows the zone covering exactly that parent (<code>position: absolute; inset: 0</code>), gone again on drop or leave. For a Files view whose target is “wherever the list is”. A <code>position: static</code> parent gets <code>relative</code> (undone on removal). The default hint is dropped (nothing to click); <code>browse()</code> stays the picker path."],
+                ])}
+                ${table("Property", [
+                    ["accept / label / hint", "String, reflect the attributes."],
+                    ["multiple / disabled / overlay", "Boolean, reflect the attributes."],
                 ])}
                 ${table("Method", [
                     ["browse()", "Opens the picker. Browsers only honor this inside a user gesture."],
                 ])}
                 ${table("Event", [
-                    ["sac:files", "detail { files } — accepted files as a plain Array, from drop <em>and</em> picker alike. The hidden shadow <code>&lt;input type=\"file\"&gt;</code> is reset after every pick, so picking the same file twice in a row really fires twice."],
+                    ["sac:files", "detail { files } — accepted files as a plain Array, from drop <em>and</em> picker alike. Every file carries <code>relativePath</code>: its path from the dropped root (<code>Photos/2026/IMG_0412.jpg</code>), or its name for a loose file. A drop containing a folder is walked (<code>webkitGetAsEntry</code>, <code>readEntries</code> until empty; <code>accept</code> and <code>multiple</code> apply as usual) and adds <code>detail.folders</code> — every folder walked, empty ones included. A drop without folders is unchanged. The hidden shadow <code>&lt;input type=\"file\"&gt;</code> is reset after every pick, so picking the same file twice in a row really fires twice."],
                     ["sac:rejected", "detail { files } — fired <em>instead</em> of sac:files when <code>accept</code> filtered out every dropped file. Whether that deserves a toast is the app's call."],
                 ])}
                 ${table("CSS custom property", [
@@ -1283,6 +1328,15 @@ sac.regional.set({ date: "dmy.", hourCycle: "h23" });`)}
 zone.addEventListener("sac:rejected", (e) => {
     sac.toast(\`\${e.detail.files.length} file(s) of the wrong type.\`, { kind: "warn" });
 });`)}
+                ${code(`<div class="file-list">
+    …rows…
+    <sac-drop-zone overlay multiple label="Drop to upload"></sac-drop-zone>
+</div>
+
+zone.addEventListener("sac:files", async (e) => {
+    for (const folder of e.detail.folders || []) await store.write(folder + "/.folder", "");
+    for (const file of e.detail.files) await store.write(here + file.relativePath, file);
+});`)}
                 ${compact(`phones have no OS drag-and-drop, so on a touch-only device (<code>hover: none</code> and
                    <code>pointer: coarse</code>) the zone is a tap target first: the whole surface opens the picker and the
                    <code>touch-label</code> / <code>touch-hint</code> wording replaces “drop / click”. It follows a live
@@ -1290,46 +1344,167 @@ zone.addEventListener("sac:rejected", (e) => {
 
                 <h2 id="sac-file-browser">&lt;sac-file-browser&gt;</h2>
                 <p>A folder view over any <code>sac.fs</code> handle — the user's files, an app's own
-                   drawer, a host's space. <code>sprites/hero.png</code> <em>is</em> the folder
+                   drawer, a host's space, a server-backed store. <code>sprites/hero.png</code> <em>is</em> the folder
                    <code>sprites</code>; a folder the user creates empty keeps itself with a hidden marker. It is the list inside the
-                   <code>sac.files.virtual()</code> dialogs, and on its own the body of a Files app.</p>
-                <div class="sg-demo sg-col" style="max-width:640px;height:320px;">
-                    <sac-file-browser id="demo-file-browser" pixelated root-label="Demo files"
-                                      style="flex:1;min-height:0;"></sac-file-browser>
-                    <span id="demo-file-browser-result" style="color:var(--text-muted);font-size:0.85rem;">Double-click a file.</span>
+                   <code>sac.files.virtual()</code> dialogs, and on its own one pane of a Files app — marks, rename,
+                   drag between panes, thousands of rows.</p>
+                <div class="sg-demo sg-col" style="max-width:760px;">
+                    <div class="sg-row" style="height:320px;align-items:stretch;flex-wrap:nowrap;">
+                        <sac-file-browser id="demo-file-browser" pixelated root-label="Demo files"
+                                          style="flex:1;min-width:0;min-height:0;"></sac-file-browser>
+                        <sac-file-browser id="demo-file-browser-2" multiple header columns="type size date"
+                                          cursor-style="bar" pixelated root-label="Demo files"
+                                          style="flex:1;min-width:0;min-height:0;"></sac-file-browser>
+                    </div>
+                    <span id="demo-file-browser-result" style="color:var(--text-muted);font-size:0.85rem;">Double-click a file, or drag one onto the other pane. The right pane has marks, a header and the bar cursor.</span>
                 </div>
                 ${table("Attribute", [
                     ["accept", "<code>.png,image/*</code> — the file input's grammar. Files that do not match are left out; folders always show."],
-                    ["multiple", "Presence: Ctrl/⌘-click and Shift-click (Shift+↑/↓) select several."],
-                    ["readonly", "Presence hides New folder, the per-row delete buttons and the Delete key — a view that changes nothing."],
+                    ["multiple", "Presence: marks — a set of rows, folders included, independent of the cursor (see Keyboard). Ctrl/⌘-click and Shift-click select several, as before."],
+                    ["readonly", "Presence hides New folder, the per-row delete buttons, the Delete and F2 keys and refuses drops — a view that changes nothing. Rows can still be dragged out."],
                     ["pixelated", "Presence draws image thumbnails with hard pixel edges. Default smooth — most images are not pixel art."],
+                    ["no-thumbnails", "Presence: image files keep the image icon and nothing is fetched for them."],
                     ["root-label", "The first breadcrumb. Default <code>Files</code>."],
+                    ["columns", "The meta columns, in order, from <code>type size date</code>. Default <code>size date</code>; <code>\"\"</code> shows the name only."],
+                    ["sort", "<code>name</code> (default), <code>size</code>, <code>date</code> or <code>type</code>. Folders always come first, by name."],
+                    ["sort-dir", "<code>asc</code> (default) or <code>desc</code>."],
+                    ["header", "Presence shows a column header; a label sorts by its column, again reverses, and fires <code>sac:sort</code>."],
+                    ["cursor-style", "<code>bar</code> — the commander cursor: a solid <code>--accent</code> bar with <code>--on-accent</code> ink while the list has focus, a hairline frame without it; only marked rows are tinted."],
+                ])}
+                ${table("Slot", [
+                    ["title", "Sits in the header row between Up and the breadcrumb — a workspace menu, a pane caption. Hide the kit's breadcrumb with <code>::part(crumbs) { display: none }</code> when the title replaces it."],
                 ])}
                 ${table("Property / method", [
-                    ["store", "The <code>sac.fs</code> handle to browse (<code>list</code>, <code>stat</code>, <code>read</code>, <code>remove</code>). Setting it resets to the root."],
+                    ["store", "The <code>sac.fs</code> handle to browse. Setting it resets to the root. Optional store methods are used when present (through <code>sac.fs.ops</code> when <code>sac.fs</code> is loaded): <code>entries()</code> lists a folder in one call instead of <code>list()</code> + one <code>stat()</code> per file, <code>url()</code> streams thumbnails instead of <code>read()</code>-ing the bytes, <code>rename()</code>/<code>move()</code> back the built-in rename. See <a href=\"#/styleguide/helpers/sac-fs-contract\">the store contract</a>."],
                     ["path", "The current folder, <code>\"\"</code> = root. Setting navigates."],
-                    ["selected", "The selected file paths (folders are never selected)."],
-                    ["refresh()", "Re-read the current folder — after writing into the store from outside."],
-                    ["up()", "One folder up."],
+                    ["selected", "The selected file paths: the marked files when anything is marked, else the file last clicked or arrowed onto. Folders are never selected."],
+                    ["marked", "The marked paths, folders included, in row order. Get/set (setting fires nothing; needs <code>multiple</code>)."],
+                    ["cursor", "The path of the row under the keyboard cursor — file or folder. Setting moves the cursor and scrolls it into view."],
+                    ["items", "The rows in view order, read-only: <code>[{ kind, path, name, stat }]</code> — for a status line (“2 of 48 marked · 4.4 MB”)."],
+                    ["refresh()", "Re-read the current folder — after writing into the store from outside. The cursor stays on its row."],
+                    ["up()", "One folder up; the cursor lands on the folder just left."],
                     ["newFolder()", "An inline name field; Enter creates the folder and goes into it. An empty folder keeps itself alive with a hidden <code>&lt;folder&gt;/.folder</code> marker entry — never listed, removed with the folder."],
-                    ["select(path)", "Select one file by path."],
+                    ["rename(path?)", "An inline name field on the row (default: the cursor row) — bind it to your own chord; F2 is built in. Enter commits, Esc cancels, leaving the field commits a changed name; a taken name or one starting with a dot keeps the field open. The browser performs the rename, like delete and New folder, unless a <code>sac:request-rename</code> listener cancels."],
+                    ["select(path)", "Select one file by path; clears the marks."],
                 ])}
                 ${table("Event", [
                     ["sac:select", "detail { paths } — the selection changed (user action)."],
+                    ["sac:mark", "detail { paths } — the marks changed (user action, or cleared by a folder change)."],
+                    ["sac:cursor", "detail { path, kind } — the row under the cursor changed: a move, or the folder loading under it. A preview pane follows this."],
                     ["sac:choose", "detail { paths } — a file was double-clicked or Enter'd. Folders open on a single click and never choose."],
                     ["sac:navigate", "detail { path } — the folder changed."],
-                    ["sac:remove", "detail { path, folder } — a file, or a folder with everything in it, was deleted after an armed confirm that says how many files go with it."],
+                    ["sac:sort", "detail { key, dir } — a header label changed the sort."],
+                    ["sac:request-remove", "<strong>Cancelable</strong>, before anything is deleted: detail { path, folder, permanent, paths } — <code>permanent</code> = Shift was held, <code>paths</code> = every target (the marked rows when Delete acts on marks). <code>preventDefault()</code> skips the built-in confirm and delete, so a host can move to a trash instead."],
+                    ["sac:remove", "detail { path, folder } — one per item the built-in path deleted, after an armed confirm that says how many files go with it."],
+                    ["sac:request-rename", "<strong>Cancelable</strong>: detail { from, to, folder } before a rename. <code>preventDefault()</code> and the host renames, then calls <code>refresh()</code>."],
+                    ["sac:rename", "detail { from, to, folder } — the built-in rename landed."],
+                    ["sac:drop", "detail { paths, target, copy, source } — rows dragged from a <code>&lt;sac-file-browser&gt;</code> (this one or another; <code>source</code> is that element), or { files, target, copy: true } — files from the OS. <code>target</code> is the folder dropped on, else this browser's folder; <code>copy</code> = Ctrl (Option on macOS) held. The browser moves nothing: the host does, with <code>sac.fs.ops.move</code> / <code>copy</code> / <code>write</code>, then refreshes."],
                 ])}
-                ${code(`<sac-file-browser accept=".png,image/*" pixelated></sac-file-browser>
+                ${code(`<sac-file-browser multiple header columns="type size date" cursor-style="bar">
+    <sac-menu slot="title" …>Personal</sac-menu>
+</sac-file-browser>
 
-browser.store = sac.fs.shared("files");
-browser.addEventListener("sac:choose", (e) => open(e.detail.paths[0]));`)}
-                <p>Keyboard: ↑/↓ Home/End move · Enter opens the folder or chooses the file ·
-                   Backspace goes up · Delete removes the file or folder (asks first). Rows: folders first, then files by
-                   name — an image file shows itself as its thumbnail, on the token checker.</p>
-                ${compact(`under a 480px <em>container</em> the size and date columns drop out, so it fits a
-                   narrow window or a bottom-sheet dialog. Rows are 44px on touch and the delete button is
-                   always visible there — no hover to reveal it.`)}
+pane.store = sac.fs.shared("files");
+pane.addEventListener("sac:choose", (e) => open(e.detail.paths[0]));
+sac.hotkeys.register("alt+r", () => pane.rename(), { description: "Rename", group: "Files" });
+pane.addEventListener("sac:request-remove", (e) => {
+    if (e.detail.permanent) return;            // Shift+Delete: the kit's own confirm
+    e.preventDefault();
+    trash(e.detail.paths).then(() => pane.refresh());
+});
+pane.addEventListener("sac:drop", async (e) => {
+    const { paths, files, target, copy } = e.detail;
+    for (const p of paths || []) {
+        const to = (target ? target + "/" : "") + p.slice(p.lastIndexOf("/") + 1);
+        await (copy ? sac.fs.ops.copy : sac.fs.ops.move)(pane.store, p, to);
+    }
+    for (const f of files || []) await pane.store.write((target ? target + "/" : "") + f.name, f);
+    pane.refresh();
+});`)}
+                <p>Keyboard: ↑/↓ PgUp/PgDn Home/End move the cursor · Enter opens the folder or chooses the file ·
+                   Backspace or Alt+↑ goes up · Delete removes the marked rows, else the cursor row (asks first) · F2 renames.
+                   With <code>multiple</code>: Shift + a move marks the range (added to earlier marks), Ctrl/⌘-click and
+                   Ctrl/⌘+Space toggle one row, Ctrl/⌘+A marks all, Esc clears — an Esc with nothing marked still closes the
+                   dialog around. Plain arrows keep the marks; a plain click clears them. Rows are virtualised: a folder of
+                   thousands renders only what is in view. Rows expose <code>part="row file|folder [selected] [marked] [cursor]"</code>,
+                   so <code>::part(marked)</code> restyles marks.</p>
+                ${compact(`under a 480px <em>container</em> the meta columns and their header labels drop out, so it fits
+                   a narrow window, a split pane or a bottom-sheet dialog. Rows, header labels and the delete button are 44px on
+                   touch, and the delete button is always visible there — no hover to reveal it. Drag and drop is a
+                   pointer-device affair; on a phone the host offers Move/Copy through its own toolbar.`)}
+
+                <h2 id="sac-quick-look">&lt;sac-quick-look&gt;</h2>
+                <p>A preview surface: hand it a <code>File</code> or a <code>{ url, type }</code> descriptor and it renders the
+                   right thing for the type — images with pan/zoom, SVG, text and code, JSON, Markdown, audio, video — and an
+                   info card for everything else. Inline it is a preview pane; inside a maximised <code>&lt;sac-window&gt;</code>
+                   it is a quick look. Untrusted content never reaches the DOM as HTML.</p>
+                <div class="sg-demo sg-col" style="max-width:640px;">
+                    <div class="sg-row" id="demo-ql-pick" style="gap:6px;flex-wrap:wrap;">
+                        <button class="btn" style="width:auto" data-ql="image">Image</button>
+                        <button class="btn" style="width:auto" data-ql="svg">SVG</button>
+                        <button class="btn" style="width:auto" data-ql="text">Log (truncated)</button>
+                        <button class="btn" style="width:auto" data-ql="json">JSON</button>
+                        <button class="btn" style="width:auto" data-ql="md">Markdown</button>
+                        <button class="btn" style="width:auto" data-ql="zip">Other</button>
+                    </div>
+                    <sac-quick-look id="demo-ql" nav text-limit="4096"
+                                    style="height:300px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-l);"></sac-quick-look>
+                </div>
+                ${table("Rendering", [
+                    ["Raster image", "<code>&lt;img&gt;</code> on the kit checkerboard, fitted, never upscaled. Pan/zoom via <code>sac.setupPanZoom</code> when <code>pan-zoom.js</code> is loaded: wheel, drag, pinch, double-click resets."],
+                    ["SVG", "Always an <code>&lt;img&gt;</code> from a blob URL — a URL source is fetched first. Never inline, never <code>&lt;object&gt;</code>: scripts in the file cannot run."],
+                    ["Text / code / CSV / logs", "<code>&lt;pre&gt;</code> via <code>textContent</code>, monospace (<code>--font-mono</code>). Only the first <code>text-limit</code> bytes are read (a URL is streamed and cut off), with a “Showing the first 256 KB of 3.2 MB” note."],
+                    ["JSON", "Pretty-printed when it parses and was read whole; otherwise shown as is."],
+                    ["Markdown", "Rendered with the vendored <code>marked</code> + <code>DOMPurify</code> (<code>&lt;style&gt;</code> and <code>style=\"\"</code> dropped too; links open in a new tab) with a Rendered / Source toggle that sticks across files. Without both libs on <code>window</code> it shows as text."],
+                    ["Audio", "<code>&lt;audio controls preload=\"metadata\"&gt;</code> under the file name."],
+                    ["Video", "<code>&lt;video controls&gt;</code> — whatever the browser can decode."],
+                    ["Everything else", "An info card: icon, name, type, size and the <code>actions</code> slot. A file that fails to load or decode falls back to the same card, saying so."],
+                ])}
+                ${table("Attribute", [
+                    ["nav", "Shows ‹ › buttons at the sides that fire <code>sac:nav</code>. Bare <code>nav</code> = both; <code>nav=\"next\"</code> / <code>nav=\"prev\"</code> = one side only (at the ends of a list). Live."],
+                    ["text-limit", "Bytes of a text file to read. Default <code>262144</code> (256 KB)."],
+                ])}
+                ${table("Property", [
+                    ["source", "<code>{ file }</code> (a <code>File</code> or <code>Blob</code>; a bare one works too) or <code>{ url, type, name, size }</code>. <code>type</code> falls back to the file extension. <code>null</code> = the empty state. Setting it replaces the preview; a load still in flight is discarded."],
+                    ["kind", "Read-only: <code>image</code> · <code>svg</code> · <code>video</code> · <code>audio</code> · <code>markdown</code> · <code>json</code> · <code>text</code> · <code>other</code> · <code>\"\"</code>."],
+                    ["textLimit", "Number, reflects <code>text-limit</code>."],
+                ])}
+                ${table("Event", [
+                    ["sac:nav", "detail { direction: -1 | 1 } — <kbd>←</kbd> / <kbd>→</kbd> (not while a media control has focus) or the nav buttons. The app walks its list and sets the next <code>source</code>."],
+                    ["sac:dismiss", "<kbd>Escape</kbd>. The component closes nothing itself — the app closes the window it put it in."],
+                    ["sac:load", "detail { kind, source } — the preview finished rendering (a card: at once)."],
+                    ["sac:error", "detail { kind, source } — loading or decoding failed; the info card is showing."],
+                ])}
+                ${table("Slot", [
+                    ["actions", "The info card's buttons. Fallback: a Download link to the file. <code>&lt;button slot=\"actions\" class=\"btn\"&gt;</code> replaces it."],
+                ])}
+                ${table("CSS custom property / part", [
+                    ["--quick-look-min-height", "Height when the host has none of its own. Default <code>240px</code>. Give the host a height (a pane, a window body) and the preview fills it."],
+                    ["::part(view)", "The content box."],
+                    ["::part(card)", "The info card."],
+                    ["::part(nav)", "Both nav buttons."],
+                ])}
+                ${code(`<sac-window id="look" title="" maximized controls="close" style="--window-padding:0">
+    <sac-quick-look id="ql" nav style="height:100%"></sac-quick-look>
+</sac-window>
+
+// Space opens the selection in a quick look; ← → walk the folder; Escape closes.
+const show = (i) => {
+    at = i;
+    ql.source = { file: files[i] };           // or { url, type, name, size }
+    look.setAttribute("title", files[i].name);
+};
+ql.addEventListener("sac:nav", (e) => show((at + e.detail.direction + files.length) % files.length));
+ql.addEventListener("sac:dismiss", () => look.close());
+look.open(); ql.focus();
+
+// From a store: stream when it can (sac.fs.ops.url), else read the bytes.
+const url = await sac.fs.ops.url(store, path);
+ql.source = url ? { url, type: stat.type, name: stat.name, size: stat.size }
+                : { file: new File([await store.read(path)], stat.name, { type: stat.type }) };`)}
+                ${compact(`the nav buttons, the Rendered / Source toggle and the Download link are 44px under
+                   <code>pointer: coarse</code>; one finger pans an image, two pinch-zoom around their midpoint, a double-tap
+                   resets. Inside a <code>&lt;sac-window&gt;</code> it goes full-screen with the window on a phone.`)}
 
                 <h2 id="sac-avatar">&lt;sac-avatar&gt;</h2>
                 <p>Round identity badge — initials by default, photo when <code>src</code> is set. The
@@ -2090,6 +2265,50 @@ sac.shortcuts.add([
 sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
                 ${compact(`a bottom sheet (full width, above the safe area, at most 85dvh, list scrolling) and one column
                    instead of two; the close button reaches 44 × 44.`)}
+
+                <h2 id="sac-shortcut-bar">&lt;sac-shortcut-bar&gt;</h2>
+                <p>A visible action bar over <code>sac.hotkeys</code> — the Norton-Commander bottom row. Every item is a
+                   button with its key cap AND a registered binding, so a click and the key run the same action and
+                   <code>&lt;sac-shortcut-sheet&gt;</code> lists it with no extra wiring. Hold <kbd>Shift</kbd> and items
+                   with a Shift variant relabel in place.</p>
+                <div class="sg-demo sg-col" style="max-width:none;">
+                    <sac-shortcut-bar id="demo-shortcut-bar" group="Demo bar" nav="none"></sac-shortcut-bar>
+                    <span id="demo-shortcut-bar-state" style="color:var(--text-muted);font-size:0.85rem;">Click an item, press its key, or hold <kbd>Shift</kbd>.</span>
+                </div>
+                ${table("Item (items property)", [
+                    ["label", "String, or a function returning one — called on every render and language switch, so <code>() =&gt; sac.t(\"app.copy\", \"Copy\")</code> follows <code>sac.lang</code>."],
+                    ["combo", "A <code>sac.hotkeys</code> combo (<code>\"alt+n\"</code>, <code>\"delete\"</code>, <code>\"mod+shift+s\"</code>). The key cap is <code>sac.hotkeys.format(combo)</code>. Optional — without one the item is a plain button."],
+                    ["action(e)", "Runs on the hotkey (<code>KeyboardEvent</code>), a click (<code>MouseEvent</code>) or the nav's “…” entry (its <code>sac:select</code> event) — always an event, so <code>e.shiftKey</code> is safe to read."],
+                    ["shiftLabel", "String or function: the label while <kbd>Shift</kbd> is held."],
+                    ["shiftAction(e)", "The Shift variant. Given → the bar also registers <code>shift+&lt;combo&gt;</code> (listed under <code>shiftLabel</code>), a Shift+click runs it and the key cap shows the Shift chord while Shift is held. Absent → Shift+click runs <code>action</code> (check <code>e.shiftKey</code>) and a Shift+key chord is your own <code>register()</code> — matching is exact, <code>\"delete\"</code> does not fire for Shift+Delete."],
+                    ["icon", "<code>sac.icons</code> name, between key cap and label."],
+                    ["disabled", "Greyed out, not clickable, and <em>not registered</em> — a disabled action has no binding."],
+                    ["id", "Echoed as <code>data-id</code> on the button and in <code>sac:invoke</code>."],
+                ])}
+                ${table("Element", [
+                    ["items", "Property — the array above. Assigning re-renders and re-registers. Which items exist is the caller's job: hand in an already-filtered array (no dead buttons)."],
+                    ["group", "Attribute / property — the heading the bindings are listed under in the sheet. The property may be a function (translated heading)."],
+                    ["nav", "Attribute — the <code>&lt;sac-nav&gt;</code> to fold into on compact: a CSS selector, or <code>none</code>. Absent = the first <code>&lt;sac-nav&gt;</code> on the page."],
+                    ["folded · shift", "Reflected, read-only: the items live in the nav's “…” menu / the Shift layer is up."],
+                    ["sac:invoke", "Event after an item ran — detail <code>{ id, shift, source: \"key\" | \"click\" | \"menu\" }</code>. Bubbles, composed."],
+                ])}
+                ${table("Interaction", [
+                    ["Shift layer", "Held <kbd>Shift</kbd> swaps labels (and Shift key caps) in place — no re-render. Released on keyup, window blur and a hidden tab; ignored while typing in a text field."],
+                    ["Lifetime", "Bindings exist while the bar is connected; removing it or replacing <code>items</code> unregisters them."],
+                    ["Wrapping", "Too many items for one row wrap onto the next."],
+                ])}
+                ${code(`<sac-shortcut-bar group="Files"></sac-shortcut-bar>
+
+bar.items = [
+  { label: "New folder", combo: "alt+n", icon: "folder-plus", action: () => view.newFolder() },
+  { label: "Trash", combo: "delete", icon: "trash", action: () => view.trash(),
+    shiftLabel: "Delete permanently", shiftAction: () => view.destroy() },
+  { label: () => sac.t("files.preview", "Preview"), combo: "alt+p", action: () => view.togglePreview() },
+];`)}
+                ${compact(`the bar hides and its items join the <code>&lt;sac-nav&gt;</code> “…” menu as one group
+                   (a Shift variant with its own action becomes an entry of its own — a phone has no Shift key).
+                   Without a nav, or with <code>nav="none"</code> (as this demo does), the bar stays and wraps; under
+                   <code>pointer: coarse</code> its buttons are 44px tall.`)}
             </div>
             `;
     }
@@ -2136,7 +2355,7 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
         grid.innerHTML = sac.icons.names().map(n => `
             <span style="display:inline-flex;flex-direction:column;align-items:center;gap:4px;width:72px;">
                 <sac-icon name="${n}" style="--icon-size:22px;color:var(--text)"></sac-icon>
-                <span style="font-size:0.62rem;color:var(--text-dim);font-family:monospace;">${n}</span>
+                <span style="font-size:0.62rem;color:var(--text-dim);font-family:var(--font-mono);">${n}</span>
             </span>`).join("");
 
         // sac-launcher — three demo registry entries. The demo tag is
@@ -2275,6 +2494,16 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
                 label: "Got it",
             });
             dlgResult.textContent = "info dismissed";
+        });
+        root.querySelector("#demo-prompt").addEventListener("click", async () => {
+            const name = await sac.dialog.prompt({
+                title: "Rename",
+                label: "New name",
+                value: "lease.pdf",
+                validate: (v) => !v.trim() ? "A name is required"
+                              : v.includes("/") ? "No slashes in a name" : null,
+            });
+            dlgResult.textContent = `resolved: ${JSON.stringify(name)}`;
         });
 
         // Banner
@@ -2437,14 +2666,23 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
         // Drop zone
         const dropList = root.querySelector("#demo-drop-list");
         const demoDrop = root.querySelector("#demo-drop");
-        demoDrop.addEventListener("sac:files", (e) => {
+        // Both zones report here; a folder drop lists each file by its path
+        // from the dropped root.
+        const listFiles = (e) => {
             dropList.innerHTML = "";
             for (const file of e.detail.files) {
                 const li = document.createElement("li");
-                li.textContent = `${file.name} — ${(file.size / 1024).toFixed(1)} KB`;
+                li.textContent = `${file.relativePath || file.name} — ${(file.size / 1024).toFixed(1)} KB`;
                 dropList.appendChild(li);
             }
-        });
+            if (e.detail.folders) {
+                const li = document.createElement("li");
+                li.textContent = `${e.detail.folders.length} folder(s): ${e.detail.folders.join(", ")}`;
+                dropList.appendChild(li);
+            }
+        };
+        demoDrop.addEventListener("sac:files", listFiles);
+        root.querySelector("#demo-drop-overlay sac-drop-zone").addEventListener("sac:files", listFiles);
         demoDrop.addEventListener("sac:rejected", (e) => {
             dropList.innerHTML = "";
             const li = document.createElement("li");
@@ -2460,6 +2698,60 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
             const st = await fileBrowser.store.stat(e.detail.paths[0]);
             fileBrowserOut.textContent = st ? `chose ${st.path} — ${st.type}, ${st.size} B` : "";
         });
+        // The commander pane on the same store. sac:drop only reports — the
+        // host (here: nobody) would move the files.
+        const fileBrowser2 = root.querySelector("#demo-file-browser-2");
+        demoFiles().then((store) => { fileBrowser2.store = store; });
+        for (const el of [fileBrowser, fileBrowser2]) {
+            el.addEventListener("sac:drop", (e) => {
+                const d = e.detail;
+                fileBrowserOut.textContent = d.files
+                    ? `Dropped ${d.files.length} file(s) into “${d.target || "/"}”.`
+                    : `${d.copy ? "Copy" : "Move"} ${d.paths.join(", ")} → “${d.target || "/"}” (the host does it).`;
+            });
+        }
+        fileBrowser2.addEventListener("sac:mark", (e) => {
+            fileBrowserOut.textContent = `${e.detail.paths.length} marked`;
+        });
+
+        // Quick look — generated samples. Colors come from the live tokens, so
+        // the samples follow the theme and the source holds no raw colors.
+        const ql = root.querySelector("#demo-ql");
+        const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        const qlSamples = {
+            image: () => new Promise((res) => {
+                const c = document.createElement("canvas");
+                c.width = 480; c.height = 300;
+                const g = c.getContext("2d");
+                const gr = g.createLinearGradient(0, 0, 480, 300);
+                gr.addColorStop(0, token("--accent"));
+                gr.addColorStop(1, token("--accent-edit"));
+                g.fillStyle = gr;
+                g.fillRect(0, 0, 480, 300);
+                g.clearRect(190, 100, 100, 100);   // a hole: the checkerboard shows through
+                c.toBlob((b) => res({ file: new File([b], "gradient.png", { type: "image/png" }) }));
+            }),
+            svg: () => ({ file: new File([
+                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80"><rect width="120" height="80" rx="8" fill="${token("--accent")}"/><circle cx="60" cy="40" r="22" fill="${token("--accent-warm")}"/></svg>`,
+            ], "badge.svg", { type: "image/svg+xml" }) }),
+            text: () => ({ file: new File([Array.from({ length: 300 },
+                (_, i) => `${String(i + 1).padStart(4, "0")}  [info] worker ${i % 7} processed batch`).join("\n")], "server.log") }),
+            json: () => ({ file: new File(['{"name":"Ada Lovelace","year":1843,"tags":["math","engines"]}'], "profile.json") }),
+            md: () => ({ file: new File(["# Notes\n\nSome **bold** text, `code` and a [link](https://example.com).\n\n- one\n- two\n"], "README.md") }),
+            zip: () => ({ file: new File([new Uint8Array(48213)], "archive.zip", { type: "application/zip" }) }),
+        };
+        const qlOrder = Object.keys(qlSamples);
+        let qlAt = 0;
+        const qlShow = async (i) => {
+            qlAt = (i + qlOrder.length) % qlOrder.length;
+            ql.source = await qlSamples[qlOrder[qlAt]]();
+        };
+        root.querySelector("#demo-ql-pick").addEventListener("click", (e) => {
+            const b = e.target.closest("[data-ql]");
+            if (b) qlShow(qlOrder.indexOf(b.dataset.ql));
+        });
+        ql.addEventListener("sac:nav", (e) => qlShow(qlAt + e.detail.direction));
+        qlShow(0);
 
         // Copy button
         const copyOut = root.querySelector("#demo-copy-out");
@@ -2714,6 +3006,14 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
         // sac-shortcut-sheet — "?" is bound while the guide is on stage.
         const sb = root.querySelector("#demo-shortcuts");
         if (sb) sb.addEventListener("click", () => sac.shortcuts.show());
+
+        // sac-shortcut-bar — its items (and so its alt+ bindings) are set by
+        // the app while it is on stage, see _syncDemoKeys().
+        const sbar = root.querySelector("#demo-shortcut-bar");
+        const sbarState = root.querySelector("#demo-shortcut-bar-state");
+        if (sbar) sbar.addEventListener("sac:invoke", (e) => {
+            sbarState.textContent = `${e.detail.id}${e.detail.shift ? " (shift)" : ""} — from ${e.detail.source}`;
+        });
     }
 
     /* ---------------------------------------------------------- layout --- */
@@ -2809,12 +3109,32 @@ sac.router.register("#/notes", "my-notes-view", { label: "Notes", icon: "note" }
                     <tr><th style="width:280px">sac.router API</th><th>Description</th></tr>
                     <tr><td><code>register(hash, tag, {label, icon})</code></td><td>Adds a route + fires <code>sac:route-registered</code> (this is what makes a self-registering view list work — nav components render before view scripts run). Pass <code>tag = null</code> for plain multi-page hrefs.</td></tr>
                     <tr><td><code>options.palette</code></td><td>The Ctrl-K palette group the route lists under: a string, or a function returning one (resolved on every open — follows the language); <code>false</code> keeps it out of the palette. Default <code>"Views"</code>. <code>sac.apps</code> files app routes under <code>"Apps"</code>.</td></tr>
-                    <tr><td><code>routes()</code></td><td>[{hash, tag, label, icon}] — what sac-nav renders.</td></tr>
+                    <tr><td><code>register("#/files/*", tag, opts)</code></td><td>A <b>prefix route</b>: a hash ending in <code>/*</code> owns its base and everything below it — <code>#/files</code>, <code>#/files/Photos/2026</code>. Moving between those does <b>not</b> remount the view; it gets a <code>sac:route</code> event instead. An exact route on a longer hash (<code>#/files/settings</code>) still wins, and the longest prefix wins over a shorter one.</td></tr>
+                    <tr><td><code>routes()</code></td><td><code>[{hash, tag, label, icon, palette, prefix}]</code> — what sac-nav and the Ctrl-K palette render. A prefix route lists under its base (<code>#/files</code>, <code>prefix: true</code>), so its link lands on the prefix itself and stays active on every sub-path.</td></tr>
+                    <tr><td><code>subpath()</code></td><td>The part of the current hash below the matched prefix route — decoded, no leading slash, scope prefix already stripped: <code>"Photos/2026"</code>. <code>""</code> on the bare prefix and on exact routes. Read it in <code>connectedCallback</code>.</td></tr>
                     <tr><td><code>current() / currentResource()</code></td><td>Raw hash / hash with any scope prefix stripped.</td></tr>
                     <tr><td><code>navigate(hash)</code></td><td>Sets location.hash.</td></tr>
                     <tr><td><code>mount(selector)</code></td><td>Starts rendering views into the mount point. On hashchange it swaps <code>innerHTML</code> to the matching tag.</td></tr>
+                    <tr><td><code>sac:route</code> (event on the view)</td><td>Fired on the mounted view when the hash changes but the same prefix route still matches (a sub-path change, or a scope switch). <code>detail { hash, subpath, previous }</code>; bubbles, not composed.</td></tr>
                 </table>
                 <p>Template: <code>kit/templates/app-shell.html</code>.</p>
+                <h3 id="router-prefix">Prefix routes</h3>
+                <p>A view that addresses state inside itself — a folder in a file manager, a tab in a settings
+                   page — registers a prefix route and keeps its in-flight state (scroll, marks, the other pane)
+                   across navigation: the router tells the mounted view the new sub-path instead of rebuilding it.
+                   A phone's back button walks the sub-paths like any hash history.</p>
+                ${code(`class MyFilesView extends HTMLElement {
+    connectedCallback() {
+        this.show(sac.router.subpath());                 // "" or "Photos/2026"
+        this._onRoute = (e) => this.show(e.detail.subpath);
+        this.addEventListener("sac:route", this._onRoute);
+    }
+    disconnectedCallback() { this.removeEventListener("sac:route", this._onRoute); }
+    show(folder) { /* restore the folder the URL names */ }
+}
+customElements.define("my-files-view", MyFilesView);
+sac.router.register("#/files/*", "my-files-view", { label: "Files", icon: "folder" });
+// navigate: sac.router.navigate("#/files/" + folder.split("/").map(encodeURIComponent).join("/"));`)}
 
                 <h2>Multi-page apps and the nav</h2>
                 <p>Multi-page suites use the same registry without
@@ -2977,11 +3297,11 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                 <div class="sg-demo">
                     <div class="sg-row" style="align-items:stretch;">
                         <div style="flex:1 1 180px;background:#a3e635;color:#000000;border-radius:var(--radius-m);padding:1rem;">
-                            <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:600;">#a3e635</div>
+                            <div style="font-family:var(--font-mono);font-weight:600;">#a3e635</div>
                             <button class="btn" style="width:auto;margin-top:0.75rem;background:transparent;border-color:currentColor;color:inherit;">Copy</button>
                         </div>
                         <div style="flex:1 1 180px;background:#1e3a8a;color:#ffffff;border-radius:var(--radius-m);padding:1rem;">
-                            <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:600;">#1e3a8a</div>
+                            <div style="font-family:var(--font-mono);font-weight:600;">#1e3a8a</div>
                             <button class="btn" style="width:auto;margin-top:0.75rem;background:transparent;border-color:currentColor;color:inherit;">Copy</button>
                         </div>
                     </div>
@@ -3618,13 +3938,15 @@ pz.reset();                               // e.g. when a new image loads`)}
     { label: "Export",  icon: "download", disabled: true },
 ];`)}
 
-                <h2>sac.dialog — confirm + info helpers</h2>
+                <h2>sac.dialog — confirm, info + prompt helpers</h2>
                 <p>Promise wrappers over <code>&lt;sac-dialog&gt;</code>:
                    <code>confirm()</code> asks a question, <code>info()</code> announces —
-                   one button (label default <code>"OK"</code>), no answer to carry. Both take
+                   one button (label default <code>"OK"</code>), no answer to carry —
+                   and <code>prompt()</code> asks for one line of text (the string, or <code>null</code>). All take
                    <code>message</code> as a string or an array of paragraphs, always rendered
                    via <code>textContent</code>. See the
-                   <a href="#/styleguide/components">Components</a> page for the live demo and the armed-button rules.</p>
+                   <a href="#/styleguide/components/sac-dialog">Components</a> page for the live demos, the armed-button rules
+                   and <a href="#/styleguide/components/sac-dialog-prompt"><code>prompt()</code>'s options</a>.</p>
 
                 <h2>sac.apps — apps as web components</h2>
                 <p>The <b>host</b> side of the app contract: a registry of manifests, the stage for
@@ -3817,13 +4139,17 @@ await context.fs.remove("notes/2026-08");`)}
                 <table class="sg">
                     <tr><th style="width:260px">Method</th><th>Description</th></tr>
                     <tr><td><code>read(path, fallback = null)</code></td><td>The stored value, or <code>fallback</code> when the path is absent. Unreadable JSON warns and returns the fallback too — corrupt data is not worth crashing an app over.</td></tr>
-                    <tr><td><code>write(path, value)</code></td><td>Stores any JSON-serializable value — or a <b>Blob</b> (a File is one), see below. <b>Rejects</b> when there is no room left, or when the value is a function, a symbol or <code>undefined</code> — quota is the one failure an app can act on, so it arrives as a rejection rather than a swallowed console line.</td></tr>
+                    <tr><td><code>write(path, value, opts)</code></td><td>Stores any JSON-serializable value — or a <b>Blob</b> (a File is one), see below. <b>Rejects</b> when there is no room left, or when the value is a function, a symbol or <code>undefined</code> — quota is the one failure an app can act on, so it arrives as a rejection rather than a swallowed console line. <code>opts.onProgress(loaded, total)</code> is called once, <code>(size, size)</code>, when the write lands.</td></tr>
                     <tr><td><code>remove(path)</code></td><td>Deletes one path.</td></tr>
                     <tr><td><code>list(prefix = "")</code></td><td>App-relative paths, sorted. <code>list("notes/")</code> is how a collection is enumerated.</td></tr>
                     <tr><td><code>stat(path)</code></td><td><code>{ path, name, type, size, modified, binary }</code> or <code>null</code> — what a file list shows without reading the bytes. JSON entries carry no timestamp (<code>modified: null</code>).</td></tr>
+                    <tr><td><code>entries(prefix = "")</code></td><td><code>{ folders, files }</code> — the <b>direct</b> children of a folder: <code>folders</code> as full paths, <code>files</code> as <code>stat()</code> objects, the <code>.folder</code> marker left out. One call instead of <code>list()</code> plus a <code>stat()</code> per file.</td></tr>
+                    <tr><td><code>move(from, to)</code></td><td>A file, or a whole folder with everything under it (markers included). <b>Rejects</b> if <code>to</code> exists or lies inside <code>from</code>. Binary bytes are handed from key to key, never re-encoded.</td></tr>
+                    <tr><td><code>copy(from, to)</code></td><td>The same, keeping <code>from</code>. The copy's bytes are its own — removing one leaves the other intact.</td></tr>
+                    <tr><td><code>rename(path, newName)</code></td><td>Move within the same folder. <code>newName</code> is one segment — a <code>/</code> rejects.</td></tr>
                     <tr><td><code>clear()</code></td><td>Deletes everything this app stored — and only what this app stored.</td></tr>
                     <tr><td><code>usage()</code></td><td><code>{ bytes, count }</code>. A host uses this to show what an app is keeping, or to offer deleting it.</td></tr>
-                    <tr><td><code>watch(cb)</code></td><td><code>cb(path, value)</code> on every change, <code>value === null</code> for a delete — including writes from <b>another tab</b> of the same origin. Returns an unsubscribe.</td></tr>
+                    <tr><td><code>watch(cb)</code></td><td><code>cb(path, value)</code> on every change, <code>value === null</code> for a delete — including writes from <b>another tab</b> of the same origin. Returns an unsubscribe. A move or copy is heard entry by entry: a write of each new path, then — for a move — a delete of each old one.</td></tr>
                 </table>
                 <p>Paths are slash-separated strings; leading, trailing and empty segments are
                    stripped, and <code>..</code> is not a way out of the app's own root.</p>
@@ -3859,6 +4185,42 @@ const img  = await createImageBitmap(file);`)}
     // stub as a data: URL: correct, only larger.
     getBlob(key), setBlob(key, blob), delBlob(key),
 };`)}
+                <h3 id="sac-fs-contract">The store contract</h3>
+                <p><code>&lt;sac-file-browser&gt;</code> and <code>sac.files.virtual()</code> take any object shaped
+                   like this handle as their <code>store</code> — a host's server or cloud drive included. Five
+                   methods are required (<code>read</code>, <code>write</code>, <code>remove</code>, <code>list</code>,
+                   <code>stat</code>); the rest are optional, and <code>sac.fs.ops</code> fills each gap from the five,
+                   so a consumer never asks what a store can do.</p>
+                ${code(`// a server store: the five required methods, plus what the server does natively
+const store = {
+    read(path, fallback), write(path, value, { onProgress } = {}),
+    remove(path), list(prefix), stat(path),
+    move(from, to),                     // one request, no bytes through the client
+    url(path),                          // a URL <img>/<video> can stream
+};
+
+// consumers — native when present, fallback otherwise
+const { folders, files } = await sac.fs.ops.entries(store, "Photos/");
+await sac.fs.ops.move(store, "Photos/old", "Archive/old");
+const src = await sac.fs.ops.url(store, "Photos/cat.png");   // null → read() it`)}
+                <table class="sg">
+                    <tr><th style="width:260px">Member</th><th>Description</th></tr>
+                    <tr><td><code>list(prefix)</code> <b>(required)</b></td><td>Every path under <code>prefix</code>, <b>at all depths</b>, flat and sorted — consumers derive folders from the paths. A store that can only list one level cheaply implements <code>entries()</code> too; consumers prefer it.</td></tr>
+                    <tr><td><code>entries(prefix)</code></td><td><code>{ folders, files }</code> — direct children only; <code>files</code> are <code>stat()</code> objects, markers excluded. Fallback: <code>list()</code> + <code>stat()</code> folded to one level.</td></tr>
+                    <tr><td><code>url(path)</code></td><td><code>string | null</code>, may be a Promise — a URL the browser streams, used instead of <code>read()</code> for thumbnails and media. Fallback: <code>null</code>. The default handle has none: object URLs nobody revokes would leak.</td></tr>
+                    <tr><td><code>move(from, to)</code></td><td>File or folder (everything under <code>from + "/"</code>). Rejects if <code>to</code> exists. Fallback: read + write + remove — every copy lands before any original leaves, so a failure leaves a duplicate, never a loss.</td></tr>
+                    <tr><td><code>copy(from, to)</code></td><td>Same shape; no bytes through the client on a remote store. Fallback: read + write.</td></tr>
+                    <tr><td><code>rename(path, newName)</code></td><td>One segment, no <code>/</code>. Fallback: <code>ops.move</code> within the same folder.</td></tr>
+                    <tr><td><code>write(path, value, { onProgress })</code></td><td><code>onProgress(loaded, total)</code> whenever the store can say — an upload. Stores that ignore the third argument keep working.</td></tr>
+                </table>
+                <p>Paths are relative and <code>/</code>-separated. A folder is its path without a trailing
+                   slash (<code>"Photos/2026"</code>); a prefix for <code>list()</code>/<code>entries()</code>
+                   carries one (<code>"Photos/"</code>) or is <code>""</code> for the root. An empty folder
+                   exists as a marker entry <code>&lt;folder&gt;/.folder</code>.</p>
+                <p class="sg-note">Every <code>sac.fs.ops</code> call takes the store first and returns a
+                   Promise: <code>entries(store, prefix)</code>, <code>url(store, path)</code>,
+                   <code>move(store, from, to)</code>, <code>copy(store, from, to)</code>,
+                   <code>rename(store, path, name)</code>, <code>write(store, path, value, opts)</code>.</p>
                 <h3>Host side</h3>
                 <p><code>sac.fs.for(id)</code> is also how a <b>host</b> reaches an app's data without
                    being that app: what an app keeps (<code>usage()</code>) and offering to delete it
@@ -3901,7 +4263,7 @@ if (doc) doc = await context.files.save(blob, { handle: doc.handle });   // Save
                 <table class="sg">
                     <tr><th style="width:260px">Member</th><th>Description</th></tr>
                     <tr><td><code>open(opts)</code></td><td><code>{ accept, multiple, title }</code> → a FileRef, an array of them with <code>multiple</code>, or <code>null</code> when cancelled. <code>accept</code> is the <code>&lt;input accept&gt;</code> grammar (<code>".png,image/*"</code> or an array).</td></tr>
-                    <tr><td><code>save(data, opts)</code></td><td><code>data</code>: a Blob, a string (<code>text/plain</code>) or any JSON value (<code>application/json</code>). <code>{ name, type, accept, handle, title }</code> → a FileRef or <code>null</code>. With a <code>handle</code> the same file is overwritten <b>without a dialog</b> — that is “Save”; without, it is “Save as…”.</td></tr>
+                    <tr><td><code>save(data, opts)</code></td><td><code>data</code>: a Blob, a string (<code>text/plain</code>) or any JSON value (<code>application/json</code>). <code>{ name, type, accept, handle, title, onProgress }</code> → a FileRef or <code>null</code>. With a <code>handle</code> the same file is overwritten <b>without a dialog</b> — that is “Save”; without, it is “Save as…”. <code>onProgress(loaded, total)</code> hears the write when the store reports it.</td></tr>
                     <tr><td><code>kind</code></td><td>Who answers: <code>"browser"</code>, <code>"virtual"</code> or a host's own — for wording (“Downloaded” vs “Saved”), never for branching logic.</td></tr>
                     <tr><td><code>use(provider)</code> <b>(host)</b></td><td>Install a provider; <code>null</code> restores the browser default.</td></tr>
                     <tr><td><code>forApp()</code> <b>(host)</b></td><td>The view handed to apps as <code>context.files</code> — <code>open</code>, <code>save</code>, <code>kind</code>; no <code>use()</code>.</td></tr>
@@ -3916,7 +4278,7 @@ if (doc) doc = await context.files.save(blob, { handle: doc.handle });   // Save
                 <table class="sg">
                     <tr><th style="width:260px">Provider</th><th>What the user gets</th></tr>
                     <tr><td><code>sac.files.browser</code> <b>(default)</b></td><td>The device's own files. The File System Access API where it exists — a real Save that writes back through the handle; elsewhere <code>&lt;input type="file"&gt;</code> to open and a download to save.</td></tr>
-                    <tr><td><code>sac.files.virtual(options)</code></td><td>The desktop's own file space: the kit's open/save dialog (<code>&lt;sac-file-browser&gt;</code> in a <code>&lt;sac-dialog&gt;</code>) over a <code>sac.fs</code> handle — by default <code>sac.fs.shared("files")</code>, one space every app on the desktop shares. Folders, thumbnails, overwrite confirmation, and a link to the device both ways. Options: <code>{ store, label, pixelated }</code>.</td></tr>
+                    <tr><td><code>sac.files.virtual(options)</code></td><td>The desktop's own file space: the kit's open/save dialog (<code>&lt;sac-file-browser&gt;</code> in a <code>&lt;sac-dialog&gt;</code>) over a <code>sac.fs</code> handle — by default <code>sac.fs.shared("files")</code>, one space every app on the desktop shares. Folders, thumbnails, overwrite confirmation, and a link to the device both ways. Options: <code>{ store, label, pixelated }</code>. When the store reports upload progress, the save dialog stays open with a progress bar until the write lands (buttons disabled, body dimmed, Escape held back); a store that reports nothing gets the dialog closing at once, as before.</td></tr>
                     <tr><td>your own</td><td><code>{ kind, open(opts), save(blob, opts) }</code> — a server, a cloud drive. <code>save</code> always receives a Blob; return FileRefs whose <code>handle.owner</code> is your provider and re-saves come back to you.</td></tr>
                 </table>
                 ${code(`// a desktop, once at boot — every app's Open/Save now shows the desktop's files
@@ -4131,6 +4493,7 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>date-field.placeholder-dmy-dot</code></td><td><code>dd.mm.yyyy</code></td><td><code>tt.mm.jjjj</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>date-field.placeholder-dmy-slash</code></td><td><code>dd/mm/yyyy</code></td><td><code>tt/mm/jjjj</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>date-field.placeholder-mdy-slash</code></td><td><code>mm/dd/yyyy</code></td><td><code>mm/tt/jjjj</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>dialog.cancel</code></td><td><code>Cancel</code></td><td><code>Abbrechen</code></td><td>sac.dialog</td></tr>
                     <tr><td><code>dialog.ok</code></td><td><code>OK</code></td><td><code>OK</code></td><td>sac.dialog</td></tr>
                     <tr><td><code>drop-zone.hint</code></td><td><code>or click to browse</code></td><td><code>oder klicken zum Auswählen</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>drop-zone.hint-touch</code></td><td><code>Tap to browse</code></td><td><code>Tippen zum Auswählen</code></td><td>sac-drop-zone</td></tr>
@@ -4138,10 +4501,16 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>drop-zone.label-touch</code></td><td><code>Choose files</code></td><td><code>Dateien auswählen</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>files.accept-description</code></td><td><code>Files</code></td><td><code>Dateien</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.cancel</code></td><td><code>Cancel</code></td><td><code>Abbrechen</code></td><td>sac.files, sac-file-browser</td></tr>
+                    <tr><td><code>files.col-modified</code></td><td><code>Modified</code></td><td><code>Geändert</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.col-name</code></td><td><code>Name</code></td><td><code>Name</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.col-size</code></td><td><code>Size</code></td><td><code>Größe</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.col-type</code></td><td><code>Type</code></td><td><code>Typ</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete</code></td><td><code>Delete</code></td><td><code>Löschen</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete-folder-empty</code></td><td><code>is empty and will be removed.</code></td><td><code>ist leer und wird entfernt.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete-folder-message</code></td><td><code>and the {n} file(s) in it will be permanently deleted.</code></td><td><code>und die {n} Datei(en) darin werden dauerhaft gelöscht.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete-folder-title</code></td><td><code>Delete this folder?</code></td><td><code>Diesen Ordner löschen?</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-many-message</code></td><td><code>{n} items, {files} file(s) in all, will be permanently deleted.</code></td><td><code>{n} Einträge mit insgesamt {files} Datei(en) werden dauerhaft gelöscht.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-many-title</code></td><td><code>Delete {n} items?</code></td><td><code>{n} Einträge löschen?</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete-message</code></td><td><code>will be permanently deleted.</code></td><td><code>wird dauerhaft gelöscht.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete-title</code></td><td><code>Delete this file?</code></td><td><code>Diese Datei löschen?</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.empty</code></td><td><code>Nothing here yet.</code></td><td><code>Noch nichts vorhanden.</code></td><td>sac-file-browser</td></tr>
@@ -4154,13 +4523,20 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>files.new-folder-name</code></td><td><code>Folder name</code></td><td><code>Ordnername</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.open</code></td><td><code>Open</code></td><td><code>Öffnen</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.open-title</code></td><td><code>Open</code></td><td><code>Öffnen</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.rename-dot</code></td><td><code>A name cannot start with a dot.</code></td><td><code>Ein Name darf nicht mit einem Punkt beginnen.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.rename-label</code></td><td><code>New name</code></td><td><code>Neuer Name</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.rename-taken</code></td><td><code>That name is already taken here.</code></td><td><code>Dieser Name ist hier schon vergeben.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.replace</code></td><td><code>Replace</code></td><td><code>Ersetzen</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.replace-message</code></td><td><code>already exists. Saving replaces it.</code></td><td><code>ist bereits vorhanden. Speichern ersetzt sie.</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.replace-title</code></td><td><code>Replace this file?</code></td><td><code>Diese Datei ersetzen?</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.root</code></td><td><code>Files</code></td><td><code>Dateien</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.save</code></td><td><code>Save</code></td><td><code>Speichern</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.save-title</code></td><td><code>Save as</code></td><td><code>Speichern unter</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.saving</code></td><td><code>Saving…</code></td><td><code>Speichern…</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.sort-by</code></td><td><code>Sort by {column}</code></td><td><code>Nach {column} sortieren</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.to-device</code></td><td><code>Save to this device instead…</code></td><td><code>Stattdessen auf diesem Gerät speichern…</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.type-file</code></td><td><code>File</code></td><td><code>Datei</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.type-folder</code></td><td><code>Folder</code></td><td><code>Ordner</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.up</code></td><td><code>Up one folder</code></td><td><code>Einen Ordner nach oben</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>filmstrip.add</code></td><td><code>Add frame</code></td><td><code>Frame hinzufügen</code></td><td>sac-filmstrip</td></tr>
                     <tr><td><code>filmstrip.delete</code></td><td><code>Delete frame</code></td><td><code>Frame löschen</code></td><td>sac-filmstrip</td></tr>
@@ -4248,11 +4624,26 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>palette.search</code></td><td><code>Search commands</code></td><td><code>Befehle durchsuchen</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.title</code></td><td><code>Command palette</code></td><td><code>Befehlspalette</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>pixel-canvas.label</code></td><td><code>Pixel canvas</code></td><td><code>Pixel-Leinwand</code></td><td>sac-pixel-canvas</td></tr>
+                    <tr><td><code>quick-look.download</code></td><td><code>Download</code></td><td><code>Herunterladen</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.empty</code></td><td><code>Nothing to preview</code></td><td><code>Nichts zum Anzeigen</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.failed</code></td><td><code>This file could not be previewed</code></td><td><code>Für diese Datei ist keine Vorschau möglich</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.label</code></td><td><code>Preview</code></td><td><code>Vorschau</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.loading</code></td><td><code>Loading…</code></td><td><code>Wird geladen …</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.next</code></td><td><code>Next</code></td><td><code>Nächste</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.prev</code></td><td><code>Previous</code></td><td><code>Vorherige</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.raw</code></td><td><code>Source</code></td><td><code>Quelltext</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.rendered</code></td><td><code>Rendered</code></td><td><code>Formatiert</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.truncated</code></td><td><code>Showing the first {shown} of {total}</code></td><td><code>Angezeigt: die ersten {shown} von {total}</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.truncated-unknown</code></td><td><code>Showing the first {shown}</code></td><td><code>Angezeigt: die ersten {shown}</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.unknown-type</code></td><td><code>Unknown type</code></td><td><code>Unbekannter Typ</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.unsupported</code></td><td><code>No preview available</code></td><td><code>Keine Vorschau verfügbar</code></td><td>sac-quick-look</td></tr>
+                    <tr><td><code>quick-look.view</code></td><td><code>View</code></td><td><code>Ansicht</code></td><td>sac-quick-look</td></tr>
                     <tr><td><code>scene.color</code></td><td><code>Color</code></td><td><code>Farbe</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>scene.delete</code></td><td><code>Delete</code></td><td><code>Löschen</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>scene.expand</code></td><td><code>Expand / collapse</code></td><td><code>Auf- / zuklappen</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>scene.unnamed</code></td><td><code>Unnamed</code></td><td><code>Unbenannt</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>scene.visibility</code></td><td><code>Toggle visibility</code></td><td><code>Sichtbarkeit umschalten</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>shortcutbar.label</code></td><td><code>Shortcuts</code></td><td><code>Tastenkürzel</code></td><td>sac-shortcut-bar</td></tr>
                     <tr><td><code>shortcuts.close</code></td><td><code>Close</code></td><td><code>Schließen</code></td><td>sac-shortcut-sheet</td></tr>
                     <tr><td><code>shortcuts.empty</code></td><td><code>No keyboard shortcuts are registered.</code></td><td><code>Keine Tastenkürzel registriert.</code></td><td>sac-shortcut-sheet</td></tr>
                     <tr><td><code>shortcuts.general</code></td><td><code>General</code></td><td><code>Allgemein</code></td><td>sac-shortcut-sheet</td></tr>
@@ -4285,7 +4676,7 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>window.restore</code></td><td><code>Restore</code></td><td><code>Wiederherstellen</code></td><td>sac-window</td></tr>
                 </table>
                 <p class="sg-note"><b>Placeholders:</b> <code>{name}</code>, <code>{problems}</code>, <code>{n}</code>, <code>{i}</code>,
-                   <code>{s}</code>/<code>{v}</code> are substituted by the component at render time —
+                   <code>{s}</code>/<code>{v}</code>, <code>{files}</code>, <code>{column}</code>, <code>{shown}</code>/<code>{total}</code> are substituted by the component at render time —
                    keep them verbatim in a translation. Date and number OUTPUT is never in this table:
                    that is Intl's job, always in the browser's locale.</p>
 
@@ -4577,6 +4968,15 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
         _syncDemoKeys() {
             const tb = this.querySelector("#demo-toolbox");
             if (tb) tb.toggleAttribute("hotkeys", !!this._demoOff);
+            // The demo shortcut bar's bindings are global too. alt+ combos:
+            // clear of the guide's own keys.
+            const bar = this.querySelector("#demo-shortcut-bar");
+            if (bar) bar.items = !this._demoOff ? [] : [
+                { id: "copy",  label: "Copy",  combo: "alt+c", icon: "copy",  action: () => {} },
+                { id: "trash", label: "Trash", combo: "alt+x", icon: "trash", action: () => {},
+                  shiftLabel: "Delete permanently", shiftAction: () => {} },
+                { id: "save",  label: "Save",  combo: "alt+s", icon: "save",  action: () => {} },
+            ];
         }
 
         unmount() {

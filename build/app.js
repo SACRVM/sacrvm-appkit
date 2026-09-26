@@ -183,12 +183,13 @@ await this.store.remove("notes/2026-08");`)}
         ["<code>remove(path)</code> · <code>clear()</code>", "Delete one path, or everything of yours."],
         ["<code>list(prefix)</code>", "Enumerate a collection: <code>list(\"notes/\")</code>."],
         ["<code>stat(path)</code>", "<code>{ name, type, size, modified, binary }</code> without reading the bytes."],
+        ["<code>entries(prefix)</code> · <code>move</code> · <code>copy</code> · <code>rename</code>", "One folder level as <code>{ folders, files }</code>; move, copy or rename a file or a whole folder. Optional in a host's own store — call them through <code>sac.fs.ops</code> and a store without them still works. See <a href=\"#/styleguide/helpers/sac-fs-contract\">the store contract</a>."],
         ["<code>usage()</code>", "<code>{ bytes, count }</code> — what you are keeping."],
         ["<code>watch(cb)</code>", "Changes as they happen, <b>including from another tab</b>. Returns an unsubscribe for <code>onUnmount</code>."],
     ])}
     <p class="bd-note">Async on purpose. Today it is this browser's storage; a
        host is free to back it with IndexedDB, the File System Access API or a
-       server, and an app written against these eight methods does not change a
+       server, and an app written against these methods does not change a
        line. That is also why you never call <code>localStorage</code> directly:
        you would be opting out of every host that offers something better.</p>
 

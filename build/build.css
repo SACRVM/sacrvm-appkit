@@ -52,7 +52,7 @@ app-build { display: block; }
     border-radius: var(--radius-s);
     padding: 1px 5px;
     font-size: 0.85em;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-family: var(--font-mono);
     color: var(--text);
 }
 
@@ -65,7 +65,7 @@ app-build { display: block; }
     overflow-x: auto;
     font-size: 0.8rem;
     line-height: 1.6;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-family: var(--font-mono);
     color: color-mix(in srgb, var(--fg) 85%, var(--bg));
     margin: 0;
 }
@@ -203,7 +203,7 @@ table.bd td:first-child code { white-space: nowrap; }
 .bd-shape-head sac-icon { --icon-size: 20px; color: var(--accent); }
 .bd-shape-head h3 {
     margin: 0;
-    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-family: var(--font-mono);
     font-size: 0.95rem;
 }
 .bd-shape p { font-size: 0.9rem; margin: 0 0 0.5rem; }
