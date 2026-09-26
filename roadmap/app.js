@@ -293,7 +293,7 @@
         </tr>
         <tr data-item="files-app">
             <td>Files-app kit</td>
-            <td>What a two-pane file manager needs: <code>sac-file-browser</code> marks, rename, drag between panes, sort/type columns, bar cursor and virtualised rows; <code>sac-quick-look</code>; <code>sac-shortcut-bar</code> (folds into the <code>sac-nav</code> “…”); folder drops + overlay in <code>sac-drop-zone</code>; the optional store contract with <code>sac.fs.ops</code>; save progress; prefix routes; <code>sac.dialog.prompt()</code>; <code>--font-mono</code>.</td>
+            <td>What a two-pane file manager needs: <code>sac-file-browser</code> marks, rename, drag between panes, sort/type columns, bar cursor and virtualised rows; <code>sac-quick-look</code>; <code>sac-shortcut-bar</code> (folds into the <code>sac-nav</code> “…”); folder drops + overlay in <code>sac-drop-zone</code>; the optional store contract with <code>sac.fs.ops</code>; save progress; prefix routes; <code>sac.dialog.prompt()</code>; <code>--font-mono</code>. Then: touch mark mode, <code>delete-button</code>, regional dates and <code>focus()</code> on the browser; an Undo action on <code>sac.toast</code>; async result sources and scoped views in the palette.</td>
             <td>The Fishbowl</td><td>L</td>
             <td><sac-chip label="done" color="green"></sac-chip></td>
         </tr>

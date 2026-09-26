@@ -957,7 +957,7 @@ if (rgba) {
                 <h2 id="sac-color-field">&lt;sac-color-field&gt;</h2>
                 <p>The compact form row for a sidebar or settings panel: an optional label, a color well
                    and a hex input, with the
-                   <a href="#sac-color-picker"><code>&lt;sac-color-picker&gt;</code></a> in a popover
+                   <a href="#/styleguide/components/sac-color-picker"><code>&lt;sac-color-picker&gt;</code></a> in a popover
                    instead of inline.</p>
                 <div class="sg-demo sg-row" style="align-items:flex-start;gap:2rem;flex-wrap:wrap;">
                     <sac-color-field id="demo-color-field" label="Accent" value="#3b82f6"></sac-color-field>
@@ -1133,7 +1133,7 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                 <h2 id="sac-date-field">&lt;sac-date-field&gt;</h2>
                 <p>The compact form row for a sidebar or settings panel: an optional label, a date
                    input in the chosen <code>format</code> and a calendar button, with the
-                   <a href="#sac-calendar"><code>&lt;sac-calendar&gt;</code></a> in a popover
+                   <a href="#/styleguide/components/sac-calendar"><code>&lt;sac-calendar&gt;</code></a> in a popover
                    instead of inline.</p>
                 <div class="sg-demo sg-row" style="align-items:flex-start;gap:2rem;flex-wrap:wrap;">
                     <sac-date-field id="demo-date-field" label="Due" value="2026-08-15"></sac-date-field>
@@ -1152,7 +1152,7 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                     ["value", "ISO date, tolerant in (whitespace, single-digit month/day: <code>2026-8-5</code>), reflected normalized <code>yyyy-mm-dd</code>. Empty or absent = no selection. An unparseable or impossible date (<code>2026-02-31</code>) is rejected — the last valid value is put back."],
                     ["min, max", "ISO bounds, inclusive, forwarded to the popover calendar (days outside render disabled there). A typed date outside the bounds counts as invalid and never commits."],
                     ["week-start", "<code>\"1\"</code> Monday (the calendar's default) or <code>\"0\"</code> Sunday, forwarded to the popover calendar."],
-                    ["format", "How the date is <b>shown and typed</b>: <code>iso</code> (<code>2026-09-25</code>), <code>dmy.</code> (<code>25.09.2026</code>), <code>dmy/</code> (<code>25/09/2026</code>), <code>mdy/</code> (<code>09/25/2026</code>). Absent = the page-wide <a href=\"#sac-regional\"><code>sac.regional</code></a> format, followed live. <code>value</code>, <code>min</code>/<code>max</code> and <code>sac:change</code> stay ISO whatever the format. Typing is tolerant — single-digit day/month, two-digit year (00–68 → 20xx), any of <code>. / -</code> between — and an ISO date is always accepted."],
+                    ["format", "How the date is <b>shown and typed</b>: <code>iso</code> (<code>2026-09-25</code>), <code>dmy.</code> (<code>25.09.2026</code>), <code>dmy/</code> (<code>25/09/2026</code>), <code>mdy/</code> (<code>09/25/2026</code>). Absent = the page-wide <a href=\"#/styleguide/helpers/sac-regional\"><code>sac.regional</code></a> format, followed live. <code>value</code>, <code>min</code>/<code>max</code> and <code>sac:change</code> stay ISO whatever the format. Typing is tolerant — single-digit day/month, two-digit year (00–68 → 20xx), any of <code>. / -</code> between — and an ISO date is always accepted."],
                     ["label", "Label line above the row (kit form-label styling). Absent or empty renders no label line at all. Also becomes the input's accessible name."],
                     ["placeholder", "The input's placeholder. Default follows the format (<code>yyyy-mm-dd</code>, <code>dd.mm.yyyy</code>, …), translated."],
                     ["disabled", "Greys the row out, blocks the input and the button, and closes an open popover."],
@@ -1208,7 +1208,7 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                 </div>
                 ${table("Attribute", [
                     ["value", "<code>HH:MM</code>, 24-hour whatever the display. Tolerant in (<code>9:5</code> → <code>09:05</code>), reflected normalized. Empty or absent = no time; garbage is rejected and the last valid value put back."],
-                    ["hour-cycle", "<code>h23</code> (00–23) or <code>h12</code> (01–12 plus an AM/PM segment). Absent = the page-wide <a href=\"#sac-regional\"><code>sac.regional</code></a> hour cycle, followed live."],
+                    ["hour-cycle", "<code>h23</code> (00–23) or <code>h12</code> (01–12 plus an AM/PM segment). Absent = the page-wide <a href=\"#/styleguide/helpers/sac-regional\"><code>sac.regional</code></a> hour cycle, followed live."],
                     ["step", "Minutes the arrows and the wheel step the minute segment by (default <code>1</code>; <code>5</code>, <code>15</code> …) — snapped to that grid. Typed minutes are not snapped."],
                     ["min, max", "<code>HH:MM</code> bounds, inclusive. A time outside shows <code>--danger</code> and never commits; focus leaving reverts it."],
                     ["label", "Label line above the field; also the group's accessible name."],
@@ -1413,6 +1413,7 @@ zone.addEventListener("sac:files", async (e) => {
                     ["sort-dir", "<code>asc</code> (default) or <code>desc</code>."],
                     ["header", "Presence shows a column header; a label sorts by its column, again reverses, and fires <code>sac:sort</code>."],
                     ["cursor-style", "<code>bar</code> — the commander cursor: a solid <code>--accent</code> bar with <code>--on-accent</code> ink while the list has focus, a hairline frame without it; only marked rows are tinted."],
+                    ["delete-button", "The per-row trash button (<code>part=\"delete\"</code>): <code>cursor</code> (default) — the hovered row and the cursor row, always on touch; <code>hover</code> — only the row under a hovering pointer, never on touch, and only while that row is the whole job (nothing marked, or just it); <code>none</code> — no button, the Delete key stays."],
                 ])}
                 ${table("Slot", [
                     ["title", "Sits in the header row between Up and the breadcrumb — a workspace menu, a pane caption. Hide the kit's breadcrumb with <code>::part(crumbs) { display: none }</code> when the title replaces it."],
@@ -1424,6 +1425,8 @@ zone.addEventListener("sac:files", async (e) => {
                     ["marked", "The marked paths, folders included, in row order. Get/set (setting fires nothing; needs <code>multiple</code>)."],
                     ["cursor", "The path of the row under the keyboard cursor — file or folder. Setting moves the cursor and scrolls it into view."],
                     ["items", "The rows in view order, read-only: <code>[{ kind, path, name, stat }]</code> — for a status line (“2 of 48 marked · 4.4 MB”)."],
+                    ["selecting", "Mark mode on/off, get/set (needs <code>multiple</code>). <code>true</code> enters it with the current marks (none is fine — a host's own Select button); <code>false</code> leaves it and clears the marks. Setting fires nothing."],
+                    ["focus(options?)", "Keyboard focus into the list, on the cursor row — or into an open rename / new-folder field. No <code>shadowRoot</code> reach-in; a commander's pane switch calls this."],
                     ["refresh()", "Re-read the current folder — after writing into the store from outside. The cursor stays on its row."],
                     ["up()", "One folder up; the cursor lands on the folder just left."],
                     ["newFolder()", "An inline name field; Enter creates the folder and goes into it. An empty folder keeps itself alive with a hidden <code>&lt;folder&gt;/.folder</code> marker entry — never listed, removed with the folder."],
@@ -1434,6 +1437,7 @@ zone.addEventListener("sac:files", async (e) => {
                     ["sac:select", "detail { paths } — the selection changed (user action)."],
                     ["sac:mark", "detail { paths } — the marks changed (user action, or cleared by a folder change)."],
                     ["sac:cursor", "detail { path, kind } — the row under the cursor changed: a move, or the folder loading under it. A preview pane follows this."],
+                    ["sac:selecting", "detail { selecting } — mark mode turned on or off: a long-press, Done, Esc, the last unmark, a folder change (not the property setter). Show or hide a “Delete (3)” action bar with it."],
                     ["sac:choose", "detail { paths } — a file was double-clicked or Enter'd. Folders open on a single click and never choose."],
                     ["sac:navigate", "detail { path } — the folder changed."],
                     ["sac:sort", "detail { key, dir } — a header label changed the sort."],
@@ -1470,10 +1474,34 @@ pane.addEventListener("sac:drop", async (e) => {
                    Ctrl/⌘+Space toggle one row, Ctrl/⌘+A marks all, Esc clears — an Esc with nothing marked still closes the
                    dialog around. Plain arrows keep the marks; a plain click clears them. Rows are virtualised: a folder of
                    thousands renders only what is in view. Rows expose <code>part="row file|folder [selected] [marked] [cursor]"</code>,
-                   so <code>::part(marked)</code> restyles marks.</p>
+                   so <code>::part(marked)</code> restyles marks; also <code>part="delete"</code> (the trash button), <code>"check"</code> (the
+                   mark-mode box), <code>"count"</code> and <code>"done"</code> (the mark-mode bar).</p>
+                <p><b>Dates follow <a href="#/styleguide/helpers/sac-regional"><code>sac.regional</code></a>.</b> The Modified column uses its date
+                   order (<code>2026-09-25</code> · <code>25.09.2026</code> · <code>25/09/2026</code> · <code>09/25/2026</code>) and,
+                   for today's files, its hour cycle, and repaints in place on <code>sac.regional.set()</code>; the cell's tooltip
+                   shows day and time. <b>Changed default in 2.17:</b> with <code>globals.js</code> loaded the column shows ISO
+                   (<code>2026-09-25</code>, <code>14:05</code>) until the app calls <code>sac.regional.set()</code> — before, it was
+                   formatted in the UI language (“Sep 25, 2026”). Without <code>sac.regional</code> it still formats in
+                   <code>sac.lang.locale()</code>; sizes always do.</p>
+                <h3>Mark mode on touch</h3>
+                <p>With <code>multiple</code>, a long-press (touch or pen, 450ms held still) marks the row and turns on mark mode:
+                   check boxes appear, a tap toggles a mark (folders too — nothing opens), Space toggles without a modifier, and
+                   the bar trades Up / breadcrumb / New folder for “{n} selected” and Done. It ends on Done, Esc, unmarking the
+                   last row, a folder change, or <code>selecting = false</code> — always clearing the marks. A swipe still
+                   scrolls; mouse and keyboard gestures are unchanged, but a long-press marks instead of starting a touch drag.</p>
+                ${code(`<sac-file-browser id="files" multiple delete-button="hover"></sac-file-browser>
+<div id="actions" hidden><button id="del">Delete</button></div>
+<script>
+    const files = document.getElementById("files");
+    files.addEventListener("sac:selecting", (e) => { actions.hidden = !e.detail.selecting; });
+    files.addEventListener("sac:mark", (e) => { del.textContent = \`Delete (\${e.detail.paths.length})\`; });
+    // the host's own "Select" button on desktop:  files.selecting = true;
+    // a pane switch in a commander:                files.focus();
+<\/script>`)}
                 ${compact(`under a 480px <em>container</em> the meta columns and their header labels drop out, so it fits
                    a narrow window, a split pane or a bottom-sheet dialog. Rows, header labels and the delete button are 44px on
-                   touch, and the delete button is always visible there — no hover to reveal it. Drag and drop is a
+                   touch (the mark-mode Done button too), and the default delete button is always visible there — no hover to reveal it
+                   (<code>delete-button="hover"</code> shows none on touch). Drag and drop is a
                    pointer-device affair; on a phone the host offers Move/Copy through its own toolbar.`)}
 
                 <h2 id="sac-quick-look">&lt;sac-quick-look&gt;</h2>
@@ -1552,7 +1580,7 @@ ql.source = url ? { url, type: stat.type, name: stat.name, size: stat.size }
                 <h2 id="sac-avatar">&lt;sac-avatar&gt;</h2>
                 <p>Round identity badge — initials by default, photo when <code>src</code> is set. The
                    <code>name</code> is hashed to one of the ten <code>--palette-*</code> slots and
-                   painted with the <a href="#sac-chip"><code>&lt;sac-chip&gt;</code></a> tint pattern
+                   painted with the <a href="#/styleguide/components/sac-chip"><code>&lt;sac-chip&gt;</code></a> tint pattern
                    (background at 25%, text at full); the same name always lands on the same slot, so a
                    person keeps their color across every list without anyone storing one.</p>
                 <div class="sg-demo sg-row">
@@ -1859,10 +1887,13 @@ canvas.addEventListener("contextmenu", (e) => {
                 <h2 id="sac-command-palette">&lt;sac-command-palette&gt;</h2>
                 <p>Ctrl-K palette — one line of markup per app
                    (<code>&lt;sac-command-palette&gt;&lt;/sac-command-palette&gt;</code> in the shell
-                   template), no command list of its own. Every open merges two <em>live</em> sources:
-                   the router's registered <strong>views</strong> and the app's own
+                   template), no command list of its own. Every open merges three <em>live</em> sources:
+                   the router's registered <strong>views</strong>, the app's own
                    <strong>commands</strong> from <code>sac.commands</code> — an app owns its
-                   toolbar, so it registers the actions it wants keyboard-reachable there.</p>
+                   toolbar, so it registers the actions it wants keyboard-reachable there — and async
+                   <strong>result sources</strong> asked on every keystroke. Views navigate through
+                   <code>sac.scope.hashFor()</code> when scope.js is loaded, so a view chosen inside
+                   <code>#/scope/SLUG/…</code> stays in that workspace — the <code>&lt;sac-nav&gt;</code> rule.</p>
                 <div class="sg-demo">
                     <div class="sg-row">
                         <button class="btn" style="width:auto" id="palette-open">Open the palette</button>
@@ -1885,6 +1916,16 @@ canvas.addEventListener("contextmenu", (e) => {
                     ["group", "Group header in the palette. Default <code>\"Commands\"</code>."],
                     ["hotkey", "Display hint only, rendered as a <code>&lt;kbd&gt;</code> via <code>sac.hotkeys.format()</code>. Binding it is the app's job — the palette must not own an app's key bindings."],
                     ["unregister(id) / list()", "Remove one by id; list them all in registration order."],
+                    ["registerSource({ id, group, minLength, debounce, search })", "An async result source for search-as-you-type; returns an unregister function. <code>search(query, { signal })</code> returns a Promise of <code>[{ id, label, icon, hint, hotkey, run }]</code> (or a plain array). Called with the trimmed query once it is <code>minLength</code> long (default 1 — never on an empty field) and <code>debounce</code> ms (default 150) after the last keystroke. <code>group</code>: a string or a function returning one (default <code>\"Results\"</code>). <code>id</code> upserts."],
+                    ["unregisterSource(id) / sources()", "Remove a source (a call still in flight is dropped); list them in registration order."],
+                ])}
+                ${table("Async sources", [
+                    ["Abort", "<code>signal</code> aborts when the query changes again or the palette closes. A superseded answer is dropped even when the source ignores the signal — a stale result never renders."],
+                    ["Ranking", "The source ranks its own results; the palette keeps their order and does not filter them by label. They join the end of a static group of the same name, or a group of their own below the static groups."],
+                    ["Streaming", "Arriving results never move rows already shown; the selected row stays selected."],
+                    ["Loading", "A small spinner beside the source's heading while a call is pending."],
+                    ["Errors", "A rejected or throwing search is logged (<code>console.warn</code>) and leaves one quiet “Couldn't load results” line under its heading. The palette keeps working."],
+                    ["hint", "Dim secondary text after the label (a path, a snippet); it gives way to the label when space is short."],
                 ])}
                 ${table("sac.hotkeys", [
                     ["register(combo, handler, opts)", "Returns an idempotent unregister function. On match: <code>preventDefault()</code>, then <code>handler(event)</code>. One document listener for the whole app, attached on first use."],
@@ -1907,7 +1948,25 @@ canvas.addEventListener("contextmenu", (e) => {
         hotkey: "mod+shift+e", run: () => exportJson(),
     });
     sac.hotkeys.register("mod+shift+e", () => exportJson(), { description: "Export as JSON" });
+
+    // search-as-you-type against the server
+    sac.commands.registerSource({
+        id: "notes-search",
+        group: () => sac.t("app.notes", "Notes"),
+        minLength: 2,
+        async search(query, { signal }) {
+            const res = await fetch(sac.scope.endpoint("/search?q=" + encodeURIComponent(query)), { signal });
+            return (await res.json()).map((h) => ({
+                id: h.id, label: h.title, icon: "note", hint: h.folder,
+                run: () => sac.router.navigate(sac.scope.hashFor("#/notes/" + h.id)),
+            }));
+        },
+    });
 <\/script>`)}
+                <p>Views rows resolve their destination when run: <code>sac.scope.hashFor(route.hash)</code> with scope.js,
+                   the raw hash without it; a prefix route (<code>#/files/*</code>) goes to its prefix; external links open in
+                   a new tab, unscoped. An isolated app's <code>registerSource</code> stays in its own frame — only
+                   <code>register()</code> commands are forwarded to the host palette.</p>
                 ${compact(`on compact the panel is a full-width sheet anchored to the <b>top</b> edge (below the
                    notch inset) — the half an on-screen keyboard leaves free; tapping the dimmed area closes it. Rows are
                    44px and the field 16px under <code>pointer: coarse</code>. <kbd>mod</kbd>+<kbd>K</kbd> does not exist on
@@ -1953,7 +2012,7 @@ canvas.addEventListener("contextmenu", (e) => {
 
                 <h2 id="sac-toast">&lt;sac-toast-stack&gt;</h2>
                 <p>Corner-anchored, self-dismissing notifications — the floating sibling of
-                   <a href="#sac-status-banner"><code>&lt;sac-status-banner&gt;</code></a>: the banner
+                   <a href="#/styleguide/components/sac-status-banner"><code>&lt;sac-status-banner&gt;</code></a>: the banner
                    is <em>inline</em> and waits to be cleared, a toast is transient app-level feedback
                    nobody has to read to proceed. Apps never place the stack by hand —
                    <code>sac.toast()</code> creates a shared bottom-right one on first use.</p>
@@ -1964,27 +2023,36 @@ canvas.addEventListener("contextmenu", (e) => {
                         <button class="btn" style="width:auto" data-toast="warn">warn</button>
                         <button class="btn" style="width:auto" data-toast="error">error</button>
                         <button class="btn" style="width:auto" data-toast="sticky">sticky + title</button>
+                        <button class="btn" style="width:auto" data-toast="action">with action</button>
                     </div>
                 </div>
                 ${table("sac-toast-stack", [
                     ["position", "<code>bottom-right</code> (default) | <code>bottom-left</code> | <code>top-right</code> | <code>top-left</code> — top corners clear the nav ribbon."],
                     ["Stacking", "The newest toast always appears nearest the anchored corner; hovering a toast pauses its timer, so a message you reached for never vanishes mid-read."],
+                    ["Keyboard", "An action toast pauses while focus is inside it; Escape dismisses it and focus returns where it came from. The action's label is announced with the message (same live region)."],
                 ])}
                 ${table("sac.toast(message, opts)", [
                     ["opts.kind", "\"info\" (default) | \"success\" | \"warn\" | \"error\" — icon in the kind's -text variant, soft background tint from the raw kind color."],
-                    ["opts.duration", "Milliseconds until auto-dismiss (default <code>4000</code>). <code>0</code> = sticky: stays until the × or <code>.dismiss()</code>."],
+                    ["opts.duration", "Milliseconds until auto-dismiss (default <code>4000</code>, <code>8000</code> with an action). <code>0</code> = sticky: stays until the × or <code>.dismiss()</code>."],
                     ["opts.title", "Optional bold line above the message. Title and message are set as text — never HTML."],
-                    ["→ returns", "The toast element, carrying a <code>.dismiss()</code> method for dismissing it yourself."],
+                    ["opts.action", "<code>{ label, labelKey, onClick, dismissOnClick }</code> — a text button between message and ×. <code>labelKey</code> is a <code>sac.t</code> key (relabelled on a language switch, <code>label</code> is its fallback); no label, no button. <code>onClick(card)</code> runs, then the toast dismisses — unless it returns <code>false</code> or <code>dismissOnClick: false</code> (the timer restarts once pointer and focus leave)."],
+                    ["→ returns", "The toast element, with <code>.dismiss()</code> and <code>.closed</code> — a promise resolving to how it ended: <code>\"action\"</code> (the action ran — wins over the later exit), <code>\"close\"</code> (× or Escape), <code>\"swipe\"</code>, <code>\"timeout\"</code>, <code>\"dismiss\"</code>."],
                 ])}
-                ${code(`sac.toast("Saved.", { kind: "success" });`)}
+                ${code(`sac.toast("Saved.", { kind: "success" });
+
+const t = sac.toast("Moved 3 files to the trash", {
+    action: { label: "Undo", labelKey: "files.undo", onClick: () => restore() },
+});
+if (await t.closed !== "action") purge();   // no Undo → make it final`)}
                 ${compact(`on compact every stack sits at the bottom edge, full width minus an 8px gutter, above the home
                    bar, newest nearest the bottom. A finger on a toast holds its timer; a sideways swipe past ~80px
-                   dismisses it. Under <code>pointer: coarse</code> the close button keeps its look with a 44px hit area.`)}
+                   dismisses it. Under <code>pointer: coarse</code> the close button keeps its look with a 44px hit area; an action button is a
+                   real 44px target, its label still on the message's first line.`)}
 
                 <h2 id="sac-progress">&lt;sac-progress&gt;</h2>
                 <p>Horizontal progress bar. Bar width and the percentage readout track
                    <code>value</code>/<code>max</code>, updated in place like
-                   <a href="#sac-slider">sac-slider</a>.</p>
+                   <a href="#/styleguide/components/sac-slider">sac-slider</a>.</p>
                 <div class="sg-demo sg-col">
                     <sac-progress id="demo-progress" label="Upload" value="40" max="100"></sac-progress>
                     <div class="sg-row">
@@ -2883,7 +2951,11 @@ bar.items = [
         root.querySelectorAll("[data-toast]").forEach(btn => {
             btn.addEventListener("click", () => {
                 const kind = btn.dataset.toast;
-                if (kind === "sticky") {
+                if (kind === "action") {
+                    sac.toast("Moved 3 files to the trash", {
+                        action: { label: "Undo", onClick: () => sac.toast("Restored.", { kind: "success" }) },
+                    });
+                } else if (kind === "sticky") {
                     sac.toast("No duration — this one waits for the × (or .dismiss()).", {
                         kind: "info", duration: 0, title: "Sticky",
                     });
@@ -4647,7 +4719,8 @@ sac.lang.set("de");        // or "auto"`)}
                 <p>The page-wide date and time <b>format</b>, separate from the language — an English UI with
                    German dates is a normal wish. Every <code>&lt;sac-date-field&gt;</code> and
                    <code>&lt;sac-time-field&gt;</code> without its own <code>format</code> /
-                   <code>hour-cycle</code> follows it, live.</p>
+                   <code>hour-cycle</code> follows it, live — and so does the Modified column of
+                   <a href="#/styleguide/components/sac-file-browser"><code>&lt;sac-file-browser&gt;</code></a>.</p>
                 ${code(`// on load, from the app's (or the host's) user setting
 sac.regional.set({ date: "dmy.", hourCycle: "h23" });   // iso · dmy. · dmy/ · mdy/  ·  h23 · h12
 sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
@@ -4751,6 +4824,8 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>files.save</code></td><td><code>Save</code></td><td><code>Speichern</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.save-title</code></td><td><code>Save as</code></td><td><code>Speichern unter</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.saving</code></td><td><code>Saving…</code></td><td><code>Speichern…</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.select-done</code></td><td><code>Done</code></td><td><code>Fertig</code></td><td>sac-file-browser (mark mode)</td></tr>
+                    <tr><td><code>files.selected-count</code></td><td><code>{n} selected</code></td><td><code>{n} ausgewählt</code></td><td>sac-file-browser (mark mode)</td></tr>
                     <tr><td><code>files.sort-by</code></td><td><code>Sort by {column}</code></td><td><code>Nach {column} sortieren</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.to-device</code></td><td><code>Save to this device instead…</code></td><td><code>Stattdessen auf diesem Gerät speichern…</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.type-file</code></td><td><code>File</code></td><td><code>Datei</code></td><td>sac-file-browser</td></tr>
@@ -4839,8 +4914,11 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>palette.empty</code></td><td><code>No matching commands</code></td><td><code>Keine passenden Befehle</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.group-views</code></td><td><code>Views</code></td><td><code>Ansichten</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.group-apps</code></td><td><code>Apps</code></td><td><code>Apps</code></td><td>sac-command-palette (sac.apps routes)</td></tr>
+                    <tr><td><code>palette.group-results</code></td><td><code>Results</code></td><td><code>Ergebnisse</code></td><td>sac-command-palette (async source without a group)</td></tr>
                     <tr><td><code>palette.placeholder</code></td><td><code>Type a command…</code></td><td><code>Befehl eingeben…</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.search</code></td><td><code>Search commands</code></td><td><code>Befehle durchsuchen</code></td><td>sac-command-palette</td></tr>
+                    <tr><td><code>palette.searching</code></td><td><code>Searching…</code></td><td><code>Suche läuft…</code></td><td>sac-command-palette (pending source)</td></tr>
+                    <tr><td><code>palette.source-error</code></td><td><code>Couldn't load results</code></td><td><code>Ergebnisse konnten nicht geladen werden</code></td><td>sac-command-palette (failed source)</td></tr>
                     <tr><td><code>palette.title</code></td><td><code>Command palette</code></td><td><code>Befehlspalette</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>pixel-canvas.label</code></td><td><code>Pixel canvas</code></td><td><code>Pixel-Leinwand</code></td><td>sac-pixel-canvas</td></tr>
                     <tr><td><code>quick-look.download</code></td><td><code>Download</code></td><td><code>Herunterladen</code></td><td>sac-quick-look</td></tr>
