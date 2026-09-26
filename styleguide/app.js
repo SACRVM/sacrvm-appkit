@@ -424,6 +424,7 @@
                 ${table("Attribute", [
                     ["storage", "Suffix of the localStorage key <code>sac.launcher.&lt;storage&gt;</code> holding <code>{ v: 1, order, hidden, custom }</code> (plus <code>sizes</code> / <code>colors</code> once used). Persisted ids that no longer exist are ignored and only dropped from storage on the next user change. <code>custom</code> manifests are (re)registered into <code>sac.apps</code> on connect. Absent (and no <code>persist=\"none\"</code>) = pure registry render: no persistence, no edit mode."],
                     ["persist", "<code>local</code> (default) = the <code>storage</code> key. <code>none</code> = the host owns persistence: localStorage is never read or written, the host feeds <code>layout</code> and saves what <code>sac:layout</code> reports. Edit mode, drag, hide, add/remove and menus keep working, with or without <code>storage</code>."],
+                    ["no-add", "Presence = no <b>Add app</b> tile and no Add dialog — for a host that installs apps through its own flow (an isolated install, an owner-only policy). The empty hint then shows in edit mode too."],
                     ["readonly", "Presence = view only: the arrangement renders (hidden tiles stay hidden, sizes and colors apply), but no Edit button, no drag, no move/hide/remove controls. Tile menus and launching still work — a shared space's member sees the owner's layout."],
                     ["edit", "Presence = edit mode (needs <code>storage</code> or <code>persist=\"none\"</code>, and no <code>readonly</code>): move/hide controls on every tile, hidden tiles grayed with a show control, remove only on user-added apps. The dashed tile adds an app by tag + script URL — cross-origin included (classic scripts need no CORS); added apps are plain medium tiles."],
                     ["drag", "Drag reorder (needs an editable launcher, see <code>edit</code>, and <code>sac.sortable</code>): absent = in edit mode only, <code>always</code> = also outside edit mode, <code>none</code> = move buttons only. Mouse lifts after 4px, touch after a 250ms long-press, Escape puts the tile back; a dashed outline marks where it lands. A drop persists exactly like the move buttons and fires <code>sac:layout</code>. The buttons stay the keyboard path."],
@@ -446,6 +447,7 @@
                 ])}
                 ${table("Event", [
                     ["sac:layout", "detail { order, hidden, customCount, layout } after every user change (move / drag / hide / show / add / remove). <code>layout</code> is the full object the <code>layout</code> property takes — save it as is; <code>order</code> is the effective order of every tile. Bubbles + composed."],
+                    ["sac:request-add", "The Add app tile was pressed. <b>Cancelable</b>: <code>preventDefault()</code> skips the built-in Add dialog so the host runs its own install flow behind the same tile. Bubbles + composed."],
                     ["sac:tile-action", "detail { key, appId, action } when a tile-menu item is chosen — <code>action</code> is the item's <code>id</code>, else its index; <code>appId</code> is null for a link tile. Fires after the item's <code>onClick</code>. Bubbles + composed."],
                 ])}
                 <p>A <code>menu</code> array on a manifest, a <code>tiles</code> entry, a link or
@@ -1889,7 +1891,7 @@ group.active = "two";   // programmatic switch — no event`)}
                 </div>
                 ${table("Slot", [
                     ["trigger", "The element that opens the menu (a <code>.btn</code>, an icon button, …). Kept in sync with <code>aria-haspopup</code> / <code>aria-expanded</code>. It keeps its own look: the item styles below apply only to buttons in the panel."],
-                    ["(default)", "Menu items: <code>&lt;button data-action=\"…\"&gt;</code>. An <code>&lt;hr&gt;</code> draws a separator; <code>data-danger</code> tints the hover state with <code>--danger</code>. Icons inside items inherit <code>--icon-size: 16px</code> from the panel."],
+                    ["(default)", "Menu items: <code>&lt;button data-action=\"…\"&gt;</code>. An <code>&lt;hr&gt;</code> draws a separator; <code>data-danger</code> tints the hover state with <code>--danger</code>; <code>hidden</code> hides an item (toggle it at runtime — hidden items are skipped by the arrow keys and by sac-nav's “…” fold). Icons inside items inherit <code>--icon-size: 16px</code> from the panel."],
                 ])}
                 ${table("Attribute / Method", [
                     ["open", "Presence = panel visible. Reflected by the methods; settable directly (it positions itself either way)."],
