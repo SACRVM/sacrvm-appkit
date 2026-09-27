@@ -158,11 +158,11 @@ npx serve .        # http://localhost:3000 — F5 is the whole dev loop`)}
         ["<code>appId</code>", "Your id, as the host registered it."],
         ["<code>fs</code>", "Storage scoped to your app — see below. <code>null</code> if the host granted none, so check before you reach for it."],
         ["<code>identity</code>", "Who is at this desktop: <code>get()</code> → <code>{ id, name, avatar }</code> or <code>null</code>, plus <code>onChange</code>. Read-only, and <b>not</b> authentication — see below."],
-        ["<code>files</code>", "The <b>user's</b> files: <code>open()</code> and <code>save()</code> — Open… / Save as… wherever the host keeps them. See below."],
+        ["<code>files</code>", "The <b>user's</b> files: <code>open()</code> and <code>save()</code> — Open… / Save as… wherever the host keeps them. <code>readonly</code> true: saving is refused (<code>denied</code>) — hide your Save. See below."],
         ["<code>setDirty(flag)</code>", "Tell the host you hold unsaved work; leaving the page then asks first. Clear it after a successful save."],
         ["<code>lang.get()</code><br><code>lang.onChange(cb)</code>", "The page's language (<code>\"en\"</code>, <code>\"de\"</code>, …) and a subscription. Read-only — the host owns the switch. See below."],
         ["<code>close()</code>", "Leave: your window closes, your view goes back to the host's home."],
-        ["<code>granted</code>", "<code>{ fs, files, identity, connect }</code> — what the host actually handed over, not what you asked for. An ungranted capability is <code>null</code> on context; this tells you why. <code>identity</code> may be <code>\"pseudonymous\"</code>."],
+        ["<code>granted</code>", "<code>{ fs, files, identity, connect }</code> — what the host actually handed over, not what you asked for. An ungranted capability is <code>null</code> on context; this tells you why. <code>identity</code> may be <code>\"pseudonymous\"</code>, <code>files</code> <code>\"scoped\"</code> (a picker the host narrowed for you — a folder, maybe read-only)."],
         ["<code>isolated</code>", "<code>true</code> when you run in a sandboxed frame — see <a href=\"#/build/running-sandboxed\">Running sandboxed</a>."],
     ])}
 
@@ -336,7 +336,7 @@ onUnmount() { this._offLang && this._offLang(); }`)}
         ["<code>connect</code>", "The https origins you talk to: <code>[\"https://api.example.com\"]</code> — origins only, no path. Sandboxed, these are the only ones your <code>fetch</code> can reach, and only if the host granted them."],
         ["<code>opens</code>", "File types you open, <code>[\"image/png\", \".png\"]</code> — metadata for a host's “Open with…”."],
         ["<code>isolated</code>", "<code>true</code> asks the host to run you sandboxed. It can only <b>raise</b> isolation: nothing in a manifest makes an app trusted."],
-        ["<code>tiles</code>", "Several launcher tiles for one app — a complex app deploys multiple entry points. Replaces the default tile; each entry may override <code>name</code>/<code>icon</code>/<code>description</code>/<code>badge</code>/<code>tile</code> and carry <code>route</code> (views), <code>params</code> (windows) and <code>accent</code> — the tile's color, which also becomes the app's highlight when opened through it. Give entries a stable <code>id</code>."],
+        ["<code>tiles</code>", "Several launcher tiles for one app — a complex app deploys multiple entry points. Replaces the default tile; each entry may override <code>name</code>/<code>icon</code>/<code>description</code>/<code>tile</code> and carry <code>route</code> (views), <code>params</code> (windows) and <code>accent</code> — the tile's color, which also becomes the app's highlight when opened through it. Give entries a stable <code>id</code>."],
     ])}
 
     <h2>Two shapes</h2>

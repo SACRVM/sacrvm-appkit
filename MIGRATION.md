@@ -44,7 +44,7 @@ Not carried over:
 | `--tag-*` | `--palette-*` |
 | `--tile-bg` / `--tile-border` | `--tile` / `--border-strong` |
 | raw `rgba(255,255,255,.08)` etc. | `--border`, `--hover`, … (derived — stop hardcoding) |
-| `.beta-badge` | `.tile-badge` (+ `.accent` variant) |
+| `.beta-badge` | removed — no tile badges in the kit |
 | `.tool-btn` | `.btn` (inside `.toolbar` for ribbon sizing) |
 | `#canvas-container` | `.viewport` |
 | hardcoded 6–16px radii | `--radius-s/m/l` (reduced — the kit is deliberately sharper than the legacy look) |

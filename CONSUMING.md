@@ -75,6 +75,20 @@ change unless you want to use it.
 Native DOM events on your **own** plain elements (`<input>`, `<button>`, …) are
 unaffected — this is only about events the kit dispatches.
 
+## Changes that reach app code in minor releases
+
+Most minors are additive. When one is not, it is listed here — check on re-vendor.
+
+**2.20.0 — tiles are square, tile badges are gone.**
+
+| Change | What to do |
+|---|---|
+| `.tile-badge` (+ `.accent`) removed from `ui.css` | Drop the markup; a status belongs in the tile's description or the app itself |
+| `<sac-launcher>`: `setBadge()` and the manifest / `tiles[]` / `setLinks` field `badge` removed | Delete the calls; a leftover `badge` field is ignored |
+| `.tile.large` is now 2 columns × 2 rows | Want the old 2 × 1 shape? Use `.tile.wide` |
+| Tiles are square: each takes its height from the grid's column width | Nothing, unless you sized rows yourself (next row) |
+| `.grid` is a size container | Place it in a full-width block (never a shrink-to-fit parent, where it collapses to 0) and remove any inline `grid-auto-rows` — it makes tiles overlap |
+
 ## Credits and licences: use `sac.about`, not a hand-rolled dialog
 
 If your app credits a third-party library, or ships a licence or trademark
