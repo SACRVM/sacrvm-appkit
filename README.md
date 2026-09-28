@@ -52,7 +52,7 @@ kit/                    the library — copy or link this folder into your app
                         sortable, lang + regional (in globals)
   js/i18n/              the kit's own strings in German (de.js)
   js/vendor/            marked + DOMPurify (for the help loader)
-  js/components/        47 files registering 51 sac-* Custom Elements
+  js/components/        49 files registering 53 sac-* Custom Elements
   templates/            copy-out skeletons: app shell, launcher, tool page,
                         list/detail, SPA shell, and two app skeletons
                         (dialog, fullscreen)

@@ -301,7 +301,7 @@
             <div class="sg-page">
                 <h1>Components</h1>
                 <p class="lead">
-                    47 component files, 51 custom elements — Shadow DOM (<code>mode: 'open'</code>)
+                    49 component files, 53 custom elements — Shadow DOM (<code>mode: 'open'</code>)
                     except the one documented light-DOM case, <code>&lt;sac-launcher&gt;</code>.
                     All are classic deferred scripts self-registering via
                     <code>customElements.define()</code>, usable from classic and module scripts alike.
@@ -1012,6 +1012,7 @@ if (rgba) {
                     ["alpha", "Presence adds the alpha channel: the picker gets its alpha strip and <code>value</code> reflects eight digits. Removing it forces the color opaque."],
                     ["label", "Label line above the row (kit form-label styling). Absent or empty renders no label line at all. Also becomes the hex input's accessible name."],
                     ["disabled", "Greys the row out, blocks the well and the input, and closes an open popover."],
+                    ["size", "Absent = the form row above; <code>cell</code> = a cell editor (a small swatch + the hex text, <kbd>Alt</kbd>+<kbd>↓</kbd> opens the picker) — see <a href=\"#/styleguide/components/cell-editors\">Cell editors</a>."],
                 ])}
                 ${table("Property", [
                     ["value", "get/set, normalized lowercase hex. Setting updates the well, the input and an open popover in place and fires <em>nothing</em> — events mean “the user did this”."],
@@ -1192,7 +1193,7 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                     ["label", "Label line above the row (kit form-label styling). Absent or empty renders no label line at all. Also becomes the input's accessible name."],
                     ["placeholder", "The input's placeholder. Default follows the format (<code>yyyy-mm-dd</code>, <code>dd.mm.yyyy</code>, …), translated."],
                     ["disabled", "Greys the row out, blocks the input and the button, and closes an open popover."],
-                    ["size", "<code>compact</code> (default — the small row for sidebars and settings panels) or <code>regular</code> — the metrics of a plain kit <code>&lt;input&gt;</code> (0.6rem padding, the UI font with tabular digits) for a normal form; the calendar button matches the field height. Give a date + time pair the same size and they stay one family. Touch sizing (44px, 16px type) is the same for both."],
+                    ["size", "<code>compact</code> (default — the small row for sidebars and settings panels) or <code>regular</code> — the metrics of a plain kit <code>&lt;input&gt;</code> (0.6rem padding, the UI font with tabular digits) for a normal form; the calendar button matches the field height. Give a date + time pair the same size and they stay one family. Touch sizing (44px, 16px type) is the same for both. <code>cell</code> = a cell editor — see <a href=\"#/styleguide/components/cell-editors\">Cell editors</a>."],
                 ])}
                 <p><b>CSS parts:</b> <code>label</code>, <code>input</code> (the text box), <code>well</code> (the calendar button).</p>
                 ${table("Property", [
@@ -1250,7 +1251,7 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["label", "Label line above the field; also the group's accessible name."],
                     ["placeholder", "<code>\"hh:mm\"</code>-style — each half shows dim in its empty segment. Default <code>--:--</code>."],
                     ["disabled", "Greys the field out and takes it out of the tab order."],
-                    ["size", "<code>compact</code> (default — the small row for sidebars and settings panels) or <code>regular</code> — the metrics of a plain kit <code>&lt;input&gt;</code> (0.6rem padding, the UI font with tabular digits) for a normal form; the calendar button matches the field height. Give a date + time pair the same size and they stay one family. Touch sizing (44px, 16px type) is the same for both."],
+                    ["size", "<code>compact</code> (default — the small row for sidebars and settings panels) or <code>regular</code> — the metrics of a plain kit <code>&lt;input&gt;</code> (0.6rem padding, the UI font with tabular digits) for a normal form; the calendar button matches the field height. Give a date + time pair the same size and they stay one family. Touch sizing (44px, 16px type) is the same for both. <code>cell</code> = a cell editor — see <a href=\"#/styleguide/components/cell-editors\">Cell editors</a>."],
                 ])}
                 ${table("Property", [
                     ["value", "get/set, <code>HH:MM</code> or <code>\"\"</code>. Setting updates the segments in place and fires nothing."],
@@ -1276,6 +1277,177 @@ sac.regional.set({ date: "dmy.", hourCycle: "h23" });`)}
                 ${compact(`each segment is a real text input with <code>inputmode="numeric"</code>: a tap opens the number
                    pad and typed digits run through the same segment logic. Under <code>pointer: coarse</code> the field is
                    44px tall, segments are at least 44px wide, and type is 16px.`)}
+
+                <h2 id="sac-number-field">&lt;sac-number-field&gt;</h2>
+                <p>A text input for numbers in the page-wide <a href="#/styleguide/helpers/sac-regional"><code>sac.regional</code></a>
+                   number format, re-shown live when it changes. The keyboard steps it; there are no ± buttons — that
+                   is <a href="#/styleguide/components/sac-stepper"><code>&lt;sac-stepper&gt;</code></a>. Same row family as the date field.</p>
+                <div class="sg-demo sg-row" style="align-items:flex-start;gap:2rem;flex-wrap:wrap;">
+                    <sac-number-field id="demo-number-field" label="Price" value="1234.5" decimals="2" min="0" step="0.5"></sac-number-field>
+                    <sac-number-field label="Count" value="42" min="0" max="100"></sac-number-field>
+                    <sac-number-field size="regular" label="Regular" value="-0.25" placeholder="0"></sac-number-field>
+                    <sac-number-field label="Locked" value="7" disabled></sac-number-field>
+                    <div class="sg-col" style="flex:1;min-width:220px;gap:0;">
+                        <label>Readout</label>
+                        <div class="log" id="demo-number-field-out" style="height:auto;min-height:64px;"></div>
+                    </div>
+                </div>
+                ${table("Attribute", [
+                    ["value", "A plain JS number string (<code>1234.5</code>, <code>-0.25</code>), reflected so — never the formatted text. Empty or absent = no value (<code>null</code>); garbage is rejected and the last valid value put back."],
+                    ["min, max", "Inclusive bounds. A typed number outside them shows <code>--danger</code> and never commits; stepping clamps into them."],
+                    ["step", "What <kbd>↑</kbd> / <kbd>↓</kbd> add (default <code>1</code>); <kbd>Shift</kbd> steps 10×."],
+                    ["decimals", "Fraction digits: the committed value is rounded to them and the text always shows exactly that many (<code>1,234.50</code>). Absent = as many as the number has."],
+                    ["label", "Label line above the input; also its accessible name."],
+                    ["placeholder", "The input's placeholder."],
+                    ["disabled", "Greys the field out and blocks it."],
+                    ["size", "<code>compact</code> (default — the date field's compact row), <code>regular</code> (a plain kit <code>&lt;input&gt;</code>'s metrics) or <code>cell</code> — the <a href=\"#/styleguide/components/cell-editors\">Cell editors</a> contract, right-aligned."],
+                ])}
+                ${table("Property", [
+                    ["value", "get/set — a number or <code>null</code>. Setting is programmatic: the text updates, nothing fires."],
+                    ["focus({ select })", "Focuses the input; <code>select: true</code> selects its text."],
+                ])}
+                ${table("Event", [
+                    ["sac:change", "detail { value } — number or <code>null</code>, on a user <b>commit</b> that moved the value: <kbd>Enter</kbd> or focus leaving. Stepping updates the text live and fires once, on commit. Bubbles, not composed."],
+                    ["sac:commit, sac:cancel", "<code>size=\"cell\"</code> only — see <a href=\"#/styleguide/components/cell-editors\">Cell editors</a>."],
+                ])}
+                ${table("Interaction", [
+                    ["Typing", "Tolerant: both separators are understood (<code>sac.regional.parseNumber</code>) — <code>2.000,25</code> and <code>2,000.25</code> both commit 2000.25. Invalid or out-of-range text shows <code>--danger</code> and reverts on blur or <kbd>Esc</kbd>."],
+                    ["↑ / ↓", "Step by <code>step</code> (<kbd>Shift</kbd> ×10) from the typed text, clamped to min/max; an empty field starts at 0 (or <code>min</code>)."],
+                ])}
+                <p><b>CSS parts:</b> <code>label</code>, <code>input</code>. ARIA: the input is a <code>spinbutton</code> with <code>aria-valuenow/-min/-max/-text</code>.</p>
+                ${code(`<sac-number-field label="Price" value="1234.5" decimals="2" min="0" step="0.5"></sac-number-field>
+
+field.addEventListener("sac:change", (e) => save(e.detail.value));   // 1234.5 | null
+sac.regional.set({ number: "1.234,5" });                            // every field re-shows: 1.234,50`)}
+                ${compact(`<code>inputmode="decimal"</code> brings up the number pad. Under <code>pointer: coarse</code> the input
+                   is 44px tall with 16px type.`)}
+
+                <h2 id="sac-select">&lt;sac-select&gt;</h2>
+                <p>A proper select: a combobox field showing the chosen option and a searchable list in a popover —
+                   the date field's top-layer technique. Type to filter, arrows to move, <kbd>Enter</kbd> to pick.
+                   One value.</p>
+                <div class="sg-demo sg-row" style="align-items:flex-start;gap:2rem;flex-wrap:wrap;">
+                    <sac-select id="demo-select" label="Fruit" value="pear" clearable></sac-select>
+                    <sac-select id="demo-select-dom" label="From &lt;option&gt;s" size="regular">
+                        <option value="draft">Draft</option>
+                        <option value="review" data-icon="eye" selected>In review</option>
+                        <option value="done" data-icon="check">Done</option>
+                        <option value="archived" disabled>Archived</option>
+                    </sac-select>
+                    <sac-select label="Locked" value="a" disabled><option value="a">Alpha</option></sac-select>
+                    <div class="sg-col" style="flex:1;min-width:220px;gap:0;">
+                        <label>Readout</label>
+                        <div class="log" id="demo-select-out" style="height:auto;min-height:64px;"></div>
+                    </div>
+                </div>
+                ${table("Attribute", [
+                    ["value", "The chosen option's value, reflected. Empty or absent = none. A value no option carries is kept and shown as-is — options may arrive later."],
+                    ["label", "Label line above the field; also the accessible name of the input and the list."],
+                    ["placeholder", "Shown while nothing is chosen. Default <code>Select…</code>, translated."],
+                    ["clearable", "A × button clears the choice (<code>value</code> becomes <code>\"\"</code>, <code>sac:change</code> fires)."],
+                    ["disabled", "Greys the field out and blocks it; an open list closes."],
+                    ["size", "<code>compact</code> (default — the date field's compact row), <code>regular</code> (a plain kit <code>&lt;input&gt;</code>'s metrics) or <code>cell</code> — the <a href=\"#/styleguide/components/cell-editors\">Cell editors</a> contract."],
+                ])}
+                ${table("Property", [
+                    ["options", "get/set — <code>[{ value, label, icon?, disabled? }]</code>. Wins over light-DOM <code>&lt;option&gt;</code> children (<code>value</code>, text, <code>data-icon</code>, <code>disabled</code>, <code>selected</code>), which are re-read when they change; set <code>null</code> to go back to them."],
+                    ["value", "get/set, a string. Setting is programmatic: nothing fires."],
+                    ["selectedOption", "Read-only — the chosen option object, or <code>null</code>."],
+                    ["open", "Read-only — whether the list is showing."],
+                    ["focus({ select })", "Focuses the input; <code>select: true</code> selects its text."],
+                ])}
+                ${table("Event", [
+                    ["sac:change", "detail { value, option } — on a user pick or clear. Bubbles, not composed."],
+                    ["sac:commit, sac:cancel", "<code>size=\"cell\"</code> only — see <a href=\"#/styleguide/components/cell-editors\">Cell editors</a>."],
+                ])}
+                ${table("Keyboard", [
+                    ["Typing", "Opens the list and filters it — labels, case-insensitive, prefix matches first; the first enabled match is highlighted."],
+                    ["↓ / ↑", "Open on the chosen option; then move, skipping disabled rows. Alt+↑ closes."],
+                    ["Home / End, PgUp / PgDn", "First / last / ±10 while the list is open (closed, they move the caret)."],
+                    ["Enter", "Pick the highlighted option — the list closes."],
+                    ["Esc", "Close the list; closed, revert typed text."],
+                    ["Tab", "Close the list — picking the highlighted option when you typed or arrowed — and move on. Never swallowed."],
+                ])}
+                <p><b>ARIA:</b> the input is <code>role="combobox"</code> (<code>aria-expanded</code>, <code>aria-controls</code>,
+                   <code>aria-activedescendant</code>, <code>aria-autocomplete="list"</code>); the list is a <code>listbox</code> of
+                   <code>option</code>s with <code>aria-selected</code> / <code>aria-disabled</code>.
+                   <b>CSS parts:</b> <code>label</code>, <code>field</code>, <code>input</code>, <code>clear</code>, <code>list</code>, <code>option</code>.</p>
+                ${code(`<sac-select label="Status" value="review">
+    <option value="draft">Draft</option>
+    <option value="review" data-icon="eye">In review</option>
+    <option value="archived" disabled>Archived</option>
+</sac-select>
+
+sel.options = [{ value: "pear", label: "Pear", icon: "star" }, { value: "plum", label: "Plum" }];
+sel.addEventListener("sac:change", (e) => save(e.detail.value));`)}
+                ${compact(`rows are 44px under <code>pointer: coarse</code>, the field 44px with 16px type. The list is at most
+                   <code>100vw - 16px</code> wide, clamped 8px inside the viewport, flips above the field when there is more room
+                   there, and is never taller than the room it has — measured against the visual viewport, so the on-screen
+                   keyboard shrinks it instead of covering it.`)}
+
+                <h2 id="cell-editors">Cell editors — size="cell"</h2>
+                <p>One contract for editing inside a table cell. <code>size="cell"</code> on
+                   <code>&lt;sac-number-field&gt;</code>, <code>&lt;sac-select&gt;</code>, <code>&lt;sac-date-field&gt;</code>,
+                   <code>&lt;sac-time-field&gt;</code>, <code>&lt;sac-chip-input&gt;</code> or <code>&lt;sac-color-field&gt;</code>
+                   makes it borderless, fills its container (100% × 100%), drops the label line and its own focus ring —
+                   the host draws the cell's. Without <code>size="cell"</code> every field behaves exactly as before.</p>
+                <div class="sg-demo sg-row" style="align-items:flex-start;gap:2rem;flex-wrap:wrap;">
+                    <div class="sg-cells" id="demo-cells">
+                        <span>text</span><div><input class="cell-input" value="Plain text"></div>
+                        <span>number</span><div><sac-number-field size="cell" value="1234.5" decimals="2"></sac-number-field></div>
+                        <span>select</span><div><sac-select size="cell" id="demo-cell-select" value="pear" clearable></sac-select></div>
+                        <span>date</span><div><sac-date-field size="cell" value="2026-09-28"></sac-date-field></div>
+                        <span>time</span><div><sac-time-field size="cell" value="14:30"></sac-time-field></div>
+                        <span>tags</span><div><sac-chip-input size="cell" id="demo-cell-chips"></sac-chip-input></div>
+                        <span>color</span><div><sac-color-field size="cell" value="#22c55e"></sac-color-field></div>
+                    </div>
+                    <div class="sg-col" style="flex:1;min-width:220px;gap:0;">
+                        <label>Events</label>
+                        <div class="log" id="demo-cells-out" style="height:auto;min-height:64px;"></div>
+                    </div>
+                </div>
+                ${table("Member", [
+                    ["size=\"cell\"", "Borderless, <code>width</code>/<code>height: 100%</code>, the cell's font (<code>font: inherit</code>), no label, no focus ring. Horizontal padding: <code>--cell-padding-inline</code> (default <code>8px</code>), set it on the grid."],
+                    ["value", "get/set, as in the field's own section. Setting is programmatic and fires nothing."],
+                    ["focus({ select })", "Focuses the field's text; <code>select: true</code> selects all of it, so a typed key replaces the value (the time field focuses its hour segment)."],
+                ])}
+                ${table("Event", [
+                    ["sac:commit", "detail { value, shiftKey } — <kbd>Enter</kbd> committed the edit (<code>shiftKey</code>: move up instead of down). Bubbles + composed. Not fired while the text is invalid — the editor stays open, marked <code>--danger</code>."],
+                    ["sac:cancel", "detail { value } — <kbd>Esc</kbd> restored the value the field had <b>when focus entered it</b> (silently: no <code>sac:change</code> for the restore). Bubbles + composed."],
+                    ["sac:change", "As today — on every committed change, including picks inside a popover and a Tab commit."],
+                ])}
+                ${table("Key", [
+                    ["Enter", "Commits and fires <code>sac:commit</code> — unless the field needs it right now: an open popover or list picks with it first (the list closes), and the <b>next</b> <kbd>Enter</kbd> commits. Either way the keydown is stopped at the field."],
+                    ["Esc", "Restores and fires <code>sac:cancel</code> — unless an open popover or list is closed by it first. Stopped at the field."],
+                    ["Tab / Shift+Tab", "Never swallowed: the field commits (invalid text reverts), closes any popover and lets the keydown continue, so the host moves. No <code>sac:commit</code> — the Tab is the host's signal."],
+                    ["Arrows, Home/End, …", "The editor's: caret, stepping, list navigation. They bubble — a host in edit mode leaves them alone."],
+                ])}
+                ${table("Field", [
+                    ["sac-number-field", "Right-aligned. <kbd>↑</kbd> / <kbd>↓</kbd> step."],
+                    ["sac-select", "Typing or <kbd>↓</kbd> opens the list; Tab takes a typed or arrowed match."],
+                    ["sac-date-field", "The calendar button leaves the tab order; <kbd>Alt</kbd>+<kbd>↓</kbd> (or a click) opens the calendar. Picking a day returns focus to the text."],
+                    ["sac-time-field", "Only the hour segment is a tab stop; <kbd>←</kbd> / <kbd>→</kbd> reach the others."],
+                    ["sac-chip-input", "One line; the entry is always shown (no ghost button). The list opens on typing or <kbd>↓</kbd> — not on focus — and closes after each pick; Tab takes a typed match."],
+                    ["sac-color-field", "A small swatch + the hex text; <kbd>Alt</kbd>+<kbd>↓</kbd> or the swatch opens the picker. <kbd>Enter</kbd> inside the picker closes it."],
+                    [".cell-input", "The CSS recipe for a plain <code>&lt;input&gt;</code> / <code>&lt;textarea&gt;</code> in a cell — same look. It fires no <code>sac:commit</code> / <code>sac:cancel</code>: the host reads <kbd>Enter</kbd> / <kbd>Esc</kbd> / <kbd>Tab</kbd> itself."],
+                ])}
+                ${code(`// A host (a data grid) opening an editor in a cell
+function edit(cell, column, row) {
+    const ed = document.createElement("sac-number-field");
+    ed.setAttribute("size", "cell");
+    ed.value = row[column.field];
+    cell.replaceChildren(ed);
+    ed.focus({ select: true });
+
+    ed.addEventListener("sac:commit", (e) => { save(row, column, e.detail.value); close(); move(e.detail.shiftKey ? "up" : "down"); });
+    ed.addEventListener("sac:cancel", () => close());            // value already restored
+    ed.addEventListener("keydown", (e) => {                      // Tab: the field committed, the host moves
+        if (e.key === "Tab") { e.preventDefault(); save(row, column, ed.value); close(); move(e.shiftKey ? "left" : "right"); }
+    });
+}
+
+<input class="cell-input">   <!-- a plain text cell: the host handles Enter / Esc / Tab -->`)}
+                ${compact(`a cell editor keeps its cell's height (no 44px floor) but uses 16px type under
+                   <code>pointer: coarse</code>, so iOS does not zoom on focus. Popovers and lists keep their own touch sizing.`)}
 
                 <h2 id="sac-collapsible">&lt;sac-collapsible&gt;</h2>
                 <p>Clamps content to a max height; when it actually overflows, a separator line with a
@@ -1333,6 +1505,7 @@ sac.regional.set({ date: "dmy.", hourCycle: "h23" });`)}
                 ${table("Attribute", [
                     ["add-label", "Ghost-button text when empty (default \"Add\")."],
                     ["allow-create", "Enables “Create '…'” with the 10-swatch palette picker."],
+                    ["size", "Absent = the inline row; <code>cell</code> = a cell editor (one line, list on typing only) — see <a href=\"#/styleguide/components/cell-editors\">Cell editors</a>."],
                 ])}
                 ${table("Property", [
                     ["value", "string[] — normalised names; reading returns a copy."],
@@ -2836,13 +3009,55 @@ bar.items = [
 
         // Time fields (only this section has them) — newest line on top.
         const tfOut = root.querySelector("#demo-time-field-out");
-        root.querySelectorAll("sac-time-field").forEach((f) => {
+        root.querySelectorAll("sac-time-field:not([size=cell])").forEach((f) => {
             f.addEventListener("sac:change", (e) => {
                 const row = document.createElement("div");
                 row.textContent = `${f.getAttribute("label")} → ${e.detail.value === "" ? "(cleared)" : e.detail.value}`;
                 tfOut.prepend(row);
                 while (tfOut.children.length > 6) tfOut.lastChild.remove();
             });
+        });
+
+        // Number field + select — newest line on top, six lines kept.
+        const logInto = (out, text) => {
+            const row = document.createElement("div");
+            row.textContent = text;
+            out.prepend(row);
+            while (out.children.length > 6) out.lastChild.remove();
+        };
+        const nfOut = root.querySelector("#demo-number-field-out");
+        root.querySelectorAll("sac-number-field:not([size=cell])").forEach((f) => {
+            f.addEventListener("sac:change", (e) => logInto(nfOut, `${f.getAttribute("label")} → ${e.detail.value}`));
+        });
+        const FRUITS = [
+            { value: "apple", label: "Apple" }, { value: "apricot", label: "Apricot" },
+            { value: "banana", label: "Banana" }, { value: "cherry", label: "Cherry", disabled: true },
+            { value: "fig", label: "Fig" }, { value: "grape", label: "Grape" },
+            { value: "pear", label: "Pear", icon: "star" }, { value: "plum", label: "Plum" },
+        ];
+        const selOut = root.querySelector("#demo-select-out");
+        for (const s of [root.querySelector("#demo-select"), root.querySelector("#demo-cell-select")]) s.options = FRUITS;
+        root.querySelectorAll("#demo-select, #demo-select-dom").forEach((s) => {
+            s.addEventListener("sac:change", (e) => logInto(selOut, `${s.getAttribute("label")} → ${e.detail.value === "" ? "(cleared)" : e.detail.value}`));
+        });
+
+        // Cell editors — every contract event into one log.
+        root.querySelector("#demo-cell-chips").suggestions = [
+            { name: "work", color: "blue" }, { name: "idea", color: "yellow" }, { name: "urgent", color: "red" },
+        ];
+        root.querySelector("#demo-cell-chips").value = ["work"];
+        const cells = root.querySelector("#demo-cells");
+        const cellsOut = root.querySelector("#demo-cells-out");
+        for (const type of ["sac:commit", "sac:cancel", "sac:change"]) {
+            cells.addEventListener(type, (e) => {
+                const name = e.target.tagName.toLowerCase().replace("sac-", "");
+                const shift = e.detail.shiftKey ? " +Shift" : "";
+                logInto(cellsOut, `${type.slice(4)} · ${name} → ${JSON.stringify(e.detail.value)}${shift}`);
+            });
+        }
+        // The plain .cell-input: its host reads the keys itself.
+        cells.querySelector(".cell-input").addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === "Escape") logInto(cellsOut, `${e.key} · input → ${JSON.stringify(e.target.value)} (host-handled)`);
         });
 
         // Chip input
@@ -3489,6 +3704,9 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                    lives on a thin wrapper: <code>&lt;span class="select"&gt;&lt;select&gt;…&lt;/select&gt;&lt;/span&gt;</code>.
                    A bare <code>&lt;select&gt;</code> shows no arrow. The chevron is an SVG mask filled with
                    <code>var(--text-muted)</code>, so it follows the theme with no colour literal.</p>
+                <p class="sg-note"><b>Searchable or in a table?</b> <a href="#/styleguide/components/sac-select"><code>&lt;sac-select&gt;</code></a>
+                   is the combobox with type-to-search; <code>.cell-input</code> is the plain input as a cell editor —
+                   see <a href="#/styleguide/components/cell-editors">Cell editors</a>.</p>
 
                 <h2>Surfaces painted from data — the onColor rule</h2>
                 <p>Sometimes a surface's background IS the app's output: the colour a picker just
@@ -4813,20 +5031,29 @@ sac.lang.set("de");        // or "auto"`)}
                 <p class="sg-note"><b>Legacy:</b> a flat table assigned straight onto <code>sac.i18n</code>
                    (<code>Object.assign(sac.i18n, {…})</code>, the boot-time model before 2.12) is still
                    honoured for every language, after the current language's table.</p>
-                <h2 id="sac-regional">sac.regional — date &amp; time format</h2>
-                <p>The page-wide date and time <b>format</b>, separate from the language — an English UI with
+                <h2 id="sac-regional">sac.regional — date, time &amp; number format</h2>
+                <p>The page-wide date, time and number <b>format</b>, separate from the language — an English UI with
                    German dates is a normal wish. Every <code>&lt;sac-date-field&gt;</code> and
                    <code>&lt;sac-time-field&gt;</code> without its own <code>format</code> /
-                   <code>hour-cycle</code> follows it, live — and so does the Modified column of
+                   <code>hour-cycle</code> follows it, live — and so do every
+                   <a href="#/styleguide/components/sac-number-field"><code>&lt;sac-number-field&gt;</code></a> and the Modified column of
                    <a href="#/styleguide/components/sac-file-browser"><code>&lt;sac-file-browser&gt;</code></a>.</p>
                 ${code(`// on load, from the app's (or the host's) user setting
-sac.regional.set({ date: "dmy.", hourCycle: "h23" });   // iso · dmy. · dmy/ · mdy/  ·  h23 · h12
-sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
+sac.regional.set({ date: "dmy.", hourCycle: "h23", number: "1.234,5" });
+sac.regional.onChange(({ date, hourCycle, number }) => rerender());
+
+sac.regional.formatNumber(1234.5, { decimals: 2 });   // "1.234,50"
+sac.regional.parseNumber("1.234,5");                  // 1234.5
+sac.regional.parseNumber("1,234.5");                  // 1234.5 — the other style is understood too
+sac.regional.parseNumber("12,34.5");                  // NaN`)}
                 <table class="sg">
                     <tr><th style="width:260px">Member</th><th>Description</th></tr>
-                    <tr><td><code>sac.regional.get()</code></td><td><code>{ date, hourCycle }</code>. Default <code>{ date: "iso", hourCycle: "h23" }</code>.</td></tr>
-                    <tr><td><code>sac.regional.set(partial)</code></td><td>Merge — <code>date</code>: <code>"iso"</code> | <code>"dmy."</code> | <code>"dmy/"</code> | <code>"mdy/"</code>; <code>hourCycle</code>: <code>"h23"</code> | <code>"h12"</code>. Unknown values are ignored. <b>Not persisted</b>: the app or host owns the user setting and calls this on load.</td></tr>
-                    <tr><td><code>sac.regional.onChange(cb)</code></td><td><code>cb({ date, hourCycle })</code>; returns an unsubscribe. Also <code>sac:regional</code> on <code>document</code>.</td></tr>
+                    <tr><td><code>sac.regional.get()</code></td><td><code>{ date, hourCycle, number }</code>. Default <code>{ date: "iso", hourCycle: "h23", number: "1,234.5" }</code>.</td></tr>
+                    <tr><td><code>sac.regional.set(partial)</code></td><td>Merge — <code>date</code>: <code>"iso"</code> | <code>"dmy."</code> | <code>"dmy/"</code> | <code>"mdy/"</code>; <code>hourCycle</code>: <code>"h23"</code> | <code>"h12"</code>; <code>number</code>: <code>"1,234.5"</code> | <code>"1.234,5"</code> | <code>"1 234,5"</code> | <code>"1'234.5"</code> — the identifier <em>is</em> the pattern (group, then decimal separator; the space is a no-break space). Unknown values are ignored. <b>Not persisted</b>: the app or host owns the user setting and calls this on load.</td></tr>
+                    <tr><td><code>sac.regional.onChange(cb)</code></td><td><code>cb({ date, hourCycle, number })</code>; returns an unsubscribe. Also <code>sac:regional</code> on <code>document</code>.</td></tr>
+                    <tr><td><code>sac.regional.separators()</code></td><td><code>{ decimal, group }</code> of the current number format.</td></tr>
+                    <tr><td><code>sac.regional.formatNumber(n, opts)</code></td><td>A number in the current format. <code>opts</code>: <code>decimals</code> (exact fraction digits), <code>minFractionDigits</code> / <code>maxFractionDigits</code> (default 0 / 20 — as many as the number needs), <code>group</code> (default <code>true</code>). Not finite → <code>""</code>.</td></tr>
+                    <tr><td><code>sac.regional.parseNumber(text)</code></td><td>Text → number; <code>NaN</code> for empty text or garbage. Tolerant: spaces and apostrophes are grouping; with both <code>.</code> and <code>,</code> the last one is the decimal separator; one repeated is grouping; a single one is decimal — except the format's own group separator in a thousands position (<code>1,234</code> under <code>"1,234.5"</code>). Grouping must sit in thousands positions (<code>12,34.5</code> → <code>NaN</code>).</td></tr>
                 </table>
                 <p class="sg-note"><b>Why a setting and not detection:</b> browsers never expose the operating
                    system's regional date / time format to a page (fingerprinting). <code>Intl</code> and the native
@@ -5008,6 +5235,7 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>nav.menu</code></td><td><code>Menu</code></td><td><code>Menü</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.more</code></td><td><code>More</code></td><td><code>Mehr</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.no-sections</code></td><td><code>No sections yet.</code></td><td><code>Noch keine Bereiche.</code></td><td>sac-nav</td></tr>
+                    <tr><td><code>number-field.number</code></td><td><code>Number</code></td><td><code>Zahl</code></td><td>sac-number-field</td></tr>
                     <tr><td><code>palette.commands</code></td><td><code>Commands</code></td><td><code>Befehle</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.empty</code></td><td><code>No matching commands</code></td><td><code>Keine passenden Befehle</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.group-views</code></td><td><code>Views</code></td><td><code>Ansichten</code></td><td>sac-command-palette</td></tr>
@@ -5038,6 +5266,10 @@ sac.regional.onChange(({ date, hourCycle }) => rerender());`)}
                     <tr><td><code>scene.expand</code></td><td><code>Expand / collapse</code></td><td><code>Auf- / zuklappen</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>scene.unnamed</code></td><td><code>Unnamed</code></td><td><code>Unbenannt</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>scene.visibility</code></td><td><code>Toggle visibility</code></td><td><code>Sichtbarkeit umschalten</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>select.clear</code></td><td><code>Clear</code></td><td><code>Leeren</code></td><td>sac-select</td></tr>
+                    <tr><td><code>select.no-matches</code></td><td><code>No matches</code></td><td><code>Keine Treffer</code></td><td>sac-select</td></tr>
+                    <tr><td><code>select.options</code></td><td><code>Options</code></td><td><code>Optionen</code></td><td>sac-select</td></tr>
+                    <tr><td><code>select.placeholder</code></td><td><code>Select…</code></td><td><code>Auswählen …</code></td><td>sac-select</td></tr>
                     <tr><td><code>shortcutbar.label</code></td><td><code>Shortcuts</code></td><td><code>Tastenkürzel</code></td><td>sac-shortcut-bar</td></tr>
                     <tr><td><code>shortcuts.close</code></td><td><code>Close</code></td><td><code>Schließen</code></td><td>sac-shortcut-sheet</td></tr>
                     <tr><td><code>shortcuts.empty</code></td><td><code>No keyboard shortcuts are registered.</code></td><td><code>Keine Tastenkürzel registriert.</code></td><td>sac-shortcut-sheet</td></tr>

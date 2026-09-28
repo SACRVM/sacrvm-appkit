@@ -460,3 +460,23 @@ table.sg td:first-child { white-space: nowrap; }
 /* sac.sortable demo (Helpers) */
 .sg-sortable li { cursor: grab; border-radius: var(--radius-m); }
 .sg-sortable li[data-sortable-dragging] { cursor: grabbing; box-shadow: var(--shadow-2); }
+
+/* Cell editors demo (Components): a mock grid, the host draws the focus ring. */
+.sg-cells {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 260px);
+    flex: 0 1 336px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-m);
+    font-size: 13px;
+}
+.sg-cells > span,
+.sg-cells > div { height: 32px; border-bottom: 1px solid var(--border); }
+.sg-cells > :nth-last-child(-n + 2) { border-bottom: 0; }
+.sg-cells > span {
+    padding: 0 8px;
+    line-height: 32px;
+    color: var(--text-muted);
+    border-right: 1px solid var(--border);
+}
+.sg-cells > div:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; }
