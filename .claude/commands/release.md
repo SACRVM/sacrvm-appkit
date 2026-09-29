@@ -66,6 +66,8 @@ Follow these steps exactly:
    - `vectorizer`, `background-remover`, `mesh-optimizer`, `svg-to-3d` — dream-tools apps ported to
      the kit (view apps).
    - `the-fishbowl` — the social app the kit's core came from; vendors the kit.
+   - `sac-data-grid` — the data grid component; vendors the kit and drives cell-editor /
+     regional / dialog work.
    Each message carries: the version + release URL, the one-line re-vendor step (delete
    `kit/`, unzip the new ZIP), the headline changes that touch that repo, and the
    version-skew caveat (a new-version feature is unusable on a host still on an older
