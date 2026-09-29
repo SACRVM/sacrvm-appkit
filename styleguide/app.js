@@ -663,6 +663,10 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
                    takes a string or an <em>array of paragraphs</em>, always rendered via
                    <code>textContent</code>. A dialog with more content than the viewport caps out
                    and scrolls its body; title and buttons stay put.</p>
+                ${table("Keyboard", [
+                    ["Tab / Shift+Tab", "Focus trap over everything focusable in the body, then the buttons, in document order — kit fields included (their inputs sit in shadow roots), and from inside another component's shadow root too."],
+                    ["Esc", "Closes with <code>null</code> — unless something inside handles it first: an open field popover (a <code>sac-select</code> list, a <code>sac-date-field</code> calendar), a menu, a field reverting its typing. That Escape stays there; the next one closes the dialog. Only the topmost open dialog handles keys."],
+                ])}
                 <div class="sg-demo sg-row">
                     <button class="btn danger" style="width:auto" id="demo-dialog">Delete something…</button>
                     <button class="btn" style="width:auto" id="demo-dialog-info">About…</button>
@@ -1509,7 +1513,7 @@ function edit(cell, column, row) {
                 ])}
                 ${table("Property", [
                     ["value", "string[] — normalised names; reading returns a copy."],
-                    ["suggestions", "[{ name, color, count? }] — color is a palette slot."],
+                    ["suggestions", "[{ name, color, count?, label?, labelKey? }] — color is a palette slot. <code>label</code> is the text <em>shown</em> for the name in chips and list (<code>{ name: \"fragile\", label: \"Fragile\" }</code>); with <code>labelKey</code> it is <code>sac.t(labelKey, label)</code> and follows a language switch. Typing matches label and name alike; <code>value</code> stays the names."],
                 ])}
                 ${table("Event", [
                     ["sac:change", "detail { value: string[] } (new list). Bubbles, not composed."],
@@ -2104,9 +2108,9 @@ group.active = "two";   // programmatic switch — no event`)}
                     ["open() / close() / toggle()", "Show, hide, flip. <code>open()</code> anchors the panel to the trigger's viewport rect and shows it in the <strong>top layer</strong> (<code>popover</code>), so neither a clipping ancestor nor a transformed one can reach it — a menu works inside a <code>.tile</code>, which is both. It flips above the trigger when there is no room below, and re-anchors on scroll/resize."],
                     ["openAt(point)", "A <b>context menu</b>: opens with its top-left at a viewport point — pass the <code>contextmenu</code> event itself or any <code>{ clientX, clientY }</code>. Flips left / up where there is no room, clamped 8px inside the viewport; same keyboard. No trigger needed — a <code>&lt;sac-menu&gt;</code> with only items is a context menu. Scrolling closes it (the point no longer means anything); <kbd>Esc</kbd> returns focus to what had it before."],
                 ])}
-                ${table("Event", [["sac:select", "detail { action }."]])}
+                ${table("Event", [["sac:select", "detail { action }. Fired after the menu closed and handed focus back, so a dialog opened from the handler returns focus to the trigger."]])}
                 ${table("Keyboard", [
-                    ["Open panel", "An outside pointerdown or <kbd>Esc</kbd> closes it (<kbd>Esc</kbd> also returns focus to the trigger) · <kbd>↓</kbd>/<kbd>↑</kbd> walk the items · <kbd>Enter</kbd> activates natively · <kbd>Tab</kbd> closes."],
+                    ["Open panel", "An outside pointerdown or <kbd>Esc</kbd> closes it · <kbd>↓</kbd>/<kbd>↑</kbd> walk the items — also when the menu lives in another component's shadow root · <kbd>Enter</kbd> activates natively · <kbd>Tab</kbd> closes. <kbd>Esc</kbd> and <kbd>Enter</kbd> return focus to the trigger."],
                 ])}
                 ${code(`<sac-menu>
     <button slot="trigger" class="btn" style="width:auto">Actions</button>
@@ -3063,11 +3067,15 @@ bar.items = [
         // Chip input
         const chips = root.querySelector("#demo-chips");
         const chipsState = root.querySelector("#demo-chips-state");
+        // Labels: the chip shows "Urgent" / "Dringend", the value keeps "urgent".
+        if (window.sac && sac.i18n && sac.i18n.add) {
+            sac.i18n.add("de", { "sg.tag.work": "Arbeit", "sg.tag.personal": "Privat", "sg.tag.urgent": "Dringend", "sg.tag.idea": "Idee" });
+        }
         chips.suggestions = [
-            { name: "work",     color: "blue",   count: 12 },
-            { name: "personal", color: "green",  count: 5 },
-            { name: "urgent",   color: "red",    count: 2 },
-            { name: "idea",     color: "yellow" },
+            { name: "work",     color: "blue",   count: 12, label: "Work",     labelKey: "sg.tag.work" },
+            { name: "personal", color: "green",  count: 5,  label: "Personal", labelKey: "sg.tag.personal" },
+            { name: "urgent",   color: "red",    count: 2,  label: "Urgent",   labelKey: "sg.tag.urgent" },
+            { name: "idea",     color: "yellow",            label: "Idea",     labelKey: "sg.tag.idea" },
         ];
         chips.addEventListener("sac:change", (e) => {
             chipsState.textContent = `value: ${JSON.stringify(e.detail.value)}`;
@@ -5045,7 +5053,13 @@ sac.regional.onChange(({ date, hourCycle, number }) => rerender());
 sac.regional.formatNumber(1234.5, { decimals: 2 });   // "1.234,50"
 sac.regional.parseNumber("1.234,5");                  // 1234.5
 sac.regional.parseNumber("1,234.5");                  // 1234.5 — the other style is understood too
-sac.regional.parseNumber("12,34.5");                  // NaN`)}
+sac.regional.parseNumber("12,34.5");                  // NaN
+
+sac.regional.formatDate("2026-09-25");                // "25.09.2026"
+sac.regional.parseDate("25.9.26");                    // "2026-09-25"
+sac.regional.parseDate("31.02.2026");                 // null — not a real date
+sac.regional.formatTime("14:30", { hourCycle: "h12" });  // "2:30 PM"
+sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                 <table class="sg">
                     <tr><th style="width:260px">Member</th><th>Description</th></tr>
                     <tr><td><code>sac.regional.get()</code></td><td><code>{ date, hourCycle, number }</code>. Default <code>{ date: "iso", hourCycle: "h23", number: "1,234.5" }</code>.</td></tr>
@@ -5054,6 +5068,10 @@ sac.regional.parseNumber("12,34.5");                  // NaN`)}
                     <tr><td><code>sac.regional.separators()</code></td><td><code>{ decimal, group }</code> of the current number format.</td></tr>
                     <tr><td><code>sac.regional.formatNumber(n, opts)</code></td><td>A number in the current format. <code>opts</code>: <code>decimals</code> (exact fraction digits), <code>minFractionDigits</code> / <code>maxFractionDigits</code> (default 0 / 20 — as many as the number needs), <code>group</code> (default <code>true</code>). Not finite → <code>""</code>.</td></tr>
                     <tr><td><code>sac.regional.parseNumber(text)</code></td><td>Text → number; <code>NaN</code> for empty text or garbage. Tolerant: spaces and apostrophes are grouping; with both <code>.</code> and <code>,</code> the last one is the decimal separator; one repeated is grouping; a single one is decimal — except the format's own group separator in a thousands position (<code>1,234</code> under <code>"1,234.5"</code>). Grouping must sit in thousands positions (<code>12,34.5</code> → <code>NaN</code>).</td></tr>
+                    <tr><td><code>sac.regional.formatDate(iso, opts)</code></td><td>An ISO date in the current date format — <code>"25.09.2026"</code> under <code>"dmy."</code>. <code>""</code> for empty or not a real date. <code>opts.format</code> overrides the page format.</td></tr>
+                    <tr><td><code>sac.regional.parseDate(text, opts)</code></td><td>Text → <code>"yyyy-mm-dd"</code>; <code>""</code> for empty text, <code>null</code> for garbage or an impossible date. The rules <code>&lt;sac-date-field&gt;</code> types with: ISO always works; otherwise day / month / year in the format's order, any of <code>.</code> <code>/</code> <code>-</code> between, single digits, a two-digit year (00–68 → 20xx, 69–99 → 19xx). <code>opts.format</code>.</td></tr>
+                    <tr><td><code>sac.regional.formatTime(hhmm, opts)</code></td><td><code>"HH:MM"</code> in the current hour cycle — <code>"14:30"</code>, or <code>"2:30 PM"</code> under <code>h12</code> (AM / PM translated). <code>""</code> for empty or garbage. <code>opts.hourCycle</code> overrides the page setting.</td></tr>
+                    <tr><td><code>sac.regional.parseTime(text)</code></td><td>Text → <code>"HH:MM"</code> (24-hour); <code>""</code> for empty, <code>null</code> for garbage. Reads both cycles whatever the setting — <code>9:5</code>, <code>14.30</code>, <code>14:30:00</code> (seconds dropped, as spreadsheets paste them), <code>2:30 pm</code>, <code>2 PM</code>, <code>12 AM</code> → <code>00:00</code>, and the translated AM / PM.</td></tr>
                 </table>
                 <p class="sg-note"><b>Why a setting and not detection:</b> browsers never expose the operating
                    system's regional date / time format to a page (fingerprinting). <code>Intl</code> and the native
