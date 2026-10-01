@@ -436,13 +436,14 @@
                 ${table("Layout field", [
                     ["order", "Tile keys in display order. Unlisted tiles follow in registration order; keys not (yet) registered are kept until the next user change."],
                     ["hidden", "Tile keys the user hid."],
-                    ["sizes", "<code>{ key: \"medium\" | \"wide\" | \"large\" }</code> — overrides the entry's <code>tile</code> footprint (<code>medium</code> undoes a manifest's <code>wide</code>). Unknown values are ignored."],
+                    ["sizes", "<code>{ key: \"small\" | \"medium\" | \"wide\" | \"large\" }</code> — overrides the entry's <code>tile</code> footprint (<code>medium</code> undoes a manifest's <code>wide</code>). Unknown values are ignored."],
                     ["colors", "<code>{ key: slot }</code> — a data-palette slot name (<code>blue</code>, <code>teal</code>, … the ten <code>--palette-&lt;slot&gt;</code> tokens) overriding the entry's <code>accent</code>. The name is stored, never a hex, so a re-theme never rewrites saved layouts; the tile and the app opened through it take the slot's color. Unknown slots are ignored."],
                     ["custom", "The user-added app manifests (the Add tile)."],
                 ])}
                 ${table("Method", [
                     ["refresh()", "Re-read <code>sac.apps.list()</code> and re-sync the grid in place. The component re-syncs itself on every <code>sac:apps-changed</code> the runtime emits, so late registration just works — call this only after mutating state outside <code>sac.apps</code>."],
                     ["setLinks(list)", "Plain link tiles beside the <code>sac.apps</code> tiles: <code>[{ id, name, icon, description, href, tile, accent, menu }]</code>. Each is a real <code>&lt;a href&gt;</code>, so <code>href: \"#/notes\"</code> is an in-SPA navigation, never a reload. The <code>id</code> is the tile key and shares the persisted order / hidden layout with the app tiles (an app tile wins a collision). Movable and hideable, never removable. Replaces the previous list; <code>launcher.links</code> reads or assigns it."],
+                    ["SacLauncher.sizeLabel(size)", "Static: a footprint's menu label in the current language (<code>\"Small tile\"</code> / <code>\"Kleine Kachel\"</code>, keys <code>launcher.size-&lt;size&gt;</code>) — for hosts offering a size menu via <code>setMenu()</code>."],
                     ["setMenu(key, items)", "Sets one tile's corner menu, overriding the entry's own <code>menu</code>; <code>null</code> = no menu, <code>undefined</code> = back to the entry's. Prefer it over a manifest <code>menu</code>: it keeps functions out of manifests that come from JSON."],
                 ])}
                 ${table("Event", [
@@ -2768,7 +2769,11 @@ bar.items = [
             if (hub) customElements.whenDefined("sac-launcher").then(() => {
                 hub.setLinks([{ id: "sg-demo-link", name: "Link tile", icon: "link",
                                 description: "setLinks() — a plain link, no app registration. Goes to the sac-menu section.",
-                                href: "#/styleguide/components/sac-menu" }]);
+                                href: "#/styleguide/components/sac-menu" },
+                              // tile: "small" — four in a row share one medium cell.
+                              ...[["settings", "Settings"], ["trash", "Trash"], ["users", "Members"], ["lock", "Admin"]]
+                                  .map(([icon, name]) => ({ id: "sg-demo-small-" + icon, name, icon, tile: "small",
+                                                            href: "#/styleguide/components/sac-launcher" }))]);
                 hub.setMenu("sg-demo-clock", [
                     { id: "open", label: "Open", icon: "clock", onClick: () => sac.apps.open("sg-demo-clock") },
                     "-",
@@ -3538,7 +3543,9 @@ sac.router.register("#/notes", "my-notes-view", { label: "Notes", icon: "note" }
                     <tr><td><code>register(hash, tag, {label, icon})</code></td><td>Adds a route + fires <code>sac:route-registered</code> (this is what makes a self-registering view list work — nav components render before view scripts run). Pass <code>tag = null</code> for plain multi-page hrefs.</td></tr>
                     <tr><td><code>options.palette</code></td><td>The Ctrl-K palette group the route lists under: a string, or a function returning one (resolved on every open — follows the language); <code>false</code> keeps it out of the palette. Default <code>"Views"</code>. <code>sac.apps</code> files app routes under <code>"Apps"</code>.</td></tr>
                     <tr><td><code>register("#/files/*", tag, opts)</code></td><td>A <b>prefix route</b>: a hash ending in <code>/*</code> owns its base and everything below it — <code>#/files</code>, <code>#/files/Photos/2026</code>. Moving between those does <b>not</b> remount the view; it gets a <code>sac:route</code> event instead. An exact route on a longer hash (<code>#/files/settings</code>) still wins, and the longest prefix wins over a shorter one.</td></tr>
-                    <tr><td><code>routes()</code></td><td><code>[{hash, tag, label, icon, palette, prefix}]</code> — what sac-nav and the Ctrl-K palette render. A prefix route lists under its base (<code>#/files</code>, <code>prefix: true</code>), so its link lands on the prefix itself and stays active on every sub-path.</td></tr>
+                    <tr><td><code>options.scope</code></td><td>Which workspace the route exists in: <code>"any"</code> (default), <code>"root"</code> or <code>"scoped"</code> (see <code>sac.scope</code>). Elsewhere sac-nav and the Ctrl-K palette leave it out, and the router treats its hash as unmatched — a stale link falls back like an unknown route instead of mounting the view in the wrong workspace.</td></tr>
+                    <tr><td><code>inScope(route)</code></td><td><code>true</code> when a route from <code>routes()</code> exists in the active workspace — for apps that build their own lists.</td></tr>
+                    <tr><td><code>routes()</code></td><td><code>[{hash, tag, label, icon, palette, scope, prefix}]</code> — every route, in every workspace; what sac-nav and the Ctrl-K palette render. A prefix route lists under its base (<code>#/files</code>, <code>prefix: true</code>), so its link lands on the prefix itself and stays active on every sub-path.</td></tr>
                     <tr><td><code>subpath()</code></td><td>The part of the current hash below the matched prefix route — decoded, no leading slash, scope prefix already stripped: <code>"Photos/2026"</code>. <code>""</code> on the bare prefix and on exact routes. Read it in <code>connectedCallback</code>.</td></tr>
                     <tr><td><code>current() / currentResource()</code></td><td>Raw hash / hash with any scope prefix stripped.</td></tr>
                     <tr><td><code>navigate(hash)</code></td><td>Sets location.hash.</td></tr>
@@ -3796,6 +3803,12 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                             <sac-icon name="lightbulb"></sac-icon>
                             <div><h2 style="font-size:1.2rem;">Accented tile</h2><p>Own <code>--accent</code> seed — the Windows-Phone move.</p></div>
                         </a>
+                        <div class="tile-pack">
+                            <a class="tile small" href="#/styleguide/patterns" title="Settings"><sac-icon name="settings"></sac-icon><h2>Settings</h2></a>
+                            <a class="tile small" href="#/styleguide/patterns" title="Trash"><sac-icon name="trash"></sac-icon><h2>Trash</h2></a>
+                            <a class="tile small" href="#/styleguide/patterns" title="Members"><sac-icon name="users"></sac-icon><h2>Members</h2></a>
+                            <a class="tile small" href="#/styleguide/patterns" title="Admin" style="--accent:#e59500;"><sac-icon name="lock"></sac-icon><h2>Admin</h2></a>
+                        </div>
                     </div>
                 </div>
                 ${table("Class", [
@@ -3804,6 +3817,7 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                     [".tile.wide", "2 columns × 1 row — as tall as one column is wide."],
                     [".tile.large", "2 columns × 2 rows, square. <b>Changed:</b> used to be 2 columns × 1 row (that is now <code>.wide</code>)."],
                     [".tile.disabled", "Grayscale, not clickable-looking."],
+                    [".tile-pack > .tile.small", "A quarter of a medium: up to four small tiles in a <code>.tile-pack</code> fill one cell 2 × 2 with the grid's gap, edge to edge with the neighbours. Icon only — the <code>h2</code> stays as the accessible name (visually hidden); add a <code>title</code> for the tooltip. Stays small on phones: a one-column grid lays the pack out as one row of four."],
                 ])}
                 ${compact(`from two columns on tiles stay square (the gap narrows to 14px); <code>.wide</code> and <code>.large</code>
                    collapse to medium — a 2 × 2 tile would own a tablet screen. A <b>one-column</b> grid, on any screen, is a
@@ -4466,7 +4480,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>name</code></td><td>Display name (window title / tile heading).</td></tr>
                     <tr><td><code>icon</code></td><td><code>sac-icon</code> name for the tile.</td></tr>
                     <tr><td><code>description</code></td><td>Tile subline (optional).</td></tr>
-                    <tr><td><code>tile</code></td><td>Optional tile footprint in the launcher grid: <code>"medium"</code> (default, omit-able), <code>"wide"</code> (2 columns) or <code>"large"</code> (2 columns × 2 rows). Unknown values fall back to medium silently; all footprints collapse to medium on narrow viewports.</td></tr>
+                    <tr><td><code>tile</code></td><td>Optional tile footprint in the launcher grid: <code>"medium"</code> (default, omit-able), <code>"wide"</code> (2 columns), <code>"large"</code> (2 columns × 2 rows) or <code>"small"</code> (icon only, name as tooltip — four consecutive small tiles fill one medium cell 2 × 2). Unknown values fall back to medium silently; wide and large collapse to medium on narrow viewports, small tiles stay small.</td></tr>
                     <tr><td><code>kind</code></td><td><code>"window"</code> (floating overlay, default), <code>"view"</code> (takes the stage at <code>#/&lt;id&gt;</code>) or <code>"page"</code> (plain link to <code>href</code>).</td></tr>
                     <tr><td><code>entry</code></td><td>Installed apps: the script path <em>relative to the manifest</em>. <code>inspect()</code> resolves it into <code>src</code>. A shell registering its own apps gives <code>src</code> directly.</td></tr>
                     <tr><td><code>nav</code></td><td>view only: <code>false</code> keeps the app out of the nav panel (it stays reachable by hash).</td></tr>
