@@ -5439,7 +5439,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
     const ADDONS = [
         { id: "sac-data-grid", kind: "Component", name: "&lt;sac-data-grid&gt;",
           text: "A spreadsheet-grade data grid: virtual rows into the hundred thousands, sheet / read / form edit modes, typed columns with cell editors, regional formats, a data-source contract for server paging.",
-          kit: "2.23.0", page: null, repo: "https://github.com/SACRVM/sac-data-grid" },
+          kit: "2.24.0", page: "https://sacrvm.github.io/sac-data-grid/", repo: "https://github.com/SACRVM/sac-data-grid" },
         { id: "sac-md-editor", kind: "Component", name: "&lt;sac-md-editor&gt;",
           text: "Live-preview markdown editing: the caret line is raw source, every other line renders. Toolbar, list continuation, custom block types.",
           kit: "2.12.0", page: null, repo: "https://github.com/SACRVM/sac-md-editor" },
