@@ -2357,7 +2357,9 @@ if (await t.closed !== "action") purge();   // no Undo → make it final`)}
                    switches in place; apps follow through <code>context.lang</code>. One button per
                    language that has a table, titled with the language's own name; <b>Auto</b> follows
                    the system language as far as the browser shows it. Inside an isolated app a click
-                   switches the host, like the theme toggle. Live below — try DE.</p>
+                   switches the host, like the theme toggle. Live below — try DE: the kit's own strings switch
+                   (the nav, the buttons, dates); this guide's text is English only, and a reload brings the site
+                   back to English.</p>
                 <div class="sg-demo sg-col">
                     <sac-lang-toggle id="demo-lang-toggle"></sac-lang-toggle>
                 </div>
@@ -5038,6 +5040,7 @@ sac.lang.set("de");        // or "auto"`)}
                     <tr><td><code>sac.lang.get()</code></td><td>The current code: the explicit choice, else the system language.</td></tr>
                     <tr><td><code>sac.lang.mode()</code></td><td><code>"auto"</code> or the chosen code.</td></tr>
                     <tr><td><code>sac.lang.set(code)</code> <b>(host)</b></td><td><code>"auto"</code> or a code. Persisted (localStorage <code>sac-lang</code>), mirrored onto <code>&lt;html lang&gt;</code>, announced — including to other tabs.</td></tr>
+                    <tr><td><code>sac.lang.set(code, { persist: false })</code></td><td>This page only: the stored choice stays untouched and other tabs' switches are not followed. For a single-language site that shares its origin with other kit pages — this site pins itself to English that way.</td></tr>
                     <tr><td><code>sac.lang.onChange(cb)</code></td><td><code>cb(code)</code> on every change; returns an unsubscribe. Also <code>sac:lang</code> { lang } on <code>document</code>.</td></tr>
                     <tr><td><code>sac.lang.available()</code></td><td>Codes with a table, <code>"en"</code> first.</td></tr>
                     <tr><td><code>sac.lang.name(code)</code></td><td>The language's own name via Intl — <code>"Deutsch"</code>.</td></tr>
@@ -5586,7 +5589,7 @@ sac.showcase.watchCode(page);`)}
             this._nav.setAttribute("sections-nav", "wide");
             const ctxSlot = document.createElement("div");
             ctxSlot.slot = "context";
-            ctxSlot.append(document.createElement("sac-lang-toggle"), document.createElement("sac-theme-toggle"));
+            ctxSlot.append(document.createElement("sac-theme-toggle"));
             this._nav.appendChild(ctxSlot);
             // Pinned in the ribbon (data-overflow="never"): parked behind
             // "…" the switch would be one tap further from what it previews.

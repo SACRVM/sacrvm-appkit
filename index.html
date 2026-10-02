@@ -151,7 +151,7 @@
              nav is the HOME'S chrome, so it lives and dies with it. -->
         <div id="app-home" class="app-home">
             <sac-nav brand="SACRVM APPKIT" brand-icon="cube" brand-href="#/" app-name="v2.24.0" compact-title="SACRVM APPKIT">
-                <div slot="context"><sac-lang-toggle></sac-lang-toggle><sac-theme-toggle></sac-theme-toggle></div>
+                <div slot="context"><sac-theme-toggle></sac-theme-toggle></div>
                 <div slot="toolbar" class="toolbar">
                     <a class="btn" href="https://github.com/SACRVM/sacrvm-appkit">
                         <sac-icon name="github"></sac-icon> GitHub
@@ -318,6 +318,11 @@
         // all.js injects its scripts, and injected scripts do not hold up
         // DOMContentLoaded — boot on the autoloader's readiness signal.
         function boot() {
+            // This site is English. Its kit strings follow suit whatever the
+            // system language — without storing it, so the stored choice on
+            // this origin (other kit pages share it) stays the visitor's.
+            sac.lang.set("en", { persist: false });
+
             // This hub is a small desktop: its apps' Open / Save go to one
             // shared file space (with the device one click away), not
             // straight to the disk.

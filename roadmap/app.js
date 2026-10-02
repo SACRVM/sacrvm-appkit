@@ -40,7 +40,7 @@
             this._nav.setAttribute("sections-nav", "wide");
             const ctxSlot = document.createElement("div");
             ctxSlot.slot = "context";
-            ctxSlot.append(document.createElement("sac-lang-toggle"), document.createElement("sac-theme-toggle"));
+            ctxSlot.append(document.createElement("sac-theme-toggle"));
             this._nav.appendChild(ctxSlot);
 
             const layout = document.createElement("div");
