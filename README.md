@@ -44,18 +44,19 @@ GitHub Pages and any desktop installs it from the repository URL.
 ```
 kit/                    the library — copy or link this folder into your app
   css/ui.css            tokens (seed→derived theming) + global styles
+  css/showcase.css      the style guide's page look, for add-on API pages
   fonts/                self-hosted Inter + Outfit (woff2)
   js/lib/               sac namespace: router, icons, scope, dialog,
                         pan-zoom, help-loader, apps, app-bridge
                         (+ app-guest, loaded by the frame only), hotkeys,
                         color, fs (+ fs.ops), identity, files, about,
-                        sortable, lang + regional (in globals)
+                        sortable, showcase, lang + regional (in globals)
   js/i18n/              the kit's own strings in German (de.js)
   js/vendor/            marked + DOMPurify (for the help loader)
   js/components/        49 files registering 53 sac-* Custom Elements
   templates/            copy-out skeletons: app shell, launcher, tool page,
-                        list/detail, SPA shell, and two app skeletons
-                        (dialog, fullscreen)
+                        list/detail, SPA shell, an add-on API page
+                        (showcase), and two app skeletons (dialog, fullscreen)
 styleguide/             the kit documenting itself (built WITH the kit)
 build/                  "Build an App" — the authoring guide, itself an app
 demo/                   launcher hub → Orb Lab workspace tool → overlays

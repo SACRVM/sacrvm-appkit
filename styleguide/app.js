@@ -2,7 +2,7 @@
  * <app-styleguide> — the style guide as ONE view app.
  *
  * kind:"view": it runs on the shell's stage, not in a document of its own.
- * Five sections live in this single element — only the active one is in the
+ * Six sections live in this single element — only the active one is in the
  * DOM, because the components section alone is three dozen live demos. The
  * sub-route addresses the section ("#/styleguide/patterns") and, on the
  * components section, the component you are reading ("#/styleguide/components/
@@ -30,6 +30,12 @@
             stylesReady = Promise.resolve();
             return stylesReady;
         }
+        // The kit's showcase look first (the page, demos, code, API tables),
+        // then the guide's own demo styling on top.
+        const kitLink = document.createElement("link");
+        kitLink.rel = "stylesheet";
+        kitLink.href = BASE + "../kit/css/showcase.css";
+        document.head.appendChild(kitLink);
         const link = document.createElement("link");
         link.id = CSS_ID;
         link.rel = "stylesheet";
@@ -44,19 +50,11 @@
 
     /* ------------------------------------------------------- write-ups --- */
 
-    const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    const code = (s) => `<pre class="sg-code"><code>${esc(s)}</code></pre>`;
-
-    const table = (title, rows) => rows.length === 0 ? "" : `
-        <table class="sg">
-            <tr><th style="width:220px">${title}</th><th>Description</th></tr>
-            ${rows.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${v}</td></tr>`).join("")}
-        </table>`;
-
-    // A component's phone behaviour, one short line in every section it
-    // applies to. The full story lives in CSS Patterns → Responsive.
-    const compact = (html) => `<p class="sg-compact"><b>Compact / touch:</b> ${html}</p>`;
+    // The kit's showcase helpers (kit/js/lib/showcase.js) — the same ones an
+    // add-on uses for its own API page. compact() is a component's phone
+    // behaviour, one short line in every section it applies to; the full
+    // story lives in CSS Patterns → Responsive.
+    const { esc, code, table, compact } = sac.showcase;
 
     const sw = (token, note) => `
         <div class="sg-swatch">
@@ -5432,6 +5430,87 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
         });
     }
 
+    /* ---------------------------------------------------------- add-ons --- */
+
+    // Each add-on lives in its own repo with its own release and its own API
+    // page; the guide only points there. `page` is the add-on's showcase on
+    // GitHub Pages (null until it has one — then the repo is the link).
+    // `kit` is the appkit version the add-on currently vendors.
+    const ADDONS = [
+        { id: "sac-data-grid", kind: "Component", name: "&lt;sac-data-grid&gt;",
+          text: "A spreadsheet-grade data grid: virtual rows into the hundred thousands, sheet / read / form edit modes, typed columns with cell editors, regional formats, a data-source contract for server paging.",
+          kit: "2.23.0", page: null, repo: "https://github.com/SACRVM/sac-data-grid" },
+        { id: "sac-md-editor", kind: "Component", name: "&lt;sac-md-editor&gt;",
+          text: "Live-preview markdown editing: the caret line is raw source, every other line renders. Toolbar, list continuation, custom block types.",
+          kit: "2.12.0", page: null, repo: "https://github.com/SACRVM/sac-md-editor" },
+        { id: "sacrvm-newskit", kind: "Sister kit", name: "SACRVM NEWSKIT",
+          text: "The editorial kit: appkit's look specialised for long-form, source-backed articles — the reading layer, article primitives and sources and provenance as first-class citizens.",
+          kit: "2.15.0", page: "https://sacrvm.github.io/sacrvm-newskit/", repo: "https://github.com/SACRVM/sacrvm-newskit" },
+    ];
+
+    function addonsHtml() {
+        const cards = ADDONS.map((a) => `
+            <article class="card sg-addon">
+                <img src="${BASE}addons/${a.id}.webp" alt="" loading="lazy" width="960" height="600">
+                <div class="sg-addon-body">
+                    <p class="sg-addon-kind">${a.kind}</p>
+                    <h3>${a.name}</h3>
+                    <p>${a.text}</p>
+                    <p class="sg-muted">Built on appkit ${a.kit}</p>
+                    <div class="sg-row">
+                        ${a.page ? `<a class="btn primary" href="${a.page}" target="_blank" rel="noopener">API page</a>` : ""}
+                        <a class="btn" href="${a.repo}" target="_blank" rel="noopener">Repository</a>
+                    </div>
+                </div>
+            </article>`).join("");
+        return `
+            <div class="sg-page">
+                <h1>Add-ons</h1>
+                <p class="lead">
+                    Components and kits built on the appkit that live in <strong>their own repos</strong> —
+                    their own releases, versions and API pages, in this guide's look. They are not in the
+                    kit ZIP: vendor each one beside your <code>kit/</code>, like the kit itself.
+                </p>
+                <div class="sg-addons">${cards}</div>
+
+                <h2 id="showcase">An API page for your add-on</h2>
+                <p>This guide's page look is part of the kit, so an add-on documents itself the same way:
+                   <code>kit/css/showcase.css</code> styles the page, <code>sac.showcase</code>
+                   (<code>kit/js/lib/showcase.js</code>, also in <code>all.js</code>) writes the markup, and
+                   <code>kit/templates/showcase.html</code> is the starter — the add-on repo's
+                   <code>index.html</code>, published with GitHub Pages. Its nav brand links back here.</p>
+                ${code(`<link rel="stylesheet" href="kit/css/ui.css">
+<link rel="stylesheet" href="kit/css/showcase.css">
+<script defer src="kit/js/lib/globals.js"><\/script>
+<script defer src="kit/js/lib/showcase.js"><\/script>
+
+const { code, table, compact, note } = sac.showcase;
+page.innerHTML = \`
+    <h1>&lt;my-widget&gt;</h1>
+    <p class="lead">What it is, in a sentence.</p>
+    <div class="sg-demo"><my-widget></my-widget></div>
+    \${code('<my-widget value="3"></my-widget>')}
+    \${table("Attribute", [["value", "The number shown."]])}\`;
+sac.showcase.watchCode(page);`)}
+                ${table("sac.showcase", [
+                    ["esc(text)", "HTML-escapes a string (<code>&amp; &lt; &gt;</code>)."],
+                    ["code(source)", "A <code>pre.sg-code</code> block; the source is escaped."],
+                    ["table(title, rows)", "An API table: <code>[[key, description HTML], …]</code>, the key escaped and set as code. <code>\"\"</code> for no rows."],
+                    ["compact(html)", "The <b>Compact / touch:</b> line — what changes on a phone."],
+                    ["note(html)", "A warm <code>.sg-note</code> callout — a caveat, not a fact."],
+                    ["watchCode(root)", "Marks which side of each code block in <code>root</code> still scrolls, for the soft edge on phones. Call after each render; returns a stop function."],
+                ])}
+                ${table("showcase.css", [
+                    [".sg-page", "The page column: gradient <code>h1</code>, <code>p.lead</code>, ruled <code>h2</code>, <code>h3</code>, muted prose, inline <code>code</code>."],
+                    [".sg-demo", "A live-example box; <code>.on-bg</code> sets it on the page ground."],
+                    [".sg-row / .sg-col", "Examples side by side (wrapping) / stacked."],
+                    ["pre.sg-code / table.sg", "Code block / API table — on a phone the table stacks key over description."],
+                    [".sg-note / .sg-compact / .sg-muted", "Caveat callout / phone-behaviour line / small muted text."],
+                ])}
+                ${compact(`the page narrows its padding and type below 768px; below 480px every API table row stacks, key on top of its description.`)}
+            </div>`;
+    }
+
     /* ------------------------------------------------------------ app --- */
 
     const SECTIONS = [
@@ -5445,6 +5524,8 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
           html: patternsHtml,   wire: wirePatterns },
         { id: "helpers",    label: "Helpers",          icon: "settings",
           html: helpersHtml,    wire: wireHelpers },
+        { id: "addons",     label: "Add-ons",          icon: "layers",
+          html: addonsHtml },
     ];
 
     /** "components/sac-calendar" → { id: "components", anchor: "sac-calendar" } */
@@ -5645,7 +5726,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             this._demoCmdsOff();
             if (this._onCompact) { COMPACT.removeEventListener("change", this._onCompact); this._onCompact = null; }
             this._dropFrame();
-            this._codeObs?.disconnect();
+            this._offCode?.(); this._offCode = null;
         }
 
         /* ----------------------------------------------- width preview --- */
@@ -5840,17 +5921,8 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
          *  stylesheet turns that into a soft edge. A ResizeObserver covers the
          *  first layout, a late stylesheet and a rotated phone alike. */
         _watchCode() {
-            this._codeObs?.disconnect();
-            const mark = (pre) => {
-                const max = pre.scrollWidth - pre.clientWidth;
-                pre.classList.toggle("sg-more-start", pre.scrollLeft > 1);
-                pre.classList.toggle("sg-more-end", pre.scrollLeft < max - 1);
-            };
-            this._codeObs = new ResizeObserver((entries) => entries.forEach((e) => mark(e.target)));
-            this._body.querySelectorAll("pre.sg-code").forEach((pre) => {
-                pre.addEventListener("scroll", () => mark(pre), { passive: true });
-                this._codeObs.observe(pre);
-            });
+            this._offCode?.();
+            this._offCode = sac.showcase.watchCode(this._body);
         }
 
         /** The app owns its scrolling — the .app-scroll region beside the rail. */
