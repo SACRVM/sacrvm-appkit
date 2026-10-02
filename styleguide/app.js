@@ -5442,7 +5442,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
           kit: "2.24.0", page: "https://sacrvm.github.io/sac-data-grid/", repo: "https://github.com/SACRVM/sac-data-grid" },
         { id: "sac-md-editor", kind: "Component", name: "&lt;sac-md-editor&gt;",
           text: "Live-preview markdown editing: the caret line is raw source, every other line renders. Toolbar, list continuation, custom block types.",
-          kit: "2.12.0", page: null, repo: "https://github.com/SACRVM/sac-md-editor" },
+          kit: "2.24.0", page: "https://sacrvm.github.io/sac-md-editor/", repo: "https://github.com/SACRVM/sac-md-editor" },
         { id: "sacrvm-newskit", kind: "Sister kit", name: "SACRVM NEWSKIT",
           text: "The editorial kit: appkit's look specialised for long-form, source-backed articles — the reading layer, article primitives and sources and provenance as first-class citizens.",
           kit: "2.15.0", page: "https://sacrvm.github.io/sacrvm-newskit/", repo: "https://github.com/SACRVM/sacrvm-newskit" },
