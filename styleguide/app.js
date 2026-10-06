@@ -327,6 +327,7 @@
                     ["brand-icon", "Icon name rendered before the brand text."],
                     ["brand-href", "Brand link target (default <code>#/</code>, scope-aware)."],
                     ["app-name", "Accent-colored text after the brand — spacing alone separates the segments."],
+                    ["app-icon", "Icon name rendered before <code>app-name</code>, in accent — a suite whose pages are its apps reads exactly like a host showing a hosted app. Unhosted, the phone ribbon shows it in place of <code>brand-icon</code>."],
                     ["compact-title", "The app's name as the <b>phone ribbon</b> shows it. Absent = <code>brand</code> for a hosted app, else <code>app-name</code>, else <code>brand</code>. Set it where <code>app-name</code> is no name — the home hub's is the version, so it sets <code>compact-title=\"SACRVM APPKIT\"</code>."],
                     ["host-href / host-label / host-icon", "Attribute form of the host jump alone, for static pages. A hosted app sets the <code>host</code> property instead. Icon default <code>home</code>."],
                     ["rail", "Which rail the burger opens as a drawer on compact: a CSS selector, or <code>none</code> to opt out. Absent = the first <code>&lt;sac-sidebar&gt;</code> / <code>.sidebar</code> inside a <code>.main-layout</code> next to the nav. A rail that is still empty (a hidden <code>&lt;sac-sidebar&gt;</code>) is adopted too; the burger appears once it has items. This guide sets it explicitly (<code>app-styleguide &gt; .main-layout &gt; sac-sidebar</code>)."],
@@ -750,13 +751,24 @@ if (name != null) await sac.fs.ops.rename(store, path, name.trim());`)}
 sac.about.open({                          // or an explicit object (standalone)
     name: 'Color Bucket', icon: 'palette', version: '1.0.0',
     description: 'Mix colors like paint…',
+    license: 'MIT', copyright: 'Color Bucket contributors',
+    source: 'https://github.com/…',
     notices: [
         { title: 'spectral.js', text: 'MIT © 2025 Ronald van Wijnen…' },
         { title: 'RAL',         text: '"RAL" is a registered trademark…' },
+        { title: 'marked', license: 'MIT', holder: 'Christopher Jeffrey', group: 'Interface' },
     ],
 });`)}
-                <p>Only <code>notices</code> is a new manifest field (see <code>sac.apps</code>); <code>name · icon ·
-                   description · version</code> are already there. In a hosted ribbon the host's controls sit behind a
+                ${table("Field", [
+                    ["name · icon · version", "The head: icon, name, version."],
+                    ["description", "First line of the <b>Info</b> tab."],
+                    ["license · copyright · source", "The app's own facts, a term list in <b>Info</b>. <code>source</code> as a URL becomes a link."],
+                    ["notices", "The <b>Open source</b> tab. With <code>text</code>: a titled paragraph. With <code>license</code> / <code>holder</code> instead: a compact part — name, then one muted “licence · holder” line, in columns (the window widens to 680px), under its optional <code>group</code>."],
+                ])}
+                <p>Info and Open source are always two tabs, so a long list of notices never buries the app's own
+                   facts; only when one of them is empty does the strip drop. The window takes the taller tab's height.
+                   <code>notices</code>, <code>license</code>, <code>copyright</code> and <code>source</code> are manifest
+                   fields (see <code>sac.apps</code>); <code>name · icon · description · version</code> were there already. In a hosted ribbon the host's controls sit behind a
                    hairline divider from the app's own, so an app About and a host About read as two scopes, not one row.
                    There is a <code>copyright</code> icon for the button that opens it.</p>
 
@@ -1628,6 +1640,7 @@ zone.addEventListener("sac:files", async (e) => {
                     ["flush", "Presence: the list has no border, radius or background of its own, so it sits flush in a host panel."],
                     ["active", "Which pane has the keys in a two-pane layout, shown in the bar only: a 1px hairline under it, <code>--accent</code> on the active pane, a muted bar on the other. <code>\"\"</code> / <code>true</code> = this pane, <code>false</code> = the other pane, <code>auto</code> = follows focus inside the browser. Absent = no cue."],
                     ["show-hidden", "Presence lists dot entries (<code>.config</code>, <code>.apps/</code>) — hidden by default, like a desktop file manager. Bind it to your own toggle (a menu item, a key chord); the <code>showHidden</code> property mirrors it. The <code>.folder</code> marker is never listed."],
+                    ["parent-row", "Presence: a <code>..</code> row first in every folder below the root, so going up is a row like any other — cursor onto it, <kbd>Enter</kbd> (the commander convention). Always first, whatever the sort. Not an entry: never marked, deleted, renamed or dragged, never in <code>sac:choose</code> / <code>sac:select</code> / <code>sac:mark</code> or <code>items</code>; on it <code>cursor</code> is <code>null</code> and <code>sac:cursor</code> says <code>kind: \"parent\"</code>. A drop on it lands in the parent folder. The bar's Up button stays."],
                     ["delete-button", "The per-row trash button (<code>part=\"delete\"</code>): <code>cursor</code> (default) — the hovered row and the cursor row, always on touch; <code>hover</code> — only the row under a hovering pointer, never on touch, and only while that row is the whole job (nothing marked, or just it); <code>none</code> — no button, the Delete key stays."],
                 ])}
                 ${table("CSS custom property", [
@@ -2653,13 +2666,14 @@ sac.hotkeys.register("mod+z", undo, { description: "Undo", group: "Edit" });`)}
                     ["items", "Property — the array above. Assigning re-renders and re-registers. Which items exist is the caller's job: hand in an already-filtered array (no dead buttons)."],
                     ["group", "Attribute / property — the heading the bindings are listed under in the sheet. The property may be a function (translated heading)."],
                     ["nav", "Attribute — the <code>&lt;sac-nav&gt;</code> to fold into on compact: a CSS selector, or <code>none</code>. Absent = the first <code>&lt;sac-nav&gt;</code> on the page."],
+                    ["fit", "Attribute — <code>labels</code>: before anything folds, items with an icon drop their label (key cap + icon; the label stays tooltip and accessible name). Absent = straight into “…”."],
                     ["folded · shift", "Reflected, read-only: the items live in the nav's “…” menu / the Shift layer is up."],
                     ["sac:invoke", "Event after an item ran — detail <code>{ id, shift, source: \"key\" | \"click\" | \"menu\" }</code>. Bubbles, composed."],
                 ])}
                 ${table("Interaction", [
                     ["Shift layer", "Held <kbd>Shift</kbd> swaps labels (and Shift key caps) in place — no re-render. Released on keyup, window blur and a hidden tab; ignored while typing in a text field."],
                     ["Lifetime", "Bindings exist while the bar is connected; removing it or replacing <code>items</code> unregisters them."],
-                    ["Wrapping", "Too many items for one row wrap onto the next."],
+                    ["One row", "Always one row: what does not fit folds, from the end, into a trailing “…” menu — same icons, labels and key caps, Shift layer included; the hotkeys stay registered. Re-fitted on every width change."],
                 ])}
                 ${code(`<sac-shortcut-bar group="Files"></sac-shortcut-bar>
 
@@ -4442,7 +4456,41 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>add(manifest|url, opts?)</code></td><td><code>Promise&lt;manifest&gt;</code>. Registers an inspected manifest (or inspects a URL first). Registering still does not run the app: its script is injected on first open, exactly like an app the shell declared itself. <code>opts { isolated, grant, integrity }</code>; the result carries the pin as <code>integrity</code> — store it with the install record (see <a href="#/styleguide/helpers/sac-apps-pinning">Pinned installs</a>).</td></tr>
                     <tr><td><code>policy(id)</code></td><td><code>{ isolated, granted }</code> — what the host decided for an installed app (a settings page). <code>null</code> for an unknown id.</td></tr>
                     <tr><td><code>frameOf(id)</code></td><td>The <code>&lt;iframe&gt;</code> of an isolated app once created, else <code>null</code>.</td></tr>
+                    <tr><td><code>opening(file)</code></td><td>Manifest copies whose <code>opens</code> matches a FileRef, File or <code>{ name, type }</code> — see <a href="#/styleguide/helpers/sac-apps-open-with">Open with</a>.</td></tr>
                 </table>
+                <h3 id="sac-apps-open-with">Open with</h3>
+                <p>A file manager opens an app <em>with</em> a file. <code>opening(file)</code> lists the apps whose
+                   manifest <code>opens</code> matches it (exact MIME, <code>type/*</code> or <code>.ext</code>), so every
+                   host offers the same choices; <code>open(id, params, { files })</code> hands over FileRefs of the
+                   host's files provider. The app reads them from <code>context.launch.files</code> — the same
+                   <code>{ name, file, handle }</code> that <code>context.files.open()</code> returns, so
+                   <code>files.save(blob, { handle })</code> writes back. Already mounted, it hears later files via
+                   <code>context.onLaunch(cb)</code>. Only with a files grant (else <code>[]</code>); an isolated app
+                   gets opaque handle ids, exactly as for picked files.</p>
+                ${code(`// host
+const apps = sac.apps.opening(ref);             // [manifest, …] for "Open with"
+await sac.apps.open(apps[0].id, null, { files: [ref] });
+
+// app
+mount(context) {
+    for (const f of context.launch.files) load(f.file, f.handle);
+    context.onLaunch(({ files }) => files.forEach((f) => load(f.file, f.handle)));
+}`)}
+                <h3>When an app breaks</h3>
+                <p>Load failures reject <code>open()</code>. What goes wrong <em>after</em> that reaches the host
+                   page as <code>sac:app-error</code> on <code>document</code> (bubbles), so a host that runs
+                   its users' apps can keep an error log their authors can read. <code>kind</code> is
+                   <code>"mount"</code> / <code>"unmount"</code> (the call threw — any app) or
+                   <code>"error"</code> / <code>"rejection"</code> (uncaught inside an isolated frame; in-realm
+                   those are the page's own). Message capped at 1000 characters, stack at 4000, 10 reports a
+                   second per app; <code>source</code> / <code>line</code> / <code>column</code> only when the
+                   source lies in the app's own entry folder. Uncaught errors carry message and stack only when the
+                   entry's server sends CORS (<code>Access-Control-Allow-Origin</code> — GitHub Pages does); otherwise
+                   the browser hands over just <code>"Script error."</code> and no rejections. A pinned entry always
+                   loads with CORS.</p>
+                ${code(`document.addEventListener("sac:app-error", (e) => {
+    const { appId, kind, message, source, line, column, stack } = e.detail;
+});`)}
                 <h3>Hosting view apps</h3>
                 <p>A shell that wants full-stage apps hands <code>init()</code> two elements — the
                    stage view apps are appended into, and the home screen to hide while one is up —
@@ -5446,7 +5494,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
     const ADDONS = [
         { id: "sac-data-grid", kind: "Component", name: "&lt;sac-data-grid&gt;",
           text: "A spreadsheet-grade data grid: virtual rows into the hundred thousands, sheet / read / form edit modes, typed columns with cell editors, regional formats, a data-source contract for server paging.",
-          kit: "2.24.0", page: "https://sacrvm.github.io/sac-data-grid/", repo: "https://github.com/SACRVM/sac-data-grid" },
+          kit: "2.25.0", page: "https://sacrvm.github.io/sac-data-grid/", repo: "https://github.com/SACRVM/sac-data-grid" },
         { id: "sac-md-editor", kind: "Component", name: "&lt;sac-md-editor&gt;",
           text: "Live-preview markdown editing: the caret line is raw source, every other line renders. Toolbar, list continuation, custom block types.",
           kit: "2.24.0", page: "https://sacrvm.github.io/sac-md-editor/", repo: "https://github.com/SACRVM/sac-md-editor" },
