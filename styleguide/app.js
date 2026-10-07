@@ -4441,9 +4441,15 @@ pz.reset();                               // e.g. when a new image loads`)}
                     ["destroy()", "Removes every listener (and puts back a tile mid-drag)."],
                     ["repack()", "Re-packs the current order — after the host added or removed tiles itself."],
                 ])}
+                ${table("Feel", [
+                    ["Lift", "The tile follows the pointer 1:1 at its grab offset — a little larger (1.03), a strong shadow, the accent ring, on top. The grid carries <code>data-sortable-active</code>: a grabbing cursor, and the tiles passed over show no hover."],
+                    ["Target", "Hit-tested against the <b>settled</b> layout, never against tiles still sliding. The order changes only when the pointer enters another tile (its before or after half), then holds until the pointer leaves what it is over: one change per tile entered, no flicker. Over a gap, a fixed tile or outside every tile the slot stays; past the last tile is the end."],
+                    ["Slide · settle", "Displaced tiles — packs re-forming included — slide to their new cells (200ms). On drop the tile glides from the pointer into its slot; Escape glides everything back to the exact DOM from before the drag."],
+                    ["Reduced motion", "The same targeting; nothing animates."],
+                ])}
                 <p>Input is <code>sac.sortable</code>'s (4px to lift, a 250ms long-press on touch, the eaten click,
-                   auto-scroll, <code>data-sortable-dragging</code>); Escape restores the exact DOM from before the drag.
-                   Live content inside a tile travels with it as is — tiles are moved, never rebuilt.</p>
+                   auto-scroll); a tile link's native drag is off while a press is live. Live content inside a tile
+                   travels with it as is — tiles are moved, never rebuilt.</p>
                 ${code(`sac.tiles.sortable(grid, {
     items: ".tile:not(.fb-cover)",
     disabled: () => !isOwner,
@@ -5643,7 +5649,7 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
     const ADDONS = [
         { id: "sac-data-grid", kind: "Component", name: "&lt;sac-data-grid&gt;",
           text: "A spreadsheet-grade data grid: virtual rows into the hundred thousands, sheet / read / form edit modes, typed columns with cell editors, regional formats, a data-source contract for server paging.",
-          kit: "2.25.0", page: "https://sacrvm.github.io/sac-data-grid/", repo: "https://github.com/SACRVM/sac-data-grid" },
+          kit: "2.26.0", page: "https://sacrvm.github.io/sac-data-grid/", repo: "https://github.com/SACRVM/sac-data-grid" },
         { id: "sac-md-editor", kind: "Component", name: "&lt;sac-md-editor&gt;",
           text: "Live-preview markdown editing: the caret line is raw source, every other line renders. Toolbar, list continuation, custom block types.",
           kit: "2.24.0", page: "https://sacrvm.github.io/sac-md-editor/", repo: "https://github.com/SACRVM/sac-md-editor" },
