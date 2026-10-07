@@ -279,6 +279,15 @@
 /* sac.sortable demo (Helpers) */
 .sg-sortable li { cursor: grab; border-radius: var(--radius-m); }
 .sg-sortable li[data-sortable-dragging] { cursor: grabbing; box-shadow: var(--shadow-2); }
+/* sac.selection demo: a plain list the page renders itself. */
+.sg-sel-list { display: flex; flex-direction: column; gap: 2px; max-width: 360px; padding: 4px;
+               border: 1px solid var(--border); border-radius: var(--radius-m); background: var(--field); outline: none; }
+.sg-sel-list:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sg-sel-row { display: flex; align-items: center; gap: 0.6rem; padding: 6px 8px; border-radius: var(--radius-m);
+              color: var(--text-muted); cursor: pointer; --icon-size: 18px; }
+.sg-sel-row:hover:not(.marked) { background: var(--hover); color: var(--text); }
+.sg-sel-row.open:not(.marked) { background: var(--hover); color: var(--text); }
+.sg-sel-list.marking .sg-sel-row.open:not(.marked) { background: none; box-shadow: inset 0 0 0 1px var(--border-strong); }
 
 /* Cell editors demo (Components): a mock grid, the host draws the focus ring. */
 .sg-cells {

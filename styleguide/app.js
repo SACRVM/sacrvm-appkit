@@ -534,6 +534,7 @@
                 <div class="sg-demo sg-row">
                     <button class="btn primary" style="width:auto" id="demo-open-window">Open window</button>
                     <button class="btn" style="width:auto" id="demo-open-plain-window">Close-only, fixed size</button>
+                    <button class="btn" style="width:auto" id="demo-open-toolbar-window">With a toolbar</button>
                     <span id="demo-window-state" style="color:var(--text-muted);font-size:0.85rem;"></span>
                 </div>
                 ${table("Attribute", [
@@ -554,6 +555,10 @@
                     ["minimize() / maximize()", "Enter either state. Each clears the other; leaving <code>maximized</code> puts the saved rect back first."],
                     ["restore()", "Back to the saved rect from either state, clamped in case the viewport shrank meanwhile."],
                 ])}
+                ${table("Slot", [
+                    ["(default)", "The content — inside the scroll container, padded by <code>--window-padding</code>."],
+                    ["toolbar", "A row between the title bar and the content, <b>outside</b> the scroll container: actions, a search, filters stay put while the content scrolls. Same side padding as the content, no ground of its own (part of the glass); a 1px hairline under it shows only while the content is scrolled. Empty = gone. Stays fixed on compact too."],
+                ])}
                 ${table("Event", [
                     ["sac:open / sac:close", "Bubbles + composed, <code>detail.window</code> = the element."],
                     ["sac:minimize / sac:maximize / sac:restore", "Bubbles + composed, <code>detail.window</code> = the element. The restore event covers the return from either state."],
@@ -561,6 +566,7 @@
                 ${table("CSS custom property / part", [
                     ["--window-padding", "The content's inner padding, default <code>20px</code>. A tool palette wants about <code>8px</code>; <code>0</code> for edge-to-edge content (a canvas, a list)."],
                     ["::part(content)", "The scrolling content box, for the rare app that needs more than the padding."],
+                    ["::part(toolbar)", "The fixed row of the <code>toolbar</code> slot."],
                 ])}
                 ${compact(`always maximized below the nav — an open window maximizes itself, the maximize dot is hidden,
                    dragging is off, minimize collapses it to its title bar at the top. The traffic lights get 44px
@@ -1640,7 +1646,7 @@ zone.addEventListener("sac:files", async (e) => {
                     ["flush", "Presence: the list has no border, radius or background of its own, so it sits flush in a host panel."],
                     ["active", "Which pane has the keys in a two-pane layout, shown in the bar only: a 1px hairline under it, <code>--accent</code> on the active pane, a muted bar on the other. <code>\"\"</code> / <code>true</code> = this pane, <code>false</code> = the other pane, <code>auto</code> = follows focus inside the browser. Absent = no cue."],
                     ["show-hidden", "Presence lists dot entries (<code>.config</code>, <code>.apps/</code>) — hidden by default, like a desktop file manager. Bind it to your own toggle (a menu item, a key chord); the <code>showHidden</code> property mirrors it. The <code>.folder</code> marker is never listed."],
-                    ["parent-row", "Presence: a <code>..</code> row first in every folder below the root, so going up is a row like any other — cursor onto it, <kbd>Enter</kbd> (the commander convention). Always first, whatever the sort. Not an entry: never marked, deleted, renamed or dragged, never in <code>sac:choose</code> / <code>sac:select</code> / <code>sac:mark</code> or <code>items</code>; on it <code>cursor</code> is <code>null</code> and <code>sac:cursor</code> says <code>kind: \"parent\"</code>. A drop on it lands in the parent folder. The bar's Up button stays."],
+                    ["parent-row", "Presence: a <code>..</code> row first in every folder below the root, so going up is a row like any other — cursor onto it, <kbd>Enter</kbd> (the commander convention). Always first, whatever the sort. Not an entry: never marked, deleted, renamed or dragged, never in <code>sac:choose</code> / <code>sac:select</code> / <code>sac:mark</code> or <code>items</code>; on it <code>cursor</code> is <code>null</code> and <code>sac:cursor</code> says <code>kind: \"parent\"</code>. A drop on it lands in the parent folder. One way up, not two: the bar's Up button goes, and the current folder's icon stands exactly over the rows' icons instead."],
                     ["delete-button", "The per-row trash button (<code>part=\"delete\"</code>): <code>cursor</code> (default) — the hovered row and the cursor row, always on touch; <code>hover</code> — only the row under a hovering pointer, never on touch, and only while that row is the whole job (nothing marked, or just it); <code>none</code> — no button, the Delete key stays."],
                 ])}
                 ${table("CSS custom property", [
@@ -2813,6 +2819,30 @@ bar.items = [
                                     minimize, maximize and close — or double-click the title bar.</span><span
                                     class="sg-only-compact">On a phone every window opens maximized: the orange
                                     dot collapses it to its title bar, the red one closes it.</span></p>`;
+                document.body.appendChild(win);
+                requestAnimationFrame(() => win.open());
+            } else {
+                if (win.hasAttribute("minimized")) win.restore();
+                win.open();
+            }
+        });
+
+        root.querySelector("#demo-open-toolbar-window").addEventListener("click", () => {
+            let win = document.getElementById("sg-demo-toolbar-window");
+            if (!win) {
+                win = document.createElement("sac-window");
+                win.id = "sg-demo-toolbar-window";
+                win.setAttribute("title", "Toolbar");
+                win.setAttribute("width", "340px");
+                win.setAttribute("height", "320px");
+                win.setAttribute("left", `${Math.max((window.innerWidth - 340) / 2 - 60, 20)}px`);
+                win.setAttribute("top", "180px");
+                const rows = Array.from({ length: 30 }, (_, i) => `<li>Row ${i + 1}</li>`).join("");
+                win.innerHTML = `<div slot="toolbar" class="sg-row" style="gap:8px;">
+                                     <input type="search" placeholder="Search" style="flex:1;min-width:0;">
+                                     <button class="btn" style="width:auto">Add</button>
+                                 </div>
+                                 <ul style="margin:0;padding-left:1.2rem;">${rows}</ul>`;
                 document.body.appendChild(win);
                 requestAnimationFrame(() => win.open());
             } else {
@@ -4378,6 +4408,94 @@ pz.reset();                               // e.g. when a new image loads`)}
     onReorder(from, to) { tags.splice(to, 0, ...tags.splice(from, 1)); save(tags); },
 });`)}
 
+                <h3 id="sac-tiles-sortable"><code>sac.tiles.sortable(grid, opts)</code> — the hub grid</h3>
+                <p>The same drag for a tile grid whose small tiles sit in <code>.tile-pack</code> cells. Every tile is
+                   one item in a single flat order, and the packing follows the drag live: consecutive small tiles share
+                   a pack, four per pack — a small tile dragged out leaves its pack (it closes up, an empty one goes), one
+                   dragged next to others joins theirs, a bigger tile pushes the rest aside, packs included. The kit owns
+                   the packing rule, so a hub keeps it by construction. Try it: the cover stays first.</p>
+                <div class="sg-demo on-bg">
+                    <div class="grid" id="demo-tiles-sortable">
+                        <div class="tile" style="cursor:default;"><sac-icon name="cube"></sac-icon><div><h2 style="font-size:1.2rem;">Cover</h2><p>Not an item — stays put.</p></div></div>
+                        <a class="tile" href="#/styleguide/helpers/sac-tiles-sortable" data-key="notes"><sac-icon name="document"></sac-icon><div><h2 style="font-size:1.2rem;">Notes</h2></div></a>
+                        <div class="tile-pack">
+                            <a class="tile small" href="#/styleguide/helpers/sac-tiles-sortable" title="Settings" data-key="settings"><sac-icon name="settings"></sac-icon><h2>Settings</h2></a>
+                            <a class="tile small" href="#/styleguide/helpers/sac-tiles-sortable" title="Trash" data-key="trash"><sac-icon name="trash"></sac-icon><h2>Trash</h2></a>
+                            <a class="tile small" href="#/styleguide/helpers/sac-tiles-sortable" title="Members" data-key="members"><sac-icon name="users"></sac-icon><h2>Members</h2></a>
+                        </div>
+                        <a class="tile" href="#/styleguide/helpers/sac-tiles-sortable" data-key="calendar"><sac-icon name="calendar"></sac-icon><div><h2 style="font-size:1.2rem;">Calendar</h2></div></a>
+                        <div class="tile-pack">
+                            <a class="tile small" href="#/styleguide/helpers/sac-tiles-sortable" title="Contacts" data-key="contacts"><sac-icon name="contacts"></sac-icon><h2>Contacts</h2></a>
+                            <a class="tile small" href="#/styleguide/helpers/sac-tiles-sortable" title="Files" data-key="files"><sac-icon name="folder"></sac-icon><h2>Files</h2></a>
+                        </div>
+                    </div>
+                    <span id="demo-tiles-sortable-state" style="color:var(--text-muted);font-size:0.85rem;">drag a tile — small ones in and out of packs</span>
+                </div>
+                ${table("Option", [
+                    ["items", "Selector for the movable tiles — in the grid or one level down in a <code>.tile-pack</code>. Default <code>.tile</code>. Grid children that match neither (a cover) keep their place among the grid's children."],
+                    ["onReorder(from, to, tile)", "Called once on drop, only if the tile's index in the flat order changed — save one tile's position (e.g. the midpoint of its new neighbours)."],
+                    ["disabled", "Boolean or function — e.g. <code>() =&gt; !isOwner</code>."],
+                    ["ignore", "Presses starting here never drag. Default: the <code>sac.sortable</code> list plus <code>button, sac-menu</code> — a tile's “⋯” and its own buttons stay clickable."],
+                ])}
+                ${table("Returns", [
+                    ["destroy()", "Removes every listener (and puts back a tile mid-drag)."],
+                    ["repack()", "Re-packs the current order — after the host added or removed tiles itself."],
+                ])}
+                <p>Input is <code>sac.sortable</code>'s (4px to lift, a 250ms long-press on touch, the eaten click,
+                   auto-scroll, <code>data-sortable-dragging</code>); Escape restores the exact DOM from before the drag.
+                   Live content inside a tile travels with it as is — tiles are moved, never rebuilt.</p>
+                ${code(`sac.tiles.sortable(grid, {
+    items: ".tile:not(.fb-cover)",
+    disabled: () => !isOwner,
+    onReorder(from, to, tile) { savePosition(tile.dataset.key, to); },
+});`)}
+
+                <h2 id="sac-selection">sac.selection — mark several rows</h2>
+                <p>The marking gestures of <code>&lt;sac-file-browser&gt;</code> for any list an app renders itself — contacts,
+                   notes, todos — so a bulk action ("Delete 3") works the same everywhere. The app keeps its click (open the
+                   row), its header and the action; the helper owns the gestures, the anchor and the marked set. Marks are
+                   kept by id and survive a re-render; only rows the list <em>shows</em> stay marked, so a search or filter
+                   that hides a row unmarks it.</p>
+                <div class="sg-demo sg-col" style="max-width:none;">
+                    <div id="demo-selection" class="sg-sel-list" tabindex="0">
+                        <div class="sg-sel-row" data-id="ada"><sac-icon name="user"></sac-icon><span>Ada Lovelace</span></div>
+                        <div class="sg-sel-row" data-id="alan"><sac-icon name="user"></sac-icon><span>Alan Turing</span></div>
+                        <div class="sg-sel-row" data-id="grace"><sac-icon name="user"></sac-icon><span>Grace Hopper</span></div>
+                        <div class="sg-sel-row" data-id="katherine"><sac-icon name="user"></sac-icon><span>Katherine Johnson</span></div>
+                        <div class="sg-sel-row" data-id="analytical"><sac-icon name="users"></sac-icon><span>Analytical Society</span></div>
+                    </div>
+                    <span id="demo-selection-state" style="color:var(--text-muted);font-size:0.85rem;">Ctrl/⌘+click, Shift+click, Ctrl/⌘+A, Esc — or long-press on touch.</span>
+                </div>
+                ${table("Gesture", [
+                    ["Click", "The app's own (open the row). While rows are marked, a plain click clears them first."],
+                    ["Ctrl/⌘+click", "Toggles a mark. The first one also marks the open row (<code>current</code>), like a file manager."],
+                    ["Shift+click", "Marks the range from the last clicked row (else the open row) in the visible order; with Ctrl/⌘ it is added."],
+                    ["Ctrl/⌘+A", "With the list focused: every visible row."],
+                    ["Esc", "Clears the marks — and only then stops the key."],
+                    ["Touch / pen", "A 500ms long-press marks the row (moving more than 10px is a scroll); while anything is marked a tap toggles. The click and the context menu after the press are eaten."],
+                ])}
+                ${table("Option", [
+                    ["rows", "Selector for the markable rows (descendants of the list). Default <code>[data-id]</code>."],
+                    ["id(row)", "A row's stable id. Default <code>row.dataset.id</code>."],
+                    ["current()", "Optional — the id of the open row (first Ctrl+click, Shift anchor)."],
+                    ["icon", "Optional selector of a row's <code>&lt;sac-icon&gt;</code>: shows <code>check</code> in <code>--accent</code> while marked, its own name after."],
+                    ["disabled", "Boolean or function — e.g. <code>() =&gt; !writable</code>."],
+                    ["onChange(ids)", "The marks changed (also as <code>sac:mark { ids }</code> on the list, bubbles + composed)."],
+                ])}
+                ${table("Returns / sets", [
+                    ["marked · has(id)", "The marked ids in visible order · one check."],
+                    ["set(ids) · clear() · toggle(id)", "Change the marks; <code>set</code> fires nothing."],
+                    ["sync() · destroy()", "Re-check what is shown (rarely needed — row changes are observed) · detach."],
+                    ["classes", "<code>marked</code> + <code>aria-selected</code> on marked rows, <code>marking</code> on the list while anything is marked; ui.css tints a marked row <code>--accent-tint</code> and turns off text selection / the touch callout on rows. A row the app shows as open can drop its own fill while the list is <code>.marking</code>, so it doesn't read as marked."],
+                ])}
+                ${code(`const sel = sac.selection.attach(listEl, {
+    rows: ".item",
+    current: () => openId,
+    icon: "sac-icon",
+    onChange: (ids) => paintHead(ids.length),   // "3 selected" + a Delete button
+});
+deleteButton.onclick = () => removeMany(sel.marked);`)}
+
                 <h2>Toolbars — no projection, by design</h2>
                 <p><strong>The app owns its top area.</strong> There is no <code>sac.toolbar</code>:
                    a view that has actions draws its own toolbar row (the <code>.toolbar</code>
@@ -5446,6 +5564,37 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                 onReorder: (from, to) => {
                     const order = Array.from(sortList.children, (li) => li.textContent.trim() || li.querySelector("sac-chip").getAttribute("label"));
                     state.textContent = `moved ${from} → ${to}: ${order.join(", ")}`;
+                },
+            });
+        }
+
+        const selList = root.querySelector("#demo-selection");
+        if (selList && window.sac && sac.selection) {
+            const state = root.querySelector("#demo-selection-state");
+            let open = null;
+            selList.addEventListener("click", (e) => {
+                const row = e.target.closest(".sg-sel-row");
+                if (!row) return;
+                open = row.dataset.id;
+                selList.querySelectorAll(".sg-sel-row").forEach((r) => r.classList.toggle("open", r === row));
+                state.textContent = `opened ${open}`;
+            });
+            sac.selection.attach(selList, {
+                rows: ".sg-sel-row",
+                current: () => open,
+                icon: "sac-icon",
+                onChange: (ids) => { state.textContent = ids.length ? `${ids.length} selected: ${ids.join(", ")}` : "nothing marked"; },
+            });
+        }
+
+        const tileGrid = root.querySelector("#demo-tiles-sortable");
+        if (tileGrid && window.sac && sac.tiles) {
+            const state = root.querySelector("#demo-tiles-sortable-state");
+            sac.tiles.sortable(tileGrid, {
+                items: ".tile[data-key]",
+                onReorder: (from, to, tile) => {
+                    const order = Array.from(tileGrid.querySelectorAll(".tile[data-key]"), (t) => t.dataset.key);
+                    state.textContent = `${tile.dataset.key}: ${from} → ${to} · ${order.join(", ")}`;
                 },
             });
         }
