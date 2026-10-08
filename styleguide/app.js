@@ -407,7 +407,7 @@
                    documented exception to the shadow rule. Page apps are real links, window
                    and view apps real buttons; every tile looks the same. Tiles are square like the
                    <code>.grid</code> pattern's — a wide one as tall as a column is wide, a large one
-                   2 × 2. The manifest decides the tile's look (<code>tile</code> footprint,
+                   2 × 2, nine small ones in one medium cell (3 × 3). The manifest decides the tile's look (<code>tile</code> footprint,
                    <code>accent</code> — see sac.apps in Helpers); a tile's accent colors the
                    tile and rides into the app opened through it. A <code>storage</code> key
                    adds the persisted user layer — or the host owns it (<code>persist="none"</code>
@@ -3854,6 +3854,11 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                             <a class="tile small" href="#/styleguide/patterns" title="Trash"><sac-icon name="trash"></sac-icon><h2>Trash</h2></a>
                             <a class="tile small" href="#/styleguide/patterns" title="Members"><sac-icon name="users"></sac-icon><h2>Members</h2></a>
                             <a class="tile small" href="#/styleguide/patterns" title="Admin" style="--accent:#e59500;"><sac-icon name="lock"></sac-icon><h2>Admin</h2></a>
+                            <a class="tile small" href="#/styleguide/patterns" title="Contacts"><sac-icon name="contacts"></sac-icon><h2>Contacts</h2></a>
+                            <a class="tile small" href="#/styleguide/patterns" title="Files"><sac-icon name="folder"></sac-icon><h2>Files</h2></a>
+                            <a class="tile small" href="#/styleguide/patterns" title="Calendar"><sac-icon name="calendar"></sac-icon><h2>Calendar</h2></a>
+                            <a class="tile small" href="#/styleguide/patterns" title="Notes"><sac-icon name="document"></sac-icon><h2>Notes</h2></a>
+                            <a class="tile small" href="#/styleguide/patterns" title="Upload"><sac-icon name="upload"></sac-icon><h2>Upload</h2></a>
                         </div>
                     </div>
                 </div>
@@ -3863,7 +3868,7 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                     [".tile.wide", "2 columns × 1 row — as tall as one column is wide."],
                     [".tile.large", "2 columns × 2 rows, square. <b>Changed:</b> used to be 2 columns × 1 row (that is now <code>.wide</code>)."],
                     [".tile.disabled", "Grayscale, not clickable-looking."],
-                    [".tile-pack > .tile.small", "A quarter of a medium: up to four small tiles in a <code>.tile-pack</code> fill one cell 2 × 2 with the grid's gap, edge to edge with the neighbours. Icon only — the <code>h2</code> stays as the accessible name (visually hidden); add a <code>title</code> for the tooltip. Stays small on phones: a one-column grid lays the pack out as one row of four."],
+                    [".tile-pack > .tile.small", "A ninth of a medium: up to nine small tiles in a <code>.tile-pack</code> fill one cell 3 × 3 with the grid's gap, edge to edge with the neighbours — the grid's rhythm runs through the pack. Icon only — the <code>h2</code> stays as the accessible name (visually hidden); add a <code>title</code> for the tooltip. Stays small on phones: a one-column grid lays the pack out as a wrapping row of ~72px squares."],
                 ])}
                 ${compact(`from two columns on tiles stay square (the gap narrows to 14px); <code>.wide</code> and <code>.large</code>
                    collapse to medium — a 2 × 2 tile would own a tablet screen. A <b>one-column</b> grid, on any screen, is a
@@ -4411,7 +4416,7 @@ pz.reset();                               // e.g. when a new image loads`)}
                 <h3 id="sac-tiles-sortable"><code>sac.tiles.sortable(grid, opts)</code> — the hub grid</h3>
                 <p>The same drag for a tile grid whose small tiles sit in <code>.tile-pack</code> cells. Every tile is
                    one item in a single flat order, and the packing follows the drag live: consecutive small tiles share
-                   a pack, four per pack — a small tile dragged out leaves its pack (it closes up, an empty one goes), one
+                   a pack, nine per pack (3 × 3) — a small tile dragged out leaves its pack (it closes up, an empty one goes), one
                    dragged next to others joins theirs, a bigger tile pushes the rest aside, packs included. The kit owns
                    the packing rule, so a hub keeps it by construction. Try it: the cover stays first.</p>
                 <div class="sg-demo on-bg">
@@ -4654,7 +4659,7 @@ mount(context) {
                     <tr><td><code>name</code></td><td>Display name (window title / tile heading).</td></tr>
                     <tr><td><code>icon</code></td><td><code>sac-icon</code> name for the tile.</td></tr>
                     <tr><td><code>description</code></td><td>Tile subline (optional).</td></tr>
-                    <tr><td><code>tile</code></td><td>Optional tile footprint in the launcher grid: <code>"medium"</code> (default, omit-able), <code>"wide"</code> (2 columns), <code>"large"</code> (2 columns × 2 rows) or <code>"small"</code> (icon only, name as tooltip — four consecutive small tiles fill one medium cell 2 × 2). Unknown values fall back to medium silently; wide and large collapse to medium on narrow viewports, small tiles stay small.</td></tr>
+                    <tr><td><code>tile</code></td><td>Optional tile footprint in the launcher grid: <code>"medium"</code> (default, omit-able), <code>"wide"</code> (2 columns), <code>"large"</code> (2 columns × 2 rows) or <code>"small"</code> (icon only, name as tooltip — nine consecutive small tiles fill one medium cell 3 × 3). Unknown values fall back to medium silently; wide and large collapse to medium on narrow viewports, small tiles stay small.</td></tr>
                     <tr><td><code>kind</code></td><td><code>"window"</code> (floating overlay, default), <code>"view"</code> (takes the stage at <code>#/&lt;id&gt;</code>) or <code>"page"</code> (plain link to <code>href</code>).</td></tr>
                     <tr><td><code>entry</code></td><td>Installed apps: the script path <em>relative to the manifest</em>. <code>inspect()</code> resolves it into <code>src</code>. A shell registering its own apps gives <code>src</code> directly.</td></tr>
                     <tr><td><code>nav</code></td><td>view only: <code>false</code> keeps the app out of the nav panel (it stays reachable by hash).</td></tr>
