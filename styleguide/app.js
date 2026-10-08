@@ -443,7 +443,7 @@
                     ["refresh()", "Re-read <code>sac.apps.list()</code> and re-sync the grid in place. The component re-syncs itself on every <code>sac:apps-changed</code> the runtime emits, so late registration just works — call this only after mutating state outside <code>sac.apps</code>."],
                     ["setLinks(list)", "Plain link tiles beside the <code>sac.apps</code> tiles: <code>[{ id, name, icon, description, href, tile, accent, menu }]</code>. Each is a real <code>&lt;a href&gt;</code>, so <code>href: \"#/notes\"</code> is an in-SPA navigation, never a reload. The <code>id</code> is the tile key and shares the persisted order / hidden layout with the app tiles (an app tile wins a collision). Movable and hideable, never removable. Replaces the previous list; <code>launcher.links</code> reads or assigns it."],
                     ["SacLauncher.sizeLabel(size)", "Static: a footprint's menu label in the current language (<code>\"Small tile\"</code> / <code>\"Kleine Kachel\"</code>, keys <code>launcher.size-&lt;size&gt;</code>) — for hosts offering a size menu via <code>setMenu()</code>."],
-                    ["setMenu(key, items)", "Sets one tile's corner menu, overriding the entry's own <code>menu</code>; <code>null</code> = no menu, <code>undefined</code> = back to the entry's. Prefer it over a manifest <code>menu</code>: it keeps functions out of manifests that come from JSON."],
+                    ["setMenu(key, items)", "Sets one tile's context menu (right-click, long-press on touch, Shift+F10 / Menu key — its last entry is <b>Arrange</b>, the edit mode, while the layout can be edited), overriding the entry's own <code>menu</code>; <code>null</code> = no menu, <code>undefined</code> = back to the entry's. Prefer it over a manifest <code>menu</code>: it keeps functions out of manifests that come from JSON."],
                 ])}
                 ${table("Event", [
                     ["sac:layout", "detail { order, hidden, customCount, layout } after every user change (move / drag / hide / show / add / remove). <code>layout</code> is the full object the <code>layout</code> property takes — save it as is; <code>order</code> is the effective order of every tile. Bubbles + composed."],
@@ -516,10 +516,8 @@
                    large tiles included; below a 480px viewport each tile is a row, icon beside the text (the <code>.tile</code>
                    pattern). Under <code>pointer: coarse</code> the edit controls grow to a 36px look with a
                    44px hit halo; under <code>hover: none</code> the Add tile's hover tint is off. The windows it opens
-                   maximize themselves on compact. Drag on touch starts after a 250ms long-press, so a swipe over the
-                   grid still scrolls. The tile-menu button has the edit controls' 36px look and 44px halo; on a 480px
-                   viewport it centres on the right edge, and while editing the controls
-                   take that edge alone.`)}
+                   maximize themselves on compact. A finger drags only in edit mode (Arrange) — then at once, while the
+                   tiles wiggle; outside it a swipe over the grid scrolls and a long-press opens the tile's menu.`)}
 
                 <h2 id="sac-window">&lt;sac-window&gt;</h2>
                 <p>Draggable, resizable, glassmorphic floating window. Content = light-DOM children.
@@ -1682,6 +1680,7 @@ zone.addEventListener("sac:files", async (e) => {
                     ["sac:remove", "detail { path, folder } — one per item the built-in path deleted, after an armed confirm that says how many files go with it."],
                     ["sac:request-rename", "<strong>Cancelable</strong>: detail { from, to, folder } before a rename. <code>preventDefault()</code> and the host renames, then calls <code>refresh()</code>."],
                     ["sac:rename", "detail { from, to, folder } — the built-in rename landed."],
+                    ["sac:context", "<strong>Cancelable</strong>, before a row's context menu opens (right-click, long-press, Shift+F10 / Menu key — the cursor moves onto the row): detail { path, kind, paths, items }. <code>paths</code> is what it acts on (the marks when the row is one of several marked); <code>items</code> the built-in list — <b>Select</b> (<code>multiple</code>), Open, Rename, Delete — as <code>sac.contextMenu</code> items: push, splice or replace in place (Copy, Move…). <code>preventDefault()</code> = no menu. On touch, <b>Select</b> is how mark mode starts."],
                     ["sac:drop", "detail { paths, target, copy, source } — rows dragged from a <code>&lt;sac-file-browser&gt;</code> (this one or another; <code>source</code> is that element), or { files, target, copy: true } — files from the OS. <code>target</code> is the folder dropped on, else this browser's folder; <code>copy</code> = Ctrl (Option on macOS) held. The browser moves nothing: the host does, with <code>sac.fs.ops.move</code> / <code>copy</code> / <code>write</code>, then refreshes."],
                 ])}
                 ${code(`<sac-file-browser multiple header columns="type size date" cursor-style="bar">
@@ -2785,13 +2784,13 @@ bar.items = [
                                 description: "A page app — the tile is a plain link. tile: \"wide\" spans two grid columns.",
                                 kind: "page", href: "#/styleguide/components", tile: "wide" });
             // Host-side extras on the same launcher: a link tile (no
-            // registration) and a corner menu on the Clock tile.
+            // registration) and a context menu on the Clock tile.
             const hub = root.querySelector("#sg-launcher-plain");
             if (hub) customElements.whenDefined("sac-launcher").then(() => {
                 hub.setLinks([{ id: "sg-demo-link", name: "Link tile", icon: "link",
                                 description: "setLinks() — a plain link, no app registration. Goes to the sac-menu section.",
                                 href: "#/styleguide/components/sac-menu" },
-                              // tile: "small" — four in a row share one medium cell.
+                              // tile: "small" — up to nine in a row share one medium cell.
                               ...[["settings", "Settings"], ["trash", "Trash"], ["users", "Members"], ["lock", "Admin"]]
                                   .map(([icon, name]) => ({ id: "sg-demo-small-" + icon, name, icon, tile: "small",
                                                             href: "#/styleguide/components/sac-launcher" }))]);
@@ -4452,13 +4451,70 @@ pz.reset();                               // e.g. when a new image loads`)}
                     ["Slide · settle", "Displaced tiles — packs re-forming included — slide to their new cells (200ms). On drop the tile glides from the pointer into its slot; Escape glides everything back to the exact DOM from before the drag."],
                     ["Reduced motion", "The same targeting; nothing animates."],
                 ])}
+                <h3>Arrange mode</h3>
+                <p>Moving tiles is an entry in the tile's context menu — <code>arrangeItem()</code> returns it ready-made —
+                   like the iPhone's: the movable tiles wiggle, a floating <b>Arrange · Done</b> pill shows, a tap opens
+                   nothing, a finger drags at once and no context menu opens. Done, Escape or a tap on a free spot ends it.
+                   A mouse drags any time (the desktop convention); a finger only while arranging. Right-click a tile above
+                   — or long-press it on touch — and choose <b>Arrange</b>.</p>
+                ${table("Arrange", [
+                    ["arrange(on) · arranging", "Enter / leave the mode; read it. <code>sac:arrange { arranging }</code> fires on the grid either way."],
+                    ["arrangeItem()", "<code>{ id: \"arrange\", label: \"Arrange\", icon: \"move\", onClick }</code> — put it in the tile's <code>sac.contextMenu</code> items."],
+                    ["Look", "The grid carries <code>data-arranging</code>; the movable tiles get <code>data-arrangeable</code> (a cover does not) and wiggle on the <code>rotate</code> property, staggered; small tiles a little more. Reduced motion: a dashed hairline instead."],
+                ])}
                 <p>Input is <code>sac.sortable</code>'s (4px to lift, a 250ms long-press on touch, the eaten click,
                    auto-scroll); a tile link's native drag is off while a press is live. Live content inside a tile
                    travels with it as is — tiles are moved, never rebuilt.</p>
-                ${code(`sac.tiles.sortable(grid, {
+                ${code(`const tiles = sac.tiles.sortable(grid, {
     items: ".tile:not(.fb-cover)",
     disabled: () => !isOwner,
     onReorder(from, to, tile) { savePosition(tile.dataset.key, to); },
+});
+sac.contextMenu(grid, {
+    targets: ".tile:not(.fb-cover)",
+    items: (tile) => [{ id: "open", label: "Open", icon: "external-link" }, "-", tiles.arrangeItem()],
+    onSelect: (item, tile) => item.onClick ? item.onClick() : tile.click(),
+});`)}
+
+                <h2 id="sac-context-menu">sac.contextMenu — right-click, long-press, Menu key</h2>
+                <p>We are an app, not a website: a surface opens <em>its</em> menu and the browser's never shows there
+                   (text fields keep theirs). Kit-wide, a <b>long-press on touch is a right-click</b>: after 500ms
+                   without moving the kit fires <code>contextmenu</code> at the finger, so every right-click handler —
+                   the kit's, <code>menu.openAt(e)</code>, an app's own — answers it too (where the browser fires its own,
+                   nothing fires twice; <code>[data-no-long-press]</code> opts a subtree out). Shift+F10 or the Menu key
+                   opens the focused target's menu. A long-press is <em>always</em> the menu: where a list marks several
+                   rows, pass <code>selection</code> and the menu's first entry <b>Select</b> starts marking.</p>
+                <div class="sg-demo sg-col" style="max-width:none;">
+                    <div id="demo-context" class="sg-sel-list" tabindex="0">
+                        <div class="sg-sel-row" data-id="ada" tabindex="-1"><sac-icon name="user"></sac-icon><span>Ada Lovelace</span></div>
+                        <div class="sg-sel-row" data-id="alan" tabindex="-1"><sac-icon name="user"></sac-icon><span>Alan Turing</span></div>
+                        <div class="sg-sel-row" data-id="grace" tabindex="-1"><sac-icon name="user"></sac-icon><span>Grace Hopper</span></div>
+                    </div>
+                    <span id="demo-context-state" style="color:var(--text-muted);font-size:0.85rem;">Right-click a row — or long-press it on touch, or Shift+F10.</span>
+                </div>
+                ${table("Option", [
+                    ["targets", "Selector for what a menu is for (descendants of the surface). A press elsewhere on the surface opens nothing — and still no browser menu."],
+                    ["items(target)", "<code>[{ id, label, labelKey, icon, danger, disabled, onClick(info) }]</code>, <code>\"-\"</code> for a separator; <code>null</code> / <code>[]</code> = no menu for this target."],
+                    ["onSelect(item, target, index)", "Optional: one handler for every item (else each item's <code>onClick({ id, target, menu })</code>)."],
+                    ["selection", "Optional <code>sac.selection</code>: <b>Select</b> becomes the first entry for an unmarked row, and the selection's own long-press steps aside."],
+                    ["keyTarget()", "The target for Shift+F10 / the Menu key when focus sits on the surface itself (a listbox with <code>aria-activedescendant</code>)."],
+                    ["disabled", "Boolean or function. Inside <code>[data-arranging]</code> (tiles being arranged) no menu opens either."],
+                ])}
+                ${table("Returns / kit-wide", [
+                    ["open(target, point?) · close() · isOpen · destroy()", "Open one by script, close it, ask, detach (the menu element goes too)."],
+                    ["sac.contextMenu.suppress(root?)", "The browser's menu off for a whole app (text fields and <code>[data-native-menu]</code> keep theirs). Returns an undo."],
+                    ["sac:context-open", "Fires on the target as a menu opens — a press waiting to become a drag lets go. A held, unmoved drag also yields to any <code>contextmenu</code>; moving first makes it a drag, and no menu comes."],
+                ])}
+                ${code(`sac.contextMenu.suppress();                 // once, at boot: an app, not a website
+const sel = sac.selection.attach(list, { rows: ".item" });
+sac.contextMenu(list, {
+    targets: ".item",
+    selection: sel,                             // "Select" first — the long-press marks through it
+    items: (row) => [
+        { id: "open",   label: "Open",   icon: "external-link", onClick: () => open(row.dataset.id) },
+        "-",
+        { id: "delete", label: "Delete", icon: "trash", danger: true, onClick: () => remove(row.dataset.id) },
+    ],
 });`)}
 
                 <h2 id="sac-selection">sac.selection — mark several rows</h2>
@@ -4483,7 +4539,7 @@ pz.reset();                               // e.g. when a new image loads`)}
                     ["Shift+click", "Marks the range from the last clicked row (else the open row) in the visible order; with Ctrl/⌘ it is added."],
                     ["Ctrl/⌘+A", "With the list focused: every visible row."],
                     ["Esc", "Clears the marks — and only then stops the key."],
-                    ["Touch / pen", "A 500ms long-press marks the row (moving more than 10px is a scroll); while anything is marked a tap toggles. The click and the context menu after the press are eaten."],
+                    ["Touch / pen", "A 500ms long-press marks the row (moving more than 10px is a scroll); while anything is marked a tap toggles. With a <a href=\"#/styleguide/helpers/sac-context-menu\">context menu</a> on the list the long-press is the menu instead, and its <b>Select</b> marks."],
                 ])}
                 ${table("Option", [
                     ["rows", "Selector for the markable rows (descendants of the list). Default <code>[data-id]</code>."],
@@ -5598,15 +5654,42 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
             });
         }
 
+        const ctxList = root.querySelector("#demo-context");
+        if (ctxList && window.sac && sac.contextMenu && sac.selection) {
+            const state = root.querySelector("#demo-context-state");
+            const sel = sac.selection.attach(ctxList, {
+                rows: ".sg-sel-row", icon: "sac-icon",
+                onChange: (ids) => { state.textContent = ids.length ? `${ids.length} selected: ${ids.join(", ")}` : "nothing marked"; },
+            });
+            sac.contextMenu(ctxList, {
+                targets: ".sg-sel-row",
+                selection: sel,
+                keyTarget: () => ctxList.querySelector(".sg-sel-row"),
+                items: (row) => [
+                    { id: "open", label: "Open", icon: "external-link", onClick: () => { state.textContent = `open ${row.dataset.id}`; } },
+                    { id: "rename", label: "Rename", icon: "pencil", onClick: () => { state.textContent = `rename ${row.dataset.id}`; } },
+                    "-",
+                    { id: "delete", label: "Delete", icon: "trash", danger: true, onClick: () => { state.textContent = `delete ${row.dataset.id}`; } },
+                ],
+            });
+        }
+
         const tileGrid = root.querySelector("#demo-tiles-sortable");
         if (tileGrid && window.sac && sac.tiles) {
             const state = root.querySelector("#demo-tiles-sortable-state");
-            sac.tiles.sortable(tileGrid, {
+            const tiles = sac.tiles.sortable(tileGrid, {
                 items: ".tile[data-key]",
                 onReorder: (from, to, tile) => {
                     const order = Array.from(tileGrid.querySelectorAll(".tile[data-key]"), (t) => t.dataset.key);
                     state.textContent = `${tile.dataset.key}: ${from} → ${to} · ${order.join(", ")}`;
                 },
+            });
+            if (sac.contextMenu) sac.contextMenu(tileGrid, {
+                targets: ".tile[data-key]",
+                items: () => [tiles.arrangeItem()],
+            });
+            tileGrid.addEventListener("sac:arrange", (e) => {
+                state.textContent = e.detail.arranging ? "arranging — drag, then Done" : "done";
             });
         }
 
