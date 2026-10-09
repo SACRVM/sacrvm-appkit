@@ -545,6 +545,7 @@
                     ["no-resize", "Boolean: no resize handle, no resizing. Dragging is unaffected. An app manifest sets these two via <code>controls</code> / <code>resizable: false</code> (see sac.apps in Helpers)."],
                     ["no-compact", "Boolean: opts <b>out</b> of the compact rules. On a narrow screen a window normally maximizes itself (a window app IS the app there); a tool palette or preview over a canvas should not — with <code>no-compact</code> it stays a floating window: its own size, draggable, pushed into view. Window apps keep the default."],
                     ["snap", "Edge snapping while dragging: within 12px of a viewport edge (top = below the nav ribbon) the window snaps to it, keeping a gap of the value — <code>snap=\"14\"</code> → 14px, bare <code>snap</code> → 8px. Dropped snapped to the right and/or bottom edge it is <b>anchored</b> there again (<code>right</code> / <code>bottom</code>), so it follows browser resizes like a freshly placed tool window; snapped left / top it keeps left / top. Dropped free, a plain position. Opt-in — the choice for tool palettes over a canvas."],
+                    ["escape-closes", "Boolean: Escape closes the window focus is in, unless something inside consumed it (an open <code>sac-select</code> list, a menu, a field reverting its typing). A dialog open above takes it first. Opt-in — an editor or a tool palette keeps Escape for itself."],
                     ["compact", "Set <b>by the component</b> while the viewport is compact — a styling hook, not an input."],
                 ])}
                 ${table("Method", [
@@ -552,6 +553,11 @@
                     ["bringToFront()", "Raises the window over the other sac-windows. Windows stack in their own band, <code>10000–18999</code>: above the page, below the open burger panel / rail drawer (<code>19000+</code>) and dialogs (<code>20000</code>) — reaching the top re-packs the band, so no window ever covers the menu."],
                     ["minimize() / maximize()", "Enter either state. Each clears the other; leaving <code>maximized</code> puts the saved rect back first."],
                     ["restore()", "Back to the saved rect from either state, clamped in case the viewport shrank meanwhile."],
+                ])}
+                ${table("Keyboard", [
+                    ["On open", "Focus moves into the window (on <code>open()</code> or the attribute, not the first paint): an element with <code>autofocus</code>, else the first focusable in the toolbar or content that isn't a text field — no keyboard popping up on a phone, no hotkeys typed into a field — else the window itself. A focus the app sets right after <code>open()</code> wins."],
+                    ["On close", "Focus goes back to whoever had it before — when it is still in the window (or nowhere); a user who has moved on keeps theirs."],
+                    ["Esc", "With <code>escape-closes</code>: closes the window."],
                 ])}
                 ${table("Slot", [
                     ["(default)", "The content — inside the scroll container, padded by <code>--window-padding</code>."],
@@ -668,6 +674,9 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
                    <code>textContent</code>. A dialog with more content than the viewport caps out
                    and scrolls its body; title and buttons stay put.</p>
                 ${table("Keyboard", [
+                    ["On open", "A button has focus, so Enter acts at once: the one marked <code>default: true</code>, else the first primary, else the first that isn't destructive (Cancel) — disabled ones and one still waiting to arm skipped. A body element with <code>autofocus</code> takes it instead, and so does a field focused right after <code>open()</code> (a prompt's — Enter there presses the primary)."],
+                    ["← / → · ↑ / ↓ · Home / End", "Move focus through the action buttons while focus is on one of them: wrapping, disabled ones skipped; ↑ / ↓ follow the bottom sheet's stacked buttons. Inside the body's fields the arrows stay theirs."],
+                    ["Enter / Space", "Press the focused button. A focus ring marks it — also when script set the focus, where <code>:focus-visible</code> stays dark — never after a click."],
                     ["Tab / Shift+Tab", "Focus trap over everything focusable in the body, then the buttons, in document order — kit fields included (their inputs sit in shadow roots), and from inside another component's shadow root too."],
                     ["Esc", "Closes with <code>null</code> — unless something inside handles it first: an open field popover (a <code>sac-select</code> list, a <code>sac-date-field</code> calendar), a menu, a field reverting its typing. That Escape stays there; the next one closes the dialog. Only the topmost open dialog handles keys."],
                 ])}
@@ -681,7 +690,8 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
                     ["action", "String the promise resolves with."],
                     ["label", "Button text."],
                     ["kind", "\"default\" | \"primary\" | \"destructive\"."],
-                    ["armAfterMs", "Arm delay for the destructive button: it takes focus only after N ms, so a reflexive Enter can't confirm it early — and the timer cancels if the pointer visits another button first."],
+                    ["default", "<code>true</code> = the button focused on open, where the rule (first primary, else first non-destructive) picks the wrong one."],
+                    ["armAfterMs", "Arm delay for the destructive button: it takes focus only after N ms, so a reflexive Enter can't confirm it early — until then the dialog sits on the safe button. Any key (an arrow, Tab, typing) or the pointer visiting another button cancels the timer, and it never fires into a field."],
                     ["disabled", "Start the button disabled — e.g. a Save that waits for a name. Toggle it later with <code>setDisabled()</code>."],
                     ["labelKey", "Optional i18n key: the button shows <code>sac.t(labelKey, label)</code> and follows a language switch in place (<code>label</code> is the English fallback). Without it the label is the caller's and never changes."],
                 ])}
