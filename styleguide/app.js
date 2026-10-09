@@ -4494,7 +4494,8 @@ sac.contextMenu(grid, {
                 </div>
                 ${table("Option", [
                     ["targets", "Selector for what a menu is for (descendants of the surface). A press elsewhere on the surface opens nothing — and still no browser menu."],
-                    ["items(target)", "<code>[{ id, label, labelKey, icon, danger, disabled, onClick(info) }]</code>, <code>\"-\"</code> for a separator; <code>null</code> / <code>[]</code> = no menu for this target."],
+                    ["items(target)", "<code>[{ id, label, labelKey, icon, checked, type, danger, disabled, onClick(info) }]</code>, <code>\"-\"</code> for a separator; <code>null</code> / <code>[]</code> = no menu for this target."],
+                    ["checked · type", "<code>checked: true | false</code> makes an entry a <b>state</b> — a checkmark in its own column, not an icon; <code>type: \"radio\"</code> for one of a group (a tile's size), else a checkbox (<code>menuitemradio</code> / <code>menuitemcheckbox</code> + <code>aria-checked</code>). Columns are reserved: once one entry is checkable every entry gets the check column, once one has an icon every entry gets the icon column — labels never jump. <code>onClick</code> gets <code>checked</code> too."],
                     ["onSelect(item, target, index)", "Optional: one handler for every item (else each item's <code>onClick({ id, target, menu })</code>)."],
                     ["selection", "Optional <code>sac.selection</code>: <b>Select</b> becomes the first entry for an unmarked row, and the selection's own long-press steps aside."],
                     ["keyTarget()", "The target for Shift+F10 / the Menu key when focus sits on the surface itself (a listbox with <code>aria-activedescendant</code>)."],
@@ -4522,7 +4523,8 @@ sac.contextMenu(list, {
                    notes, todos — so a bulk action ("Delete 3") works the same everywhere. The app keeps its click (open the
                    row), its header and the action; the helper owns the gestures, the anchor and the marked set. Marks are
                    kept by id and survive a re-render; only rows the list <em>shows</em> stay marked, so a search or filter
-                   that hides a row unmarks it.</p>
+                   that hides a row unmarks it. With <code>keyboard: true</code> it also has the file browser's keys: arrows
+                   move through the rows and the app opens each, Shift marks, Delete asks the app to remove.</p>
                 <div class="sg-demo sg-col" style="max-width:none;">
                     <div id="demo-selection" class="sg-sel-list" tabindex="0">
                         <div class="sg-sel-row" data-id="ada"><sac-icon name="user"></sac-icon><span>Ada Lovelace</span></div>
@@ -4531,7 +4533,7 @@ sac.contextMenu(list, {
                         <div class="sg-sel-row" data-id="katherine"><sac-icon name="user"></sac-icon><span>Katherine Johnson</span></div>
                         <div class="sg-sel-row" data-id="analytical"><sac-icon name="users"></sac-icon><span>Analytical Society</span></div>
                     </div>
-                    <span id="demo-selection-state" style="color:var(--text-muted);font-size:0.85rem;">Ctrl/⌘+click, Shift+click, Ctrl/⌘+A, Esc — or long-press on touch.</span>
+                    <span id="demo-selection-state" style="color:var(--text-muted);font-size:0.85rem;">Click a row, then ↑/↓, Shift+↓, Delete · Ctrl/⌘+click, Shift+click, Ctrl/⌘+A, Esc — or long-press on touch.</span>
                 </div>
                 ${table("Gesture", [
                     ["Click", "The app's own (open the row). While rows are marked, a plain click clears them first."],
@@ -4541,6 +4543,13 @@ sac.contextMenu(list, {
                     ["Esc", "Clears the marks — and only then stops the key."],
                     ["Touch / pen", "A 500ms long-press marks the row (moving more than 10px is a scroll); while anything is marked a tap toggles. With a <a href=\"#/styleguide/helpers/sac-context-menu\">context menu</a> on the list the long-press is the menu instead, and its <b>Select</b> marks."],
                 ])}
+                ${table("Key (keyboard: true)", [
+                    ["↑ / ↓ · PgUp / PgDn · Home / End", "Move the cursor through the visible rows (a row whose id is <code>null</code> is skipped), clear the marks and report it — <code>onCursor(id, row)</code> and <code>sac:cursor { id }</code>: the app opens that row, as an arrow does in Mail or Notes. Only the row's own scroller scrolls, only as far as needed (<code>scroll-padding</code> keeps it clear of a sticky header); the page never does."],
+                    ["Shift + any of those", "Marks the range from the anchor (the open row when nothing is marked) to the new cursor; moving back shrinks it; with Ctrl/⌘ it is added. Reports no cursor — the app shows “3 selected” from <code>onChange</code>."],
+                    ["Enter", "<code>sac:activate { id }</code> for the cursor row."],
+                    ["Delete · ⌘+Backspace", "<code>sac:request-remove { ids, permanent }</code> — the marked rows, else the cursor row; <code>permanent</code> = Shift held. The app asks and deletes."],
+                    ["Focus", "Keys count with focus on the list or a row — never in a field, editor or button inside it. The list gets <code>tabindex=\"0\"</code> when it has none, so a click focuses it; rows with a tabindex take focus as the cursor moves. Focus a re-render took (the open row repainted) comes back to the cursor row. A reader (<code>disabled</code>) moves the cursor; marking and Delete stay off."],
+                ])}
                 ${table("Option", [
                     ["rows", "Selector for the markable rows (descendants of the list). Default <code>[data-id]</code>."],
                     ["id(row)", "A row's stable id. Default <code>row.dataset.id</code>."],
@@ -4548,9 +4557,12 @@ sac.contextMenu(list, {
                     ["icon", "Optional selector of a row's <code>&lt;sac-icon&gt;</code>: shows <code>check</code> in <code>--accent</code> while marked, its own name after."],
                     ["disabled", "Boolean or function — e.g. <code>() =&gt; !writable</code>."],
                     ["onChange(ids)", "The marks changed (also as <code>sac:mark { ids }</code> on the list, bubbles + composed)."],
+                    ["keyboard", "Opt-in: the keys above. Off by default, so a list with keys of its own is unchanged."],
+                    ["onCursor(id, row)", "An arrow moved the cursor to this row — open it (also as <code>sac:cursor { id }</code>)."],
                 ])}
                 ${table("Returns / sets", [
                     ["marked · has(id)", "The marked ids in visible order · one check."],
+                    ["cursor · cursorRow", "The keyboard cursor's id · its row while shown. <code>sac.contextMenu({ selection })</code> opens Shift+F10 / the Menu key there."],
                     ["set(ids) · clear() · toggle(id)", "Change the marks; <code>set</code> fires nothing."],
                     ["sync() · destroy()", "Re-check what is shown (rarely needed — row changes are observed) · detach."],
                     ["classes", "<code>marked</code> + <code>aria-selected</code> on marked rows, <code>marking</code> on the list while anything is marked; ui.css tints a marked row <code>--accent-tint</code> and turns off text selection / the touch callout on rows. A row the app shows as open can drop its own fill while the list is <code>.marking</code>, so it doesn't read as marked."],
@@ -4560,8 +4572,11 @@ sac.contextMenu(list, {
     current: () => openId,
     icon: "sac-icon",
     onChange: (ids) => paintHead(ids.length),   // "3 selected" + a Delete button
+    keyboard: true,
+    onCursor: (id) => openItem(id),             // ↑/↓ open the next item
 });
-deleteButton.onclick = () => removeMany(sel.marked);`)}
+deleteButton.onclick = () => removeMany(sel.marked);
+listEl.addEventListener("sac:request-remove", (e) => confirmAndRemove(e.detail.ids));`)}
 
                 <h2>Toolbars — no projection, by design</h2>
                 <p><strong>The app owns its top area.</strong> There is no <code>sac.toolbar</code>:
@@ -5639,24 +5654,32 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
         if (selList && window.sac && sac.selection) {
             const state = root.querySelector("#demo-selection-state");
             let open = null;
+            const openRow = (id) => {
+                open = id;
+                selList.querySelectorAll(".sg-sel-row").forEach((r) => r.classList.toggle("open", r.dataset.id === id));
+                state.textContent = `opened ${open}`;
+            };
             selList.addEventListener("click", (e) => {
                 const row = e.target.closest(".sg-sel-row");
-                if (!row) return;
-                open = row.dataset.id;
-                selList.querySelectorAll(".sg-sel-row").forEach((r) => r.classList.toggle("open", r === row));
-                state.textContent = `opened ${open}`;
+                if (row) openRow(row.dataset.id);
             });
             sac.selection.attach(selList, {
                 rows: ".sg-sel-row",
                 current: () => open,
                 icon: "sac-icon",
                 onChange: (ids) => { state.textContent = ids.length ? `${ids.length} selected: ${ids.join(", ")}` : "nothing marked"; },
+                keyboard: true,
+                onCursor: openRow,
+            });
+            selList.addEventListener("sac:request-remove", (e) => {
+                state.textContent = `remove ${e.detail.ids.join(", ")}${e.detail.permanent ? " (permanently)" : ""}? — the app asks, then deletes`;
             });
         }
 
         const ctxList = root.querySelector("#demo-context");
         if (ctxList && window.sac && sac.contextMenu && sac.selection) {
             const state = root.querySelector("#demo-context-state");
+            const favs = new Set(["grace"]);
             const sel = sac.selection.attach(ctxList, {
                 rows: ".sg-sel-row", icon: "sac-icon",
                 onChange: (ids) => { state.textContent = ids.length ? `${ids.length} selected: ${ids.join(", ")}` : "nothing marked"; },
@@ -5668,6 +5691,9 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                 items: (row) => [
                     { id: "open", label: "Open", icon: "external-link", onClick: () => { state.textContent = `open ${row.dataset.id}`; } },
                     { id: "rename", label: "Rename", icon: "pencil", onClick: () => { state.textContent = `rename ${row.dataset.id}`; } },
+                    "-",
+                    { id: "fav", label: "Favourite", checked: favs.has(row.dataset.id),
+                      onClick: () => { favs.has(row.dataset.id) ? favs.delete(row.dataset.id) : favs.add(row.dataset.id); state.textContent = `favourites: ${[...favs].join(", ") || "none"}`; } },
                     "-",
                     { id: "delete", label: "Delete", icon: "trash", danger: true, onClick: () => { state.textContent = `delete ${row.dataset.id}`; } },
                 ],
