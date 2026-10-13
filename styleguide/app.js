@@ -333,6 +333,7 @@
                     ["rail", "Which rail the burger opens as a drawer on compact: a CSS selector, or <code>none</code> to opt out. Absent = the first <code>&lt;sac-sidebar&gt;</code> / <code>.sidebar</code> inside a <code>.main-layout</code> next to the nav. A rail that is still empty (a hidden <code>&lt;sac-sidebar&gt;</code>) is adopted too; the burger appears once it has items. This guide sets it explicitly (<code>app-styleguide &gt; .main-layout &gt; sac-sidebar</code>)."],
                     ["host-nav", "<code>always</code> (default) | <code>wide</code>. <code>wide</code> drops the host group (Home + the suite's app list) from the burger on compact — for a suite whose dashboard is the phone's main level; the ⌂ in the ribbon (shown while the menu is open) leads back to it. See <a href=\"#/styleguide/patterns/responsive-burger\">Who owns the burger</a>."],
                     ["sections-nav", "<code>always</code> (default) | <code>wide</code>. <code>wide</code> drops the app's own <code>sections</code> from the burger on compact — for an app whose rail already lists them, so the phone drawer holds ONE list with ONE scroll instead of the same entries twice. This guide, Build an App and the Roadmap use it."],
+                    ["titlebar", "Set <b>by the component</b> while it is the window's title bar (below): <code>overlay</code> or <code>own</code> — a styling hook, not an input."],
                 ])}
                 ${table("Property", [
                     ["host", "THE injection point of the app contract — one line in <code>mount()</code>: <code>nav.host = context.host</code>. Shape <code>{ name, icon, href, nav, toolbar }</code>: name/icon/href render the “SACRVM APPKIT” jump-home segment before the brand, in the SAME brand recipe — one title-bar style everywhere, host then app with the app's segment in accent, spacing as the only divider (visible at the top of this page); <code>nav</code> entries (<code>{label, href, icon?}</code>) become a labeled host group at the top of the burger panel; the group opens with a <b>Home</b> entry (the host's ⌂ jump — so the way back to the host lives in the menu, not only the ribbon breadcrumb; on compact the ribbon's ⌂, shown while the menu is open, takes its place), then the suite's cross-app navigation (open the burger: “SACRVM APPKIT” is that group, Home first). A <code>nav</code> entry whose <code>href</code> is <code>?app=&lt;id&gt;</code> opens that window app <b>in place</b> on a plain click (via <code>sac.apps.open</code>) and stays a deep link on a modified/middle click (new tab) — so a host can list window apps in the burger beside its routes; <code>toolbar</code> entries (<code>{icon | avatar:{name,src?}, label?, title?, href?|onClick?}</code>) render as controls at the right end of the ribbon — a suite-wide action (the GitHub button up right is one), or a signed-in user: give an entry <code>avatar</code> instead of <code>icon</code> and it materializes a real <code>&lt;sac-avatar&gt;</code> (accent-independent, name-hashed color), so the who-am-I control looks the part on every host. They are real <code>.nav-icon-btn</code> elements in the light DOM — the exact same recipe as the app's own ribbon buttons (labeled entries get the <code>.labeled</code> pill variant, avatar entries the <code>.avatar</code> variant), so host controls and app controls always look alike. Routes already listed in the host group are dropped from the app's own group, so a shared-page suite lists nothing twice. A host may re-declare later (the signed-in user was renamed, say): assign <code>context.host</code> to the nav once — the kit refreshes the injected chrome in place (<code>sac:host-changed</code>), no app cooperation. <code>null</code> = standalone, none of it renders."],
@@ -364,6 +365,21 @@
                    <code>nav.more</code>); a menu item clicks the original button. A <code>&lt;sac-menu&gt;</code> in the
                    toolbar folds as one item — its entries join the “…” menu as a group and fire the original menu's
                    <code>sac:select</code>. <code>data-overflow="never"</code> pins a control. Needs <code>sac-menu.js</code>; without it nothing overflows.</p>
+                <p><b>The window's title bar</b> (an installed app that hands its title bar to the page): the nav
+                   <em>is</em> the title bar — nothing to wire up, it follows the browser, and the person switches it
+                   on and off there. The ribbon's free space moves the window (a double-click maximises), every
+                   control in it stays a control, and height, panel and compact layout stay as they are.
+                   <b>Overlay</b> (<code>"display_override": ["window-controls-overlay"]</code> in the app's web
+                   manifest, <code>titlebar="overlay"</code>): the browser draws its own minimise / maximise / close
+                   over one corner — a page cannot hide or replace them — so the ribbon keeps that corner clear and
+                   the buttons sit on the ribbon's colour: the nav keeps a <code>&lt;meta name="theme-color"&gt;</code>
+                   of its own on the theme the kit's flag picked (the page's own metas stay untouched).
+                   <b>Own</b> (<code>display-mode: borderless</code>, <code>titlebar="own"</code>): no browser buttons, so
+                   the nav draws <code>&lt;sac-window&gt;</code>'s three traffic lights at the right end, in the
+                   theme's <code>--accent-warm</code> / <code>--ok</code> / <code>--danger</code> — each only where the
+                   browser lets a page do it: minimise and maximise need <code>window.minimize()</code> /
+                   <code>maximize()</code> (Additional Windowing Controls, window-management permission), close is
+                   <code>window.close()</code>. Chrome grants borderless to isolated web apps only.</p>
                 ${code(`<sac-nav brand="MY TOOLS" app-name="EDITOR" brand-icon="cube">
     <div slot="toolbar" class="toolbar">
         <button class="btn primary">Open</button>
@@ -3652,8 +3668,9 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                    need ui.css to reach them; components need style isolation so a view's CSS can't reach
                    in. Guess wrong and either your view is unstyled or your component leaks.</p>
                 <p class="sg-note"><b>Scrollbars:</b> Chromium and Safari draw the kit's own bar
-                   (<code>::-webkit-scrollbar</code>: a rounded 6px thumb with 2px of air, no arrow buttons, the
-                   same on every OS); Firefox gets the standard <code>scrollbar-width</code>/<code>-color</code>
+                   (<code>::-webkit-scrollbar</code>: a rounded 6px thumb with 3px of air on every side, no arrow
+                   buttons, the same on every OS — measured by <code>--scrollbar-size</code> (12px, the track) and
+                   <code>--scrollbar-gap</code> (3px), which every copy reads); Firefox gets the standard <code>scrollbar-width</code>/<code>-color</code>
                    pair, set ONLY there — a set <code>scrollbar-color</code> (inherited, even into shadow roots)
                    makes Chrome ignore every <code>::-webkit-scrollbar</code> rule. The rules do <em>not</em>
                    pierce Shadow DOM: a component with its own scrollable shadow content repeats the recipe
@@ -4559,6 +4576,7 @@ sac.contextMenu(list, {
                     ["Enter", "<code>sac:activate { id }</code> for the cursor row."],
                     ["Delete · ⌘+Backspace", "<code>sac:request-remove { ids, permanent }</code> — the marked rows, else the cursor row; <code>permanent</code> = Shift held. The app asks and deletes."],
                     ["Focus", "Keys count with focus on the list or a row — never in a field, editor or button inside it. The list gets <code>tabindex=\"0\"</code> when it has none, so a click focuses it; rows with a tabindex take focus as the cursor moves. Focus a re-render took (the open row repainted) comes back to the cursor row. A reader (<code>disabled</code>) moves the cursor; marking and Delete stay off."],
+                    ["Cursor ring", "Where the open row doesn't show the cursor — while marking (the moving end of a Shift range), or once Shift moved it off the open row — it is a 1px <code>--accent</code> ring while the list has focus: <code>data-sac-cursor</code> on the row, styled by ui.css."],
                 ])}
                 ${table("Option", [
                     ["rows", "Selector for the markable rows (descendants of the list). Default <code>[data-id]</code>."],
