@@ -1542,7 +1542,9 @@ function edit(cell, column, row) {
                 <h2 id="sac-chip-input">&lt;sac-chip-input&gt;</h2>
                 <p>Combobox for a list of named chips — chips + input + filtered dropdown. Decoupled
                    from any backend: you supply <code>.suggestions</code>, you persist on
-                   <code>change</code> / <code>sac:create</code>.</p>
+                   <code>change</code> / <code>sac:create</code>. The chips, the “Add” ghost button and the
+                   text entry share one 22px row, so the field never changes height when the ghost turns
+                   into the entry.</p>
                 <div class="sg-demo sg-col">
                     <sac-chip-input id="demo-chips" add-label="Add tag" allow-create></sac-chip-input>
                     <span id="demo-chips-state" style="color:var(--text-muted);font-size:0.85rem;">value: []</span>
@@ -1565,7 +1567,8 @@ function edit(cell, column, row) {
                 ])}
                 ${compact(`a tap commits a suggestion (a swipe that scrolls the list picks nothing). Under
                    <code>pointer: coarse</code> suggestion rows are 44px, the add button and colour swatches get 44px
-                   halos, chips sit 10px apart and the field uses 16px type. The dropdown is at most
+                   halos, chips sit 10px apart and the field uses 16px type. The row is 44px there; the chips and
+                   the ghost button keep 32px, centred in it. The dropdown is at most
                    <code>100vw - 16px</code> wide and flips above the field when the on-screen keyboard is up.`)}
 
                 <h2 id="sac-drop-zone">&lt;sac-drop-zone&gt;</h2>
