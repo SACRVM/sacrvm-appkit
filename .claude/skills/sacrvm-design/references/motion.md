@@ -1,8 +1,10 @@
 # Motion recipes for appkit apps (zero dependencies)
 
-The kit has no spring primitive yet, so a gesture release in app code uses these. They are plain
-functions with no library and no build step: paste them into the app's own `app.js`. If the kit ever
-ships one (a `sac.motion`), use that instead and delete the copy.
+Since kit 2.33, `sac.motion` ships these as `spring()`, `tracker()`, `project()` and `rubberband()`.
+Use the kit's copy, which also has `retarget()` and a `done` promise. The plain functions below are
+for apps still on an older vendored kit, and they explain what the kit does. They need no library
+and no build step: paste them into the app's own `app.js`, and delete them once the app re-vendors
+2.33 or later.
 
 Use them only where a gesture lets go of something: a dragged panel, a sheet pulled down, a drawer
 swiped, an item thrown. State changes nobody holds (hover, a menu opening) stay CSS transitions with
@@ -93,7 +95,8 @@ tune it by feel.
 
 ## Worked example: a panel pulled down to dismiss
 
-An app's own bottom panel (`sac-dialog` does not drag yet). Style it with tokens:
+An app's own bottom panel. A dialog doesn't need this: the `sac-dialog` sheet pulls by itself since
+2.33. Style the panel with tokens:
 `background: var(--glass-strong)`, `box-shadow: var(--shadow-2)`,
 `border-radius: var(--radius-l) var(--radius-l) 0 0`, and give it `touch-action: none` (or put that
 on a grab handle) so the browser does not scroll instead.

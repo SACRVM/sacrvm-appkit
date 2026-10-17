@@ -277,6 +277,27 @@
 }
 
 /* sac.sortable demo (Helpers) */
+/* sac.motion demo: a knob thrown between the ends of a track. */
+.sg-motion-track {
+    position: relative;
+    box-sizing: border-box;
+    height: 64px;
+    padding: 4px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-l);
+    touch-action: pan-y pinch-zoom;
+}
+.sg-motion-knob {
+    width: 54px;
+    height: 54px;
+    border-radius: var(--radius-l);
+    background: var(--accent-fill);
+    box-shadow: var(--shadow-1);
+    cursor: grab;
+    touch-action: none;
+}
+.sg-motion-knob:active { cursor: grabbing; }
 .sg-sortable li { cursor: grab; border-radius: var(--radius-m); }
 .sg-sortable li[data-sortable-dragging] { cursor: grabbing; box-shadow: var(--shadow-2); }
 /* sac.selection demo: a plain list the page renders itself. */

@@ -75,6 +75,19 @@ The kit must be **easily themable** — light, dark, AND custom themes:
 
 - **Global runtime language (i18n): signed off 2026-09-24, built in 2.12.0.** Language switching is kit work, not app work (Pixel Atelier dropped its own DE/EN toggle for it). Modelled on the theme: ONE global value, owned by the host on a desktop, a `<sac-lang-toggle>` in the app's own nav when standalone; apps read `context.lang` (`get` / `onChange`) and add their strings with `sac.i18n.add(lang, table)`; the host switches with `sac.lang.set()` or a `<sac-lang-toggle>`; `sac.t()` follows the current language and every kit component re-renders its strings on a switch. The kit ships **EN (inline) + DE** (a bundled table) for its own strings; other languages via `sac.i18n.add()`. **Default = the system language** as far as a page can see it: web pages cannot read the OS language, so the first entry of `navigator.languages` the kit has a table for, else EN; a stored choice wins after that.
 
+- **Apple's rules as the yardstick: signed off 2026-10-17, kit work in 2.33.0.** The `sacrvm-design` skill (`.claude/skills/sacrvm-design/`, symlinked into `~/.claude/skills/` for consumer repos) expresses Apple's interface rules in appkit terms. Where Apple and appkit disagree, appkit's settled decision wins. The kit work this triggered:
+  - `sac.motion` (zero-dependency springs: damping ratio + response, velocity handoff, projection, rubber band) drives every gesture release.
+  - `sac-window` drags with Pointer Events and throws with momentum on touch/pen only. A mouse leaves it where it lets go, as desktop windows do.
+  - The `sac-dialog` bottom sheet pulls down by its grabber + title row (not the body).
+  - The `sac-nav` drawer swipe tracks 1:1.
+  - `sac-split` slides between its collapsed panels and has a back swipe anywhere on the detail (not only the edge; fields, sliders, `[data-no-swipe]` and horizontal scrollers excluded).
+  - Sortable drops settle on a spring.
+  - Things leave the way they came: dialog exit animation + `sac:closed`, split slides, a menu opened above its trigger comes up out of it.
+  - Every control shows a press state on pointer-down: `scale(0.97)` for boxed controls, `--hover-strong` for ghost controls; tiles push down instead of scaling.
+  - `--ease-bounce` only after momentum (no longer on `.btn.primary` / tile hover); never `transition: all`.
+  - Blurred surfaces turn solid under `prefers-reduced-transparency` / `prefers-contrast: more` (`--glass-solid`, `--border-contrast`).
+  - Tracking by size (`h4`–`h6` at 0).
+
 ## Open decisions (TODO — ask, don't assume)
 
 - *(none currently)*

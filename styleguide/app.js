@@ -131,6 +131,7 @@
                     ${sw("--panel-2", "elevated panel")}
                     ${sw("--glass", "content surfaces: windows · overlays (70%)")}
                     ${sw("--glass-strong", "chrome: menus · nav ribbon (88%)")}
+                    ${sw("--glass-solid", "the glass, opaque: reduced transparency · more contrast")}
                     ${sw("--tile", "tiles · floating windows")}
                     ${sw("--tile-hover", "tile hover state")}
                     ${sw("--field", "input / select background")}
@@ -147,6 +148,7 @@
                 <div class="sg-swatches">
                     ${sw("--border", "hairlines")}
                     ${sw("--border-strong", "chrome hairlines")}
+                    ${sw("--border-contrast", "edges under prefers-contrast: more")}
                     ${sw("--hover", "hover wash")}
                     ${sw("--hover-strong", "active / press wash")}
                     ${sw("--accent-strong", "primary-button hover")}
@@ -201,13 +203,23 @@
                 <h2>Motion &amp; elevation rails</h2>
                 <table class="sg">
                     <tr><th>Token</th><th>Value</th><th>Use for</th></tr>
-                    <tr><td><code>--ease-bounce</code></td><td>cubic-bezier(0.175, 0.885, 0.32, 1.275)</td><td>playful lifts: tiles, primary buttons, icons</td></tr>
-                    <tr><td><code>--ease-smooth</code></td><td>cubic-bezier(0.4, 0, 0.2, 1)</td><td>standard state changes</td></tr>
+                    <tr><td><code>--ease-bounce</code></td><td>cubic-bezier(0.175, 0.885, 0.32, 1.275)</td><td>overshoot — only where something is let go with momentum; never on hover or press (the kit itself no longer uses it there)</td></tr>
+                    <tr><td><code>--ease-smooth</code></td><td>cubic-bezier(0.4, 0, 0.2, 1)</td><td>standard state changes, hover lifts (tiles, primary buttons)</td></tr>
                     <tr><td><code>--ease-swift</code></td><td>cubic-bezier(0.77, 0, 0.175, 1)</td><td>panel slides (nav drawer)</td></tr>
                     <tr><td><code>--shadow-1</code></td><td>derived from --sink</td><td>cards, small raises</td></tr>
                     <tr><td><code>--shadow-2</code></td><td>derived from --sink</td><td>menus, dialogs, big raises</td></tr>
                 </table>
-                <p>Use the rails instead of ad-hoc cubic-beziers and shadows — one motion language everywhere.</p>
+                <p>Use the rails instead of ad-hoc cubic-beziers and shadows — one motion language everywhere.
+                   An easing is for state changes nobody holds. Whatever a gesture lets go of — a window
+                   thrown, a sheet pulled down, a drawer swiped shut, a tile dropped — settles on a spring
+                   instead (<a href="#/styleguide/helpers/sac-motion"><code>sac.motion</code></a>): only a
+                   spring starts from where the thing is and carries on at the finger's speed.</p>
+                <p><b>Press states.</b> Every control answers the moment the pointer goes down
+                   (<code>:active</code>), not on release: a boxed button gives a little
+                   (<code>scale(0.97)</code>, 100ms in, normal pace back), a ghost control — icon button,
+                   menu row, list row, tab — steps its wash from <code>--hover</code> to
+                   <code>--hover-strong</code>. Tiles push down instead of scaling (Chromium re-rasters
+                   text mid-scale). App-made controls follow the same rule; never <code>transition: all</code>.</p>
 
                 <h2>Shape</h2>
                 <table class="sg">
@@ -233,6 +245,11 @@
                     <div style="font-family:'Inter',sans-serif;font-size:1rem;margin-top:0.5rem;">Inter 400/500/600 — body and UI. Self-hosted woff2 (latin + latin-ext), <code>font-display: swap</code>, no CDN, works offline.</div>
                     <div style="font-family:var(--font-mono);font-size:0.9rem;margin-top:0.5rem;"><kbd>Ctrl</kbd> <kbd>K</kbd> · lease.pdf · 48.2 KB · 2026-09-26 20:00 — the system monospace</div>
                 </div>
+                <p><b>Tracking follows size.</b> Display sizes tighten — <code>h1</code>–<code>h3</code> at
+                   −0.02em, the hub title at −0.03em — while body text stays at 0 and small headings
+                   (<code>h4</code>–<code>h6</code>, which sit at body size) keep the face's own spacing. Small
+                   uppercase captions open up instead (<code>--caption-tracking</code> 0.12em, buttons 0.02em).
+                   Never put a negative tracking on small text.</p>
                 <p>One monospace stack for every fixed-width surface — <code>kbd</code>, <code>.log</code>, hex /
                    date / time readouts, file names and sizes. Custom properties inherit into shadow roots, so a
                    component writes <code>font-family: var(--font-mono)</code> too.</p>
@@ -358,7 +375,10 @@
                    are and the way home, so the panel drops its Home entry. An app with nothing behind a burger
                    shows the icons all along. The panel wears the rail recipe (solid <code>--panel</code>, hairlines, item pills);
                    the app's rail is adopted as an off-canvas drawer with scrim, Escape, swipe-left-to-close and a
-                   focus trap, panel entries stacked above it. The ribbon grows by the top safe-area inset.
+                   focus trap, panel entries stacked above it. The swipe follows the finger 1:1 (panel, rail and
+                   scrim together, resisting rightwards); let go past half the width — or flicked — and a spring
+                   finishes the close, else it springs back open. Up-and-down stays a scroll. The ribbon grows by
+                   the top safe-area inset.
                    <a href="#/styleguide/patterns/responsive-ribbon">Phone ribbon →</a>`)}
                 <p><b>Toolbar overflow</b> (every width, ResizeObserver-driven): when the toolbar slot plus the host
                    tools do not fit, the trailing buttons hide behind a “…” <code>&lt;sac-menu&gt;</code> (label key
@@ -545,6 +565,15 @@
                    viewport resize the position is clamped — at least 40px stays horizontally in view,
                    the title bar between nav ribbon and bottom edge — so a window can't be lost
                    off-screen.</p>
+                <p>Mouse, pen and finger drag it alike (pointer events). Dragged past that limit the
+                   window resists more and more (a rubber band) and springs back when let go, instead of
+                   jumping. A finger or a pen also <b>throws</b> it: let go while moving and it glides on in
+                   that direction — never further out than wholly in view, never back behind where it
+                   was let go — and lands with a little bounce after a fast flick. A mouse leaves it
+                   exactly where it was released, as desktop windows do. Caught mid-flight, it stops where
+                   it shows. With <code>snap</code>, a throw that ends near an edge lands on it. Needs
+                   <a href="#/styleguide/helpers/sac-motion"><code>sac.motion</code></a>; without it the
+                   window drags as before and the clamp catches it.</p>
                 <div class="sg-demo sg-row">
                     <button class="btn primary" style="width:auto" id="demo-open-window">Open window</button>
                     <button class="btn" style="width:auto" id="demo-open-plain-window">Close-only, fixed size</button>
@@ -628,7 +657,7 @@
                     ["dragging", "Set by the component while a drag is in progress, not by hand — a styling hook."],
                     ["aria-label", "Names the divider for screen readers (it is a focusable <code>role=\"separator\"</code> with aria-valuenow/min/max in percent). Defaults to “Resize panels”."],
                     ["collapse", "List/detail on a phone: when the split's <b>own</b> width drops to this or below, it shows one panel at a time. <code>compact</code> (768px — also a bare <code>collapse</code>), <code>narrow</code> (480px) or a px length. It measures itself, so it also collapses inside a narrow sac-window on a wide screen. Absent = never collapses."],
-                    ["show", "<code>start</code> (default) | <code>end</code> — the panel a collapsed split shows. Set <code>end</code> when the user opens an item; the back bar sets <code>start</code>. Nothing re-renders: the hidden panel keeps its scroll, form state, canvas."],
+                    ["show", "<code>start</code> (default) | <code>end</code> — the panel a collapsed split shows. Set <code>end</code> when the user opens an item; the back bar sets <code>start</code>. Nothing re-renders: the hidden panel keeps its scroll, form state, canvas. Collapsed, the change <b>slides</b>: the item comes in from the right over the list (which drifts back a little), and goes out to the right on the way back — never on load or on a resize. A finger or a pen can also pull the item off to the right (the <b>back swipe</b>, anywhere on it after 10px that are clearly sideways — never from a field, a slider, <code>[data-no-swipe]</code> or something that scrolls sideways itself): past half its width or flicked, it goes back (asking <code>sac:split-back</code> first, like the bar); else it springs back. Needs <a href=\"#/styleguide/helpers/sac-motion\"><code>sac.motion</code></a>; without it, or under reduced motion, the panels swap at once."],
                     ["collapsed", "Set by the component while collapsed — a styling hook; the divider is hidden."],
                     ["rail-start", "Set by the component when the start slot holds a rail that <code>&lt;sac-nav&gt;</code> turned into a drawer (the resizable-sidebar recipe below): collapsed, the split then leaves the drawer alone and shows the end panel, with no back bar."],
                     ["no-back", "Hide the built-in back bar (draw your own and set <code>show</code>)."],
@@ -648,7 +677,7 @@
                 ])}
                 ${table("Event", [
                     ["sac:resize", "detail { position } — the percent string. Fired live during a drag, on keyboard moves, on the double-click reset, and when a container resize forces a clamp; never when the app sets it itself."],
-                    ["sac:split-back", "The back bar was used or <code>back()</code> called. Bubbles + composed, <b>cancelable</b>: <code>preventDefault()</code> keeps the end panel (confirm unsaved changes first)."],
+                    ["sac:split-back", "The back bar or the back swipe was used, or <code>back()</code> called. Bubbles + composed, <b>cancelable</b>: <code>preventDefault()</code> keeps the end panel (confirm unsaved changes first) — a swiped item then springs back."],
                     ["sac:collapse", "detail { collapsed } — the split entered or left one-panel mode. Bubbles + composed."],
                 ])}
                 ${table("CSS custom property", [
@@ -754,17 +783,23 @@ if (name != null) await sac.fs.ops.rename(store, path, name.trim());`)}
                     ["title", "Attribute — the heading; the panel is <code>aria-labelledby</code> it when set."],
                     [".buttons", "Property — array of button specs (same shape as above)."],
                     ["open()", "Show it: renders, traps focus, remembers the trigger."],
-                    ["close(action)", "Hide it and fire <code>sac:action</code> with that action; also restores focus to the trigger."],
+                    ["close(action)", "Fire <code>sac:action</code> with that action at once, restore focus to the trigger, then leave the way it came — the bottom sheet slides back down, the centred dialog shrinks and fades (the entry mirrored). Meanwhile it keeps <code>[open]</code>, gets <code>[closing]</code> and takes no pointer events; then <code>[open]</code> goes and <code>sac:closed</code> fires."],
                     [".beforeAction", "Property — <code>(action) =&gt; boolean | Promise&lt;boolean&gt;</code>, asked on every button click; <code>false</code> keeps the dialog open (an empty required field, an “overwrite?” question). Escape and the backdrop always cancel without asking."],
                     ["trigger(action)", "Run a button's action from code, through <code>beforeAction</code> — Enter in a field of the body."],
                     ["setDisabled(action, flag)", "Enable / disable one button."],
                     ["--dialog-width", "CSS custom property on the element — the panel width, default <code>420px</code>. A dialog holding a file list wants more."],
                     ["sac:open", "Fired on open (bubbles + composed)."],
-                    ["sac:action", "Fired on close; <code>detail { action }</code> (bubbles + composed). Escape / backdrop close with <code>null</code>."],
+                    ["sac:action", "Fired on close; <code>detail { action }</code> (bubbles + composed). Escape / backdrop / pulling the sheet away close with <code>null</code>."],
+                    ["sac:closed", "Fired once the exit has played (bubbles + composed). Remove the element here, not on <code>sac:action</code>, or the exit is cut short — <code>sac.dialog.*</code> do this."],
+                    ["::part(grabber)", "The bottom sheet's grabber bar (compact only)."],
                 ])}
                 ${compact(`a bottom sheet — full width, anchored above the home-bar inset, at most 85dvh with the body
                    scrolling; the actions go full-width and stack, the last one (usually the primary) on top. Focus
-                   trap and Escape unchanged. Arming cancels on a finger touching another button, not just a
+                   trap and Escape unchanged. A grabber bar sits on its top edge; the grabber and the title row
+                   (together at least 44px) pull the sheet: it follows the finger 1:1, resists upwards, and the
+                   scrim lightens as it goes. Let go past its middle — or flick it down — and it leaves
+                   (<code>null</code>, like Escape); else it springs back. Caught mid-flight, it carries on from
+                   there. The body keeps scrolling as before. Needs <code>sac.motion</code>. Arming cancels on a finger touching another button, not just a
                    pointer entering it. A <code>prompt()</code> field gets 16px type (no iOS zoom) and
                    <code>enterkeyhint="done"</code>; focusing it on open brings up the keyboard.`)}
 
@@ -4058,6 +4093,13 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                    query in <code>ui.css</code> collapses animation/transition durations app-wide, but it
                    does not pierce Shadow DOM — components with their own animations carry their own
                    query too.</p>
+                <p class="sg-note"><b>Reduced transparency, more contrast:</b> every blurred surface — the
+                   <code>.glass</code> / <code>.floating-menu</code> patterns, tiles, menus, dialogs,
+                   windows, toasts, popovers, the nav — turns solid under
+                   <code>prefers-reduced-transparency: reduce</code> or <code>prefers-contrast: more</code>
+                   (<code>--glass-solid</code>, no blur), and under more contrast its edge becomes
+                   <code>--border-contrast</code>. Scrims behind a modal keep their dim and only lose the
+                   blur. An app's own <code>backdrop-filter</code> surface adds the same two queries.</p>
 
                 <h2 id="responsive">Responsive — phones and touch</h2>
                 <p>An app built only from the kit works on a 360px portrait phone without one media
@@ -4346,6 +4388,7 @@ list.addEventListener("click", (e) => { showItem(e.target); split.show = "end"; 
                 ${code(`<!-- lib: globals FIRST, then the rest (defer preserves order) -->
 <script defer src="kit/js/lib/globals.js"><\/script>
 <script defer src="kit/js/lib/icons.js"><\/script>
+<script defer src="kit/js/lib/motion.js"><\/script>     <!-- springs: window throw, sheet pull, drawer + split swipes, drops -->
 <script defer src="kit/js/lib/router.js"><\/script>     <!-- SPA or nav registry -->
 <script defer src="kit/js/lib/scope.js"><\/script>      <!-- optional: scoped workspaces -->
 <script defer src="kit/js/lib/dialog.js"><\/script>     <!-- optional: confirm helper -->
@@ -4402,6 +4445,54 @@ pz.reset();                               // e.g. when a new image loads`)}
                 ${compact(`one finger pans, two fingers pinch-zoom around their midpoint (and pan with it), a double-tap
                    resets. The pane gets <code>touch-action: none</code>, so the gesture stays inside it — page scroll
                    and page zoom are untouched everywhere else.`)}
+
+                <h2 id="sac-motion">sac.motion — springs for what a gesture lets go of</h2>
+                <p>The physics under every release in the kit — a <code>&lt;sac-window&gt;</code> thrown, the
+                   <code>&lt;sac-dialog&gt;</code> sheet pulled down, the nav drawer swiped shut, a
+                   <code>&lt;sac-split&gt;</code> item swiped back, a tile dropped — and yours to use. No library.
+                   A spring starts from the value on screen and carries on at the speed the finger had, so
+                   there is no seam between hand and animation, and it can be caught again mid-flight. State
+                   changes nobody holds (hover, a menu opening) stay CSS transitions with the
+                   <code>--ease-*</code> tokens. Throw the knob — fast or slow, past the ends:</p>
+                <div class="sg-demo sg-col">
+                    <div id="demo-motion-track" class="sg-motion-track"><div class="sg-motion-knob" aria-hidden="true"></div></div>
+                    <span id="demo-motion-state" style="color:var(--text-muted);font-size:0.85rem;">drag the knob and let go</span>
+                </div>
+                ${table("Function", [
+                    ["spring(opts) → handle", "<code>{ from, to, velocity, damping, response, restDelta, restSpeed, onUpdate(value, velocity), onDone() }</code>. Apple's two parameters: <code>damping</code> 1 = settles without overshoot (the default), below 1 overshoots (≈0.8 only after a release with momentum); <code>response</code> = how quickly in seconds (default 0.35 — not a duration). Any unit: px, degrees, 0–1. <code>restDelta</code> / <code>restSpeed</code> decide “settled” in that unit (defaults 0.5 / 5 suit pixels; use 0.001 / 0.01 for an opacity or a scale)."],
+                    ["handle", "<code>.value</code> / <code>.velocity</code> — where it is now (start the next spring here) · <code>.retarget(to, { velocity? })</code> — new target, same position and speed · <code>.stop()</code> — freeze where it is (grabbed again) · <code>.done</code> — a promise: <code>true</code> settled, <code>false</code> stopped · <code>.running</code>."],
+                    ["tracker(windowMs = 100)", "Release velocity of one axis: <code>.add(value, timeStamp?)</code> on every move, <code>.velocity(timeStamp?)</code> in units per second at the release — 0 when the pointer had stopped before letting go — <code>.reset()</code>. A PointerEvent's <code>timeStamp</code> is on the same clock."],
+                    ["project(velocity, d = 0.998)", "How far a flick carries on before it stops (Apple's deceleration model; 0.99 stops sooner). Pick a snap target from <code>current + project(v)</code>, not from where the finger let go."],
+                    ["rubberband(overshoot, size, c = 0.55)", "Past a boundary the thing follows less and less: the displayed overshoot for a finger <code>overshoot</code> px past the edge. Never exceeds <code>size</code>."],
+                    ["reduced()", "<code>prefers-reduced-motion: reduce</code>? A spring already jumps to its target then (and in a hidden tab): <code>onUpdate(to, 0)</code> at once, <code>onDone</code> a microtask later — the outcome stays, only the travel goes."],
+                ])}
+                ${code(`const track = sac.motion.tracker();
+let anim = null, grab = 0, x = 0;
+knob.addEventListener("pointerdown", (e) => {
+    anim?.stop();                                    // caught mid-flight: carry on from here
+    knob.setPointerCapture(e.pointerId);
+    grab = e.clientX - x;                            // keep the grab offset
+    track.reset(); track.add(x, e.timeStamp);
+});
+knob.addEventListener("pointermove", (e) => {
+    if (!knob.hasPointerCapture(e.pointerId)) return;
+    const raw = e.clientX - grab;
+    x = raw < 0 ? sac.motion.rubberband(raw, width) : raw;   // resists past the left end
+    knob.style.translate = \`\${x}px\`;
+    track.add(x, e.timeStamp);
+});
+knob.addEventListener("pointerup", (e) => {
+    const v = track.velocity(e.timeStamp);
+    const to = x + sac.motion.project(v) > end / 2 ? end : 0;   // where it is heading
+    anim = sac.motion.spring({
+        from: x, to, velocity: v,                    // no seam between finger and spring
+        damping: Math.abs(v) > 400 ? 0.8 : 1,        // a flick lands with a little bounce
+        onUpdate: (val) => { x = val; knob.style.translate = \`\${val}px\`; },
+    });
+});`)}
+                <p>For 2D motion (a thrown window) run one spring per axis with that axis's velocity.
+                   The formulas for projection and rubber-banding are Apple's, from the WWDC 2018 talk
+                   <i>Designing Fluid Interfaces</i>.</p>
 
                 <h2 id="sac-sortable">sac.sortable — drag to reorder</h2>
                 <p>Pointer-based drag-to-reorder for any list of elements — the engine under
@@ -4478,7 +4569,7 @@ pz.reset();                               // e.g. when a new image loads`)}
                 ${table("Feel", [
                     ["Lift", "The tile follows the pointer 1:1 at its grab offset — a little larger (1.03), a strong shadow, the accent ring, on top. The grid carries <code>data-sortable-active</code>: a grabbing cursor, and the tiles passed over show no hover."],
                     ["Target", "Hit-tested against the <b>settled</b> layout, never against tiles still sliding. The order changes only when the pointer enters another tile (its before or after half), then holds until the pointer leaves what it is over: one change per tile entered, no flicker. Over a gap, a fixed tile or outside every tile the slot stays; past the last tile is the end."],
-                    ["Slide · settle", "Displaced tiles — packs re-forming included — slide to their new cells (200ms). On drop the tile glides from the pointer into its slot; Escape glides everything back to the exact DOM from before the drag."],
+                    ["Slide · settle", "Displaced tiles — packs re-forming included — slide to their new cells (200ms). On drop the tile settles from the pointer into its slot on a spring, at the speed the pointer let go (<a href=\"#/styleguide/helpers/sac-motion\"><code>sac.motion</code></a>; a flick lands with a little bounce, without the lib a 200ms glide); grabbed again mid-settle, it is picked up where it shows. Escape glides everything back to the exact DOM from before the drag."],
                     ["Reduced motion", "The same targeting; nothing animates."],
                 ])}
                 <h3>Arrange mode</h3>
@@ -5666,6 +5757,42 @@ sac.icons.get("note");  sac.icons.has("x");  sac.icons.names();`)}
                 const ref = await sac.files.save(await sample(), { handle: last.handle });
                 filesOut.textContent = ref ? `saved ${ref.name} again — no dialog` : "cancelled";
             });
+        }
+
+        // sac.motion — a knob thrown between the two ends of a track.
+        const mTrack = root.querySelector("#demo-motion-track");
+        if (mTrack && window.sac && sac.motion) {
+            const m = sac.motion;
+            const knob = mTrack.querySelector(".sg-motion-knob");
+            const out = root.querySelector("#demo-motion-state");
+            let x = 0, drag = null, anim = null;
+            const end = () => mTrack.clientWidth - knob.offsetWidth - 8;     // 4px padding each side
+            const place = (v) => { x = v; knob.style.transform = `translateX(${v}px)`; };
+            knob.addEventListener("pointerdown", (e) => {
+                if (anim) anim.stop();
+                knob.setPointerCapture(e.pointerId);
+                drag = { id: e.pointerId, grab: e.clientX - x, track: m.tracker() };
+                drag.track.add(x, e.timeStamp);
+            });
+            knob.addEventListener("pointermove", (e) => {
+                if (!drag || e.pointerId !== drag.id) return;
+                const raw = e.clientX - drag.grab, hi = end();
+                place(raw < 0 ? m.rubberband(raw, hi) : raw > hi ? hi + m.rubberband(raw - hi, hi) : raw);
+                drag.track.add(x, e.timeStamp);
+            });
+            const release = (e) => {
+                if (!drag || e.pointerId !== drag.id) return;
+                const v = e.type === "pointerup" ? drag.track.velocity(e.timeStamp) : 0;
+                drag = null;
+                const hi = end(), heading = x + m.project(v);
+                const to = heading > hi / 2 ? hi : 0;
+                const flick = Math.abs(v) > 400;
+                anim = m.spring({ from: x, to, velocity: v, damping: flick ? 0.8 : 1, response: 0.35, onUpdate: place });
+                out.textContent = `let go at ${Math.round(v)} px/s, heading for ${Math.round(heading)}px → `
+                    + `${to ? "right" : "left"} end${flick ? " (a flick: damping 0.8)" : ""}`;
+            };
+            knob.addEventListener("pointerup", release);
+            knob.addEventListener("pointercancel", release);
         }
 
         const sortList = root.querySelector("#demo-sortable");

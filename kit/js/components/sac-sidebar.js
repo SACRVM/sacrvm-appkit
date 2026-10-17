@@ -198,6 +198,7 @@ class SacSidebar extends HTMLElement {
                         translate: -105% 0;
                         visibility: hidden;
                         transition: translate 0.5s var(--ease-swift), visibility 0.5s;
+                        touch-action: pan-y pinch-zoom;   /* sideways = sac-nav's swipe-to-close */
                     }
                     :host([drawer][open]) {
                         translate: none;
@@ -245,6 +246,11 @@ class SacSidebar extends HTMLElement {
                                 color 0.15s var(--ease-smooth);
                 }
                 .item:hover { background: var(--hover); color: var(--text); }
+                /* Press: answers the moment it goes down. */
+                .item:active:not(.active):not([aria-disabled="true"]) {
+                    background: var(--hover-strong);
+                    transition-duration: 0s;
+                }
                 .item:focus-visible {
                     outline: 2px solid var(--accent);
                     outline-offset: -2px;

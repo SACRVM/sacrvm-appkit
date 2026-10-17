@@ -101,10 +101,14 @@ answer. If it is a real open question, ask the user. Don't decide it yourself.
 
 ## 4. Response: feedback starts at the press
 
-- **React on pointer-down, never on release.** Use `:active` (or a `[data-pressed]` set on
-  `pointerdown`) with `transform: scale(0.97)` over ~100ms ease-out, or the `--hover-strong` wash
-  (the kit's `.icon-btn:active` idiom). As of kit 2.32, many kit controls still lack a press state.
-  That is a known kit gap; app-made controls must not copy it.
+- **React on pointer-down, never on release.** Every kit control does this since 2.33, and
+  app-made controls follow the same rule:
+  - A boxed button gives a little: `:active { transform: scale(0.97); transition-duration: 0.1s; }`.
+  - A ghost control (icon button, menu row, list row, tab) steps its wash from `--hover` to
+    `--hover-strong`.
+  - A tile pushes down instead of scaling (Chromium re-rasters text mid-scale).
+  - Keep the press rule winning under `@media (hover: none)`, because a touch is also a hover. The
+    kit's `globals.js` adds the empty `touchstart` listener iOS Safari needs before `:active` fires.
 - **Never `transition: all`.** Name the properties (`transform`, `opacity`, `background-color`,
   `border-color`, `box-shadow`). `all` also animates layout properties and every theme switch.
 - **No latency on the input path.** No debounce on direct input, no waiting for a transition to
@@ -118,9 +122,13 @@ answer. If it is a real open question, ask the user. Don't decide it yourself.
 
 ## 5. Direct manipulation
 
-- **Use the kit's drag machinery before writing your own.** `sac.sortable` / `sac.tiles.sortable`
-  reorder with 1:1 tracking, Escape-to-cancel, auto-scroll, and a 250ms long-press or a handle on
-  touch. Also available: `sac.setupPanZoom` (canvases), `<sac-split>` (dividers), `<sac-slider>`.
+- **Use the kit's drag machinery before writing your own.**
+  - `sac.sortable` / `sac.tiles.sortable` reorder with 1:1 tracking, Escape-to-cancel,
+    auto-scroll, a 250ms long-press or a handle on touch, and a spring that settles the drop.
+  - Also available: `sac.setupPanZoom` (canvases), `<sac-split>` (dividers and the back swipe),
+    `<sac-slider>`.
+  - Gestures that are already built in, never rebuilt: `<sac-window>` drag and throw, the
+    `<sac-dialog>` sheet pull, the `<sac-nav>` drawer swipe, the `<sac-split>` back swipe.
 - **Writing your own drag:**
   - Use Pointer Events with `setPointerCapture`, and keep the grab offset (never snap to centre).
   - Move with `transform` on every `pointermove`, with no transition during the drag.
@@ -138,24 +146,27 @@ answer. If it is a real open question, ask the user. Don't decide it yourself.
   holds: hover, a menu opening, a toast arriving. Anything released from a gesture needs a spring,
   because only a spring starts from the value on screen and takes over the finger's velocity: a
   dragged window, a sheet pulled down, a drawer swiped, a tile dropped.
-- **The kit has no spring primitive yet.** Write one in vanilla JS from `references/motion.md`
-  (spring by damping ratio + response, velocity handoff, momentum projection, rubber-band). Never
-  pull in a library.
+- **Use `sac.motion` (kit 2.33+).** It provides `spring()` (damping ratio + response, `retarget`,
+  `stop`, a `done` promise), `tracker()` for release velocity, `project()` for momentum and
+  `rubberband()`. On an older vendored kit, paste the equivalent vanilla functions from
+  `references/motion.md`. Never pull in a library.
 - **Spring values.**
   - Damping ratio 1.0 (no overshoot) with a response of 0.3–0.4s is the default.
   - Use ~0.8 only when the release carried momentum (a flick).
   - Pick the target from the projected resting point, not from where the finger let go.
 - **Interruptible.** Grabbing a moving element continues from where it is, so read the current
   value, not the target. Never lock input during a transition.
-- **Easing tokens.** `--ease-smooth` is the default for UI state. `--ease-swift` is for panel slides
-  (drawer, split). `--ease-bounce` overshoots: keep it off new hover and press states. The kit still
-  uses it on `.btn.primary` and `.tile` hover, an inherited look that the user has yet to decide on.
+- **Easing tokens.** `--ease-smooth` is the default for UI state and hover lifts. `--ease-swift` is
+  for panel slides. `--ease-bounce` overshoots: only where something is let go with momentum,
+  never on hover or press. Since 2.33 the kit no longer uses it there either.
 - **Durations, as the kit uses them.** 100–160ms for menus, tooltips and washes; ~220ms for the
   sheet; 0.2–0.4s for hover lifts. Keep app motion in that range.
-- **Spatial consistency.** Things leave the way they came. A sheet rising from the bottom leaves
-  downwards, and a panel from the right leaves to the right. Anything that grows does so from its
-  trigger: set `transform-origin` on the trigger's side, and when a popover flips above its anchor,
-  flip its entry offset too.
+- **Spatial consistency.** Things leave the way they came, as the kit does:
+  - The `sac-dialog` sheet slides back down, and a centred dialog shrinks and fades. Remove a dialog
+    on `sac:closed`, not on `sac:action`.
+  - A `sac-split` item leaves to the right.
+  - A `sac-menu` opened above its trigger comes up out of it.
+  - Anything that grows does so from its trigger, so set `transform-origin` on the trigger's side.
 - **Animate only `transform` and `opacity`.** Use `will-change` only on what is about to move. The
   `.tile`'s permanent layer is a deliberate exception that prevents hover flicker.
 - **Reduced motion.** Every kit component honours `prefers-reduced-motion`. App code needs its own
@@ -180,18 +191,21 @@ answer. If it is a real open question, ask the user. Don't decide it yourself.
   Don't build a third kind.
 - **Text on glass** uses `--text` or `--text-muted`, never `--text-dim`. Small text on glass uses
   weight 500 or more.
-- **Blur needs fallbacks.** As of kit 2.32 the kit has none (a known gap). Every `backdrop-filter`
-  surface an app builds itself gets:
+- **Blur needs fallbacks.** Every kit surface has them since 2.33. Every `backdrop-filter` surface
+  an app builds itself gets the same two queries with the kit's tokens: `--glass-solid` (the glass
+  hue, opaque) and `--border-contrast`. On an older kit, use `--panel-2` and
+  `color-mix(in srgb, var(--fg) 45%, transparent)` instead. Scrims behind a modal keep their dim and
+  only lose the blur.
 
   ```css
   @media (prefers-reduced-transparency: reduce) {
-      .my-surface { background: var(--panel-2); backdrop-filter: none; -webkit-backdrop-filter: none; }
+      .my-surface { background: var(--glass-solid); backdrop-filter: none; -webkit-backdrop-filter: none; }
   }
   @media (prefers-contrast: more) {
       .my-surface {
-          background: var(--panel-2);
+          background: var(--glass-solid);
           backdrop-filter: none; -webkit-backdrop-filter: none;
-          border-color: color-mix(in srgb, var(--fg) 45%, transparent);
+          border-color: var(--border-contrast);
       }
   }
   ```
@@ -204,7 +218,8 @@ answer. If it is a real open question, ask the user. Don't decide it yourself.
 - **Size in rem** (the root is 14px), so layout grows with the user's text size. Shadow-DOM control
   chrome inside kit components may stay in px.
 - **Tracking by size.**
-  - Display text tightens: the kit uses −0.02em on headings and −0.03em on the hub title.
+  - Display text tightens: the kit uses −0.02em on `h1`–`h3` and −0.03em on the hub title.
+    `h4`–`h6` sit at body size and stay at 0.
   - Body text stays at 0.
   - Small uppercase text opens up: `--caption-tracking` is 0.12em, `.btn` 0.02em.
   - Small text never gets negative tracking.
@@ -226,6 +241,7 @@ A hand-built version of any of these is a finding.
 | Menu from a button / actions on a surface | `<sac-menu>` / `sac.contextMenu(el, { targets, items, selection })` |
 | Marking several rows | `sac.selection` ("Select" becomes the first context-menu entry) |
 | Reorder | `sac.sortable`; hub tiles: `<sac-launcher>` / `sac.tiles.sortable` (arrange mode built in) |
+| Something a gesture lets go of | `sac.motion` (spring, tracker, project, rubberband) |
 | Transient / lasting feedback | `sac.toast` / `<sac-status-banner>` |
 | Hint, shortcuts, search-to-act | `<sac-tooltip>`, `<sac-shortcut-bar>` / `<sac-shortcut-sheet>`, `<sac-command-palette>` |
 | Exclusive modes / sections / on-off | `<sac-segmented-control>` / `<sac-tabs>` / `<sac-toggle>` |
@@ -262,7 +278,8 @@ The live reference for every component, attribute and event is the style guide
    1. **Accessibility** (Critical): contrast from real values; 44px under coarse; the keyboard path
       including Shift+F10 and Escape; visible focus; reduced motion; nothing hover-only.
    2. **Conventions** (usually High): appkit's first (sections 2 and 9), then the platform's.
-   3. **Craft** (High / Medium): tokens, hierarchy, spacing rhythm, type, materials.
+   3. **Craft** (High / Medium): tokens, hierarchy, spacing rhythm, type, materials (including the
+      section 7 fallbacks).
    4. **Interaction** (Medium): press feedback, drag, motion, interruptibility.
    5. **Writing** (Medium): specific labels, sentence case, `sac.t` coverage, German length.
 5. **Report.**
@@ -303,8 +320,10 @@ Apple's eight design principles (WWDC 2026), as they show up in appkit work:
 ## Keeping this skill true
 
 This skill lives in sacrvm-appkit (`.claude/skills/sacrvm-design/`) and is linked into
-`~/.claude/skills/` for consumer repos. When the kit closes a gap named here (springs, transparency
-and contrast fallbacks, press states), update the matching section in the same commit.
+`~/.claude/skills/` for consumer repos. When the kit gains or changes a primitive named here, update
+the matching section in the same commit. Kit 2.33 closed the gaps the first version of this skill
+listed: springs (`sac.motion`), transparency and contrast fallbacks, press states and symmetric
+exits.
 
 ## Sources and credit
 
