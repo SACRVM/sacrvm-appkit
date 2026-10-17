@@ -1,52 +1,58 @@
 {
+  // Firepit per-project config. JSONC: comments and trailing commas are allowed.
+  // Commands follow the Linux patterns of ../firepit-template/.firepit/config.json:
+  // a group per area, a short lowercase name, a one-line description.
+
   "version": 1,
   "id": "sacrvm-appkit",
+
   "commands": [
     {
-      "name": "Serve",
-      "type": "Shell",
-      "icon": "\uD83D\uDE80",
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "serve",
-        ".",
-        "-l",
-        "3000"
-      ],
-      "window": "reuse:serve",
+      "group": "Run",
+      "name": "site",
+      "description": "Serves the kit, style guide and demos on port 3000 (also reachable from a phone on the LAN).",
+      "type": "shell",
+      "command": "python3",
+      "args": ["-m", "http.server", "3000"],
+      "window": "reuse:site",
       "longRunning": true
     },
+
     {
-      "name": "Styleguide",
-      "type": "Url",
-      "icon": "\uD83C\uDFA8",
+      "group": "Open",
+      "name": "styleguide",
+      "description": "The style guide on the local server.",
+      "type": "url",
       "url": "http://localhost:3000/#/styleguide"
     },
     {
-      "name": "Demo",
-      "type": "Url",
-      "icon": "\uD83E\uDDEA",
+      "group": "Open",
+      "name": "demo",
+      "description": "The Orb Lab demo app on the local server.",
+      "type": "url",
       "url": "http://localhost:3000/#/orb-lab"
     },
     {
-      "name": "Roadmap",
-      "type": "Url",
-      "icon": "\uD83D\uDDFA\uFE0F",
+      "group": "Open",
+      "name": "roadmap",
+      "description": "The roadmap on the local server.",
+      "type": "url",
       "url": "http://localhost:3000/#/roadmap"
     },
     {
-      "name": "GitHub",
-      "type": "Url",
-      "icon": "\uD83D\uDC19",
-      "url": "https://github.com/SACRVM/sacrvm-appkit"
-    },
-    {
-      "name": "Build an App",
-      "type": "Url",
-      "icon": "\uD83D\uDD28",
+      "group": "Open",
+      "name": "build",
+      "description": "The Build an App guide on the local server.",
+      "type": "url",
       "url": "http://localhost:3000/#/build"
+    },
+
+    {
+      "group": "Git",
+      "name": "repo",
+      "description": "The repository on GitHub.",
+      "type": "url",
+      "url": "https://github.com/SACRVM/sacrvm-appkit"
     }
   ]
 }

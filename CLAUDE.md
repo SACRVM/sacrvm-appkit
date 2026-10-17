@@ -32,7 +32,7 @@ These are the authoritative handover documents: full component inventory with AP
 
 ## Core Philosophy (inherited from DREAM TOOLS — non-negotiable)
 
-1. **Zero Dependencies**: No `node_modules`, no bundlers, no build step. Pure vanilla JavaScript, Custom Elements, plain CSS. Files are served as-is (`npx serve .`).
+1. **Zero Dependencies**: No `node_modules`, no bundlers, no build step. Pure vanilla JavaScript, Custom Elements, plain CSS. Files are served as-is (any static server, e.g. `python3 -m http.server 3000`).
 2. **Drop-in usable**: A new app consumes the kit by copying/linking the `kit/` folder and writing plain HTML. No framework, no compile.
 3. **Zero Friction, Truth in Preview**: What the style guide shows is exactly what an app gets.
 4. **Befehlsgehorsam**: The user decides, Claude executes. Do not second-guess design decisions.
@@ -95,7 +95,7 @@ The kit must be **easily themable** — light, dark, AND custom themes:
 ## Development
 
 ```bash
-npx serve .        # http://localhost:3000 — same workflow as dream-tools
+python3 -m http.server 3000   # http://localhost:3000 — or the Firepit button "Run site" (Node is not installed on this machine)
 ```
 
 No build step. No tests — verify manually in the browser, in both the style guide and the demo app.
