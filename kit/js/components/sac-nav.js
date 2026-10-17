@@ -1531,7 +1531,8 @@ class SacNav extends HTMLElement {
         // Never from a control that drags, nor from a surface that takes the
         // finger itself (touch-action: none — a canvas, a pan-zoom viewport).
         const drags = path.some((n) => n.nodeType === 1 && (n.matches(
-            'input, textarea, select, sac-slider, [role="slider"], [role="separator"], [data-no-swipe]')
+            'input, textarea, select, [contenteditable]:not([contenteditable="false"]), ' +
+            'sac-slider, [role="slider"], [role="separator"], [data-no-swipe]')
             || getComputedStyle(n).touchAction === "none"));
         if (drags) return;
         const caught = this._swipeSpring;
