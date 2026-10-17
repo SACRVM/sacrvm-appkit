@@ -80,7 +80,7 @@ The kit must be **easily themable** — light, dark, AND custom themes:
   - `sac-window` drags with Pointer Events and throws with momentum on touch/pen only. A mouse leaves it where it lets go, as desktop windows do.
   - The `sac-dialog` bottom sheet pulls down by its grabber + title row (not the body).
   - The `sac-nav` drawer swipe tracks 1:1.
-  - `sac-split` slides between its collapsed panels and has a back swipe anywhere on the detail (not only the edge; fields, sliders, `[data-no-swipe]` and horizontal scrollers excluded).
+  - `sac-split` slides between its collapsed panels and has a back swipe anywhere on the detail (not only the edge; fields, sliders, `[data-no-swipe]`, surfaces with `touch-action: none` — canvases, pan-zoom viewports — and horizontal scrollers excluded; the drawer swipe skips `touch-action: none` too, 2.33.1).
   - Sortable drops settle on a spring.
   - Things leave the way they came: dialog exit animation + `sac:closed`, split slides, a menu opened above its trigger comes up out of it.
   - Every control shows a press state on pointer-down: `scale(0.97)` for boxed controls, `--hover-strong` for ghost controls; tiles push down instead of scaling.

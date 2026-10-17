@@ -1528,8 +1528,11 @@ class SacNav extends HTMLElement {
         if (!(this.isOpen || this._drawerOpen)) return;
         const path = e.composedPath();
         if (path.some((n) => n.classList?.contains("backdrop") && n.getRootNode() === this.shadowRoot)) return;
-        const drags = path.some((n) => n.matches?.(
-            'input, textarea, select, sac-slider, [role="slider"], [role="separator"], [data-no-swipe]'));
+        // Never from a control that drags, nor from a surface that takes the
+        // finger itself (touch-action: none — a canvas, a pan-zoom viewport).
+        const drags = path.some((n) => n.nodeType === 1 && (n.matches(
+            'input, textarea, select, sac-slider, [role="slider"], [role="separator"], [data-no-swipe]')
+            || getComputedStyle(n).touchAction === "none"));
         if (drags) return;
         const caught = this._swipeSpring;
         if (caught) { caught.stop(); this._swipeSpring = null; }

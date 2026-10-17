@@ -63,7 +63,9 @@
  *                slides it back out; and a finger or a pen can pull it off
  *                to the right (the back swipe: 1:1, past half its width or
  *                flicked = back, else it springs back — sac:split-back is
- *                asked first, as for the bar). Needs sac.motion; without it,
+ *                asked first, as for the bar). Never from a field, a slider,
+ *                [data-no-swipe], a surface with touch-action: none (a canvas,
+ *                a pan-zoom viewport) or one that scrolls sideways. Needs sac.motion; without it,
  *                or under reduced motion, the panels swap at once.
  *   no-back    — hide the built-in back bar (draw your own and set `show`).
  *   back-label — the back bar's text (default "Back", i18n key split.back).
@@ -463,7 +465,12 @@ class SacSplit extends HTMLElement {
             const n = path[i];
             if (n.nodeType !== 1) continue;
             if (n.matches(NO_SWIPE)) return;
-            if (n.scrollWidth > n.clientWidth + 1 && /auto|scroll/.test(getComputedStyle(n).overflowX)) return;
+            const cs = getComputedStyle(n);
+            // A surface that takes the finger itself — a canvas someone paints
+            // on, a pan-zoom viewport (touch-action: none) — or one that
+            // scrolls sideways keeps its gesture.
+            if (cs.touchAction === "none") return;
+            if (n.scrollWidth > n.clientWidth + 1 && /auto|scroll/.test(cs.overflowX)) return;
         }
         e.__sacSwipe = true;                       // an outer split leaves it to this one
         const caught = !!this._slide;
