@@ -192,7 +192,10 @@ class SacSidebar extends HTMLElement {
                         bottom: 0;
                         left: 0;
                         width: var(--drawer-width);
-                        z-index: 10000;
+                        /* Above every floating window (10000–18999) and the
+                           open nav with its scrim (19000), under dialogs
+                           (20000) — the same as ui.css's .sidebar[drawer]. */
+                        z-index: 19001;
                         padding-left: env(safe-area-inset-left, 0px);
                         padding-bottom: env(safe-area-inset-bottom, 0px);
                         translate: -105% 0;
