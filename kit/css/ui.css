@@ -771,7 +771,10 @@ a.nav-icon-btn { text-decoration: none; }
     border: none;
     border-radius: var(--radius-m);
     background: transparent;
-    color: var(--text-dim);
+    /* --text-muted, not --text-dim: a thin 14px glyph at rest must clear 3 : 1
+       against a window's glass in both themes (it is 5.1 : 1 in light, 6.7 : 1
+       in dark; --text-dim was 2.9 : 1 in light). */
+    color: var(--text-muted);
     font-family: inherit;
     cursor: pointer;
     transition: color 120ms var(--ease-smooth), background 120ms var(--ease-smooth);

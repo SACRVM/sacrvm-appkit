@@ -417,7 +417,10 @@ class SacNav extends HTMLElement {
         if (this._offLang) { this._offLang(); this._offLang = null; }
         if (this._escHandler)   document.removeEventListener("keydown", this._escHandler);
         if (this._hashHandler)  window.removeEventListener("hashchange", this._hashHandler);
-        if (this._routeHandler) window.removeEventListener("sac:route-registered", this._routeHandler);
+        if (this._routeHandler) {
+            window.removeEventListener("sac:route-registered", this._routeHandler);
+            window.removeEventListener("sac:route-unregistered", this._routeHandler);
+        }
         if (this._scopeHandler) window.removeEventListener("sac:scope-changed", this._scopeHandler);
         if (this._hostChangedHandler) document.removeEventListener("sac:host-changed", this._hostChangedHandler);
         this._mq?.removeEventListener("change", this._mqHandler);
@@ -1826,10 +1829,11 @@ class SacNav extends HTMLElement {
         this._hashHandler = () => { this._closeAll(); this.isOpen = false; this.render(); };
         window.addEventListener("hashchange", this._hashHandler);
 
-        // Re-render when a new route registers so the panel fills in even if
-        // view scripts run after the nav's first render.
+        // Re-render when a route registers (or goes) so the panel follows
+        // even when view scripts run after the nav's first render.
         this._routeHandler = () => this.render();
         window.addEventListener("sac:route-registered", this._routeHandler);
+        window.addEventListener("sac:route-unregistered", this._routeHandler);
 
         // Scope switch: hrefs pick up the new prefix, active-state moves.
         this._scopeHandler = () => this.render();

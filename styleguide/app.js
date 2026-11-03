@@ -3650,7 +3650,8 @@ sac.router.register("#/notes", "my-notes-view", { label: "Notes", icon: "note" }
                     <tr><th style="width:280px">sac.router API</th><th>Description</th></tr>
                     <tr><td><code>register(hash, tag, {label, icon})</code></td><td>Adds a route + fires <code>sac:route-registered</code> (this is what makes a self-registering view list work — nav components render before view scripts run). Pass <code>tag = null</code> for plain multi-page hrefs.</td></tr>
                     <tr><td><code>options.palette</code></td><td>The Ctrl-K palette group the route lists under: a string, or a function returning one (resolved on every open — follows the language); <code>false</code> keeps it out of the palette. Default <code>"Views"</code>. <code>sac.apps</code> files app routes under <code>"Apps"</code>.</td></tr>
-                    <tr><td><code>register("#/files/*", tag, opts)</code></td><td>A <b>prefix route</b>: a hash ending in <code>/*</code> owns its base and everything below it — <code>#/files</code>, <code>#/files/Photos/2026</code>. Moving between those does <b>not</b> remount the view; it gets a <code>sac:route</code> event instead. An exact route on a longer hash (<code>#/files/settings</code>) still wins, and the longest prefix wins over a shorter one.</td></tr>
+                    <tr><td><code>register("#/files/*", tag, opts)</code></td><td>A <b>prefix route</b>: a hash ending in <code>/*</code> owns its base and everything below it — <code>#/files</code>, <code>#/files/Photos/2026</code>. Moving between those does <b>not</b> remount the view; it gets a <code>sac:route</code> event instead. An exact route on a longer hash (<code>#/files/settings</code>) still wins, and the longest prefix wins over a shorter one. <code>#/*</code> is the root prefix: it lists under <code>#/</code>, like the home route.</td></tr>
+                    <tr><td><code>unregister(hash)</code></td><td>Drops a route — the hash as registered (<code>"#/files/*"</code>) or its base (<code>"#/files"</code>). Fires <code>sac:route-unregistered</code> (sac-nav re-renders on it); a view it had mounted gives way to whatever owns the address now. Returns <code>true</code> when there was such a route. For routes a host registers per dynamic item — a workspace's page apps — and drops when the item goes away.</td></tr>
                     <tr><td><code>options.scope</code></td><td>Which workspace the route exists in: <code>"any"</code> (default), <code>"root"</code> or <code>"scoped"</code> (see <code>sac.scope</code>). Elsewhere sac-nav and the Ctrl-K palette leave it out, and the router treats its hash as unmatched — a stale link falls back like an unknown route instead of mounting the view in the wrong workspace.</td></tr>
                     <tr><td><code>options.open</code></td><td>A function: the entry opens something instead of showing a view — a window app listed among the routes, in registration order. sac-nav's burger and the Ctrl-K palette call <code>open(route)</code> instead of navigating; the hash is only the entry's key and never matches (a typed link to it falls back like an unknown route). Register with <code>tag = null</code>.</td></tr>
                     <tr><td><code>inScope(route)</code></td><td><code>true</code> when a route from <code>routes()</code> exists in the active workspace — for apps that build their own lists.</td></tr>
@@ -3773,7 +3774,9 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                 <p>The 26px ghost icon button for rows, lists and cards — the light-DOM twin of
                    <code>&lt;sac-copy-button&gt;</code>. <strong>An icon button next to a copy button is an
                    <code>.icon-btn</code></strong>: both read <code>--icon-btn-size</code>/<code>--icon-btn-icon</code>,
-                   so they stay alike across kit upgrades. Variants: <code>.danger</code> (danger on hover),
+                   so they stay alike across kit upgrades. At rest the glyph is <code>--text-muted</code>,
+                   <code>--text</code> on hover: a thin 14px stroke must clear 3 : 1 against a window's glass in
+                   both themes (5.1 : 1 light, 6.7 : 1 dark). Variants: <code>.danger</code> (danger on hover),
                    <code>:disabled</code>.</p>
                 <div class="sg-demo">
                     <div class="sg-row">
@@ -4769,11 +4772,11 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>list()</code></td><td>Array of manifest copies, registration order.</td></tr>
                     <tr><td><code>get(id)</code></td><td>Manifest copy or <code>null</code>.</td></tr>
                     <tr><td><code>open(id, params?, opts?)</code></td><td><code>Promise&lt;HTMLElement&gt;</code> (the app element). <code>opts { route, accent }</code> is what a launcher tile carries: <code>route</code> opens a view at <code>#/&lt;id&gt;/&lt;route&gt;</code>, <code>accent</code> seeds the app's <code>--accent</code> (tile color = app highlight). <code>kind:"page"</code> navigates to <code>href</code> (params appended, promise never resolves). <code>kind:"window"</code> injects <code>src</code> once (keyed by src), awaits <code>customElements.whenDefined(tag)</code>, shows the app in a centered, cascaded <code>&lt;sac-window&gt;</code> that stays in the DOM and is re-opened later (minimized → restored). Rejects on script-load failure (console.error + error toast).</td></tr>
-                    <tr><td><code>close(id)</code></td><td>Closes the window — element and window stay in the DOM. A view leaves the stage, back to the home section.</td></tr>
+                    <tr><td><code>close(id)</code></td><td>Closes the window — element and window stay in the DOM. A view leaves the stage, back to the home section; the address goes back to <code>#/</code> only while it still names the view (once the user has moved on to another page, it is left alone).</td></tr>
                     <tr><td><code>remove(id)</code></td><td>Unregister; calls the app's <code>unmount()</code> if present and removes its window. Emits <code>sac:apps-changed</code>.</td></tr>
                     <tr><td><code>isOpen(id)</code></td><td><code>true</code> if the app's window exists and is open.</td></tr>
                     <tr><td><code>active()</code></td><td>The id of the view app currently on the stage, or <code>null</code> at home.</td></tr>
-                    <tr><td><code>init(options?)</code></td><td>Delegated click binding for <code>[data-app="&lt;id&gt;"]</code> tiles + the <code>?app=&lt;id&gt;</code> deep link (URL cleaned via replaceState), and — with <code>{ viewHost, home }</code> — the hash router for view apps. Legacy: <code>[data-overlay]</code> and <code>?tool=</code> honored the same way.</td></tr>
+                    <tr><td><code>init(options?)</code></td><td>Delegated click binding for <code>[data-app="&lt;id&gt;"]</code> tiles + the <code>?app=&lt;id&gt;</code> deep link (URL cleaned via replaceState), and — with <code>{ viewHost, home }</code> — the hash router for view apps. A hash that names no view (another page of the shell) parks the view on stage: hidden, kept for its next open. <code>{ tiles: false }</code> skips the <code>[data-app]</code> click delegation — for a shell that uses the attribute itself, or opens apps only from code. Legacy: <code>[data-overlay]</code> and <code>?tool=</code> honored the same way.</td></tr>
                     <tr><td><code>inspect(url)</code></td><td><code>Promise&lt;manifest&gt;</code>. Fetches and validates a manifest from a repository URL, an origin or a direct <code>app.json</code>; <code>github.com/owner/repo</code> resolves to <code>owner.github.io/repo/app.json</code>. <b>Reads only</b> — nothing is registered and no app code runs, so a host can show name, version and origin before deciding. Adds <code>src</code>, <code>origin</code>, <code>manifestUrl</code> and <code>entryIntegrity</code> (<code>sha256-…</code> of the entry's bytes; <code>null</code> when the entry cannot be read here or <code>crypto.subtle</code> is missing). Rejects a malformed <code>connect</code> / <code>permissions</code> / <code>opens</code>; unknown keys pass through. A manifest's own <code>integrity</code> is dropped — the pin is the host's record.</td></tr>
                     <tr><td><code>add(manifest|url, opts?)</code></td><td><code>Promise&lt;manifest&gt;</code>. Registers an inspected manifest (or inspects a URL first). Registering still does not run the app: its script is injected on first open, exactly like an app the shell declared itself. <code>opts { isolated, grant, integrity }</code>; the result carries the pin as <code>integrity</code> — store it with the install record (see <a href="#/styleguide/helpers/sac-apps-pinning">Pinned installs</a>).</td></tr>
                     <tr><td><code>policy(id)</code></td><td><code>{ isolated, granted }</code> — what the host decided for an installed app (a settings page). <code>null</code> for an unknown id.</td></tr>
@@ -4846,6 +4849,27 @@ mount(context) {
                    shows it exactly as it was. <code>mount()</code> runs when it first reaches the
                    stage — not while it is still hidden — and <code>unmount()</code> only when
                    <code>remove()</code> takes the app out for good.</p>
+                <h3 id="sac-apps-beside-router">Views beside <code>sac.router</code></h3>
+                <p>A shell that has its own <code>sac.router</code> pages <em>and</em> hosts view apps (a workspace's
+                   apps next to the shell's notes and settings) gives each its own element: the router keeps
+                   its outlet (it swaps <code>innerHTML</code> on every route change, so a view kept there would
+                   be destroyed), the views get a stage of their own, and the router's outlet is the
+                   <code>home</code> that shows while no view is on stage. A hash that names a router page
+                   parks the view; <code>#/&lt;app-id&gt;</code> brings it back exactly as it was.</p>
+                ${code(`<main id="app-root"></main>   <!-- sac.router's outlet = sac.apps' home -->
+<main id="app-views"></main>  <!-- the views' own stage -->
+
+sac.router.mount("#app-root");
+sac.apps.init({
+    viewHost: "#app-views",
+    home:     "#app-root",
+    tiles:    false,            // the shell's own [data-app] markup keeps its clicks
+});
+
+// #/notes        → a router page: the view on stage is parked (hidden, kept)
+// #/my-app       → the view comes back; the router's outlet is hidden
+// close("my-app") → back to "#/" only while the address still names the view
+// A route per dynamic item goes again with sac.router.unregister("#/page/*").`)}
                 <table class="sg">
                     <tr><th style="width:260px">Manifest field</th><th>Description</th></tr>
                     <tr><td><code>id</code></td><td>Unique; <code>?app=</code> deep links + persistence key.</td></tr>
