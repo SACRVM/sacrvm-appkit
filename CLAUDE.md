@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## The Mission
 
-Extract, conserve, and **complete** the UI layer of DREAM TOOLS (`D:\repos\dream-tools`) as a standalone, reusable HTML appkit. DREAM TOOLS is being wound down (the 3DXChat era is ending), but its look and handling are proven and loved — they must survive as the foundation for future apps, including the user's own social game.
+Extract, conserve, and **complete** the UI layer of DREAM TOOLS (`../dream-tools`) as a standalone, reusable HTML appkit. DREAM TOOLS is being wound down (the 3DXChat era is ending), but its look and handling are proven and loved — they must survive as the foundation for future apps, including the user's own social game.
 
 ## The two guides (read in this order)
 
-**Read `D:\repos\dream-tools\dream-tools-guide.md` FIRST**, then
-`D:\repos\the-fishbowl\docs\fishbowl-ui-guide.md` — the same UI system four
+**Read `../dream-tools/dream-tools-guide.md` FIRST**, then
+`../the-fishbowl/docs/fishbowl-ui-guide.md` — the same UI system four
 months later, in production. Its §7 is a 21-row merge decision table covering
 every point where the two disagree, including four warts the dream-tools guide
 still lists as open TODOs.
