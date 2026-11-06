@@ -184,6 +184,11 @@ answer. If it is a real open question, ask the user. Don't decide it yourself.
   - `--shadow-1` is for things raised a little and `--shadow-2` for things floating (menus,
     dialogs, windows).
   - A bigger surface reads thicker: `--shadow-2` and the stronger glass.
+- **Glass is chrome; content sits on a solid ground.** Text, chips and row actions never sit
+  directly on glass over a busy backdrop, because the backdrop decides their contrast. `sac-window`
+  does this since 2.35: its title bar, toolbar and frame are glass, its content sits on
+  `--window-ground` (`--surface` at 94%). An app's own glass panel that holds reading content
+  does the same.
 - **Never translucent on translucent.** A `--glass-strong` menu over a `--glass` window is fine. A
   glass card inside a glass window is not: use `--panel-2` inside glass.
 - **Modal or parallel.** A task that blocks gets `<sac-dialog>` / `sac.dialog.*`: a scrim, and a

@@ -218,6 +218,11 @@ sac-window,
     --glass-solid: var(--glass-hue);
     --tile:        color-mix(in srgb, var(--surface) 70%, transparent);     /* launcher tiles    */
     --tile-hover:  color-mix(in srgb, var(--surface) 90%, transparent);
+    /* The ground under a window's content: glass is for the chrome (title
+       bar, toolbar, frame); text, chips and row actions sit on a near-opaque
+       ground, so a bright desktop tile behind the window cannot wash out
+       their contrast. 6% of the blurred backdrop still shows through. */
+    --window-ground: color-mix(in srgb, var(--surface) 94%, transparent);
 
     /* Text — two-step secondary: --text-muted carries real secondary
        information (AA on every plane); --text-dim is strictly tertiary,

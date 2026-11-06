@@ -134,6 +134,7 @@
                     ${sw("--glass-solid", "the glass, opaque: reduced transparency · more contrast")}
                     ${sw("--tile", "tiles · floating windows")}
                     ${sw("--tile-hover", "tile hover state")}
+                    ${sw("--window-ground", "ground under a window's content (94%)")}
                     ${sw("--field", "input / select background")}
                 </div>
                 <p class="sg-note"><b>Why two glass tokens:</b> one name with two opacities is a classic
@@ -558,6 +559,10 @@
                 <h2 id="sac-window">&lt;sac-window&gt;</h2>
                 <p>Draggable, resizable, glassmorphic floating window. Content = light-DOM children.
                    Wheel events are isolated so scrolling the window never zooms the workspace behind it.</p>
+                <p>The glass is the window's chrome: the title bar, the toolbar row and the frame. The content
+                   sits on a near-opaque ground (<code>--window-ground</code>, <code>--surface</code> at 94%), so
+                   muted text, chips and icon buttons keep their contrast whatever desktop shines through
+                   behind the window. On a phone the whole window is opaque.</p>
                 <p>The title bar carries three traffic-light dots — plain colored circles, no glyphs:
                    <b>minimize</b>, <b>maximize</b>, <b>close</b>. Color carries the meaning; tooltip
                    and accessible name flip to <i>Restore</i> whenever the window isn't in its normal
