@@ -476,6 +476,8 @@ class SacNav extends HTMLElement {
         this._hasSlotted = hasSlotted;
 
         const routes = (window.sac?.router?.routes() || []).filter(r => r.hash !== "#/")
+            // nav: false — a route the host lists its own way (sac.router.register).
+            .filter(r => r.nav !== false)
             // A route bound to one kind of workspace (scope: "root"/"scoped")
             // is left out of the other — re-checked on sac:scope-changed.
             .filter(r => !sac.router.inScope || sac.router.inScope(r))

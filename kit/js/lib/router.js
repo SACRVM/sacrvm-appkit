@@ -33,6 +33,10 @@
  *   location.pathname:
  *   sac.router.register("/svg-to-world/", null, { label: "SVG to World", icon: "shapes" });
  *
+ * options.nav: false keeps a route out of sac-nav's panel; it still matches,
+ * mounts and lists in routes() (with nav: false), for a host that shows it its
+ * own way. options.palette: false does the same for the Ctrl-K palette.
+ *
  * A route can go again: sac.router.unregister("#/files/*") (or the base hash)
  * drops it and fires sac:route-unregistered — for routes a host registers per
  * dynamic item (a workspace's page apps) and drops when the item goes away.
@@ -160,6 +164,10 @@
                 palette: options.palette === undefined ? null : options.palette,
                 scope: options.scope === "root" || options.scope === "scoped" ? options.scope : "any",
                 open: typeof options.open === "function" ? options.open : null,
+                // nav: false — the route matches and mounts like any other,
+                // but sac-nav leaves it out of its panel (a host that lists it
+                // its own way, e.g. a workspace's page apps as panel rows).
+                nav: options.nav !== false,
                 prefix,
             });
             // Notify listeners (e.g. <sac-nav>) that the route table changed.
@@ -193,7 +201,7 @@
             }
             return true;
         },
-        // Every route as { hash, tag, label, icon, palette, scope, open, prefix }.
+        // Every route as { hash, tag, label, icon, palette, scope, open, nav, prefix }.
         // A prefix route lists under its base hash ("#/files"), so a link to
         // it lands on the prefix itself. Lists ALL routes — filter with
         // inScope() for the active workspace.
