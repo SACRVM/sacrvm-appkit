@@ -345,14 +345,16 @@
  *   <sac-launcher> refreshes on). The stage also emits "view" (id = the app now
  *   on stage) and "home" (id = null, back at "#/"), so a host can track which
  *   view is showing.
- *   sac:app-error (on document, bubbles) — an app broke after it loaded.
- *   detail { appId, kind, message, source?, line?, column?, stack? }; kind is
- *   "mount" / "unmount" (the call threw — any app), or "error" / "rejection"
- *   (an uncaught exception / unhandled rejection inside an isolated frame;
- *   in-realm those are the page's own). Strings are capped (message 1000,
+ *   sac:app-error (on document, bubbles) — an app could not load, or broke
+ *   after it loaded. detail { appId, kind, message, code?, source?, line?,
+ *   column?, stack? }; kind is "load" (its script or frame did not start, or
+ *   it changed since it was installed — code "integrity"; the kit also toasts
+ *   it), "mount" / "unmount" (the call threw — any app), or "error" /
+ *   "rejection" (an uncaught exception / unhandled rejection inside an
+ *   isolated frame; in-realm those are the page's own). Strings are capped (message 1000,
  *   stack 4000) and each app may report 10 a second (burst 10) — a looping
  *   error cannot flood the host. `source` is set only when it lies in the
- *   app's own entry folder. Load failures still reject sac.apps.open().
+ *   app's own entry folder. Load failures also still reject sac.apps.open().
  */
 (function () {
     if (!window.sac) { console.warn("[sac.apps] globals.js must load first — app runtime unavailable."); return; }
@@ -1005,8 +1007,10 @@
         errorBuckets.set(id, b);
         if (b.tokens < 1) return;
         b.tokens -= 1;
-        const i = info instanceof Error ? { message: info.message, stack: info.stack } : (info || {});
+        const i = info instanceof Error ? { message: info.message, stack: info.stack, code: info.code } : (info || {});
         const detail = { appId: id, kind, message: cap(String(i.message || ""), 1000) };
+        const code = cap(i.code, 40);
+        if (code) detail.code = code;
         const src = cap(i.source, 2000);
         if (src) detail.source = src;
         if (Number.isFinite(i.line)) detail.line = i.line;
@@ -1142,7 +1146,13 @@
 
     /** The toast for a failed load — a changed pinned entry says so. */
     function reportLoadFailure(manifest, err) {
-        console.error(`[sac.apps] ${err.message}`);
+        // Some messages carry the prefix already — log it once, and hand the
+        // host the bare message.
+        const bare = String((err && err.message) || err).replace(/^\[sac\.apps\]\s*/, "");
+        console.error(`[sac.apps] ${bare}`);
+        // The host hears it too, like a mount or runtime failure — an open
+        // from an address (routeFromHash) has no caller to reject to.
+        reportError(manifest.id, "load", { message: bare, stack: err && err.stack, code: err && err.code });
         if (typeof sac.toast !== "function") return;
         if (err && err.code === "integrity") {
             sac.toast(`“${displayName(manifest)}” ` + sac.t("apps.changed",

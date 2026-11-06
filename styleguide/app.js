@@ -4808,10 +4808,13 @@ mount(context) {
     context.onLaunch(({ files }) => files.forEach((f) => load(f.file, f.handle)));
 }`)}
                 <h3>When an app breaks</h3>
-                <p>Load failures reject <code>open()</code>. What goes wrong <em>after</em> that reaches the host
-                   page as <code>sac:app-error</code> on <code>document</code> (bubbles), so a host that runs
-                   its users' apps can keep an error log their authors can read. <code>kind</code> is
-                   <code>"mount"</code> / <code>"unmount"</code> (the call threw — any app) or
+                <p>What goes wrong with an app reaches the host page as <code>sac:app-error</code> on
+                   <code>document</code> (bubbles), so a host that runs its users' apps can keep an error log their
+                   authors can read. <code>kind</code> is <code>"load"</code> (its script or frame did not start, or
+                   it changed since it was installed — then <code>code: "integrity"</code>; the kit also shows a
+                   toast, and <code>open()</code> rejects as well — but a view opened from its address has no caller,
+                   so the event is how a host hears of it), <code>"mount"</code> / <code>"unmount"</code> (the call
+                   threw — any app) or
                    <code>"error"</code> / <code>"rejection"</code> (uncaught inside an isolated frame; in-realm
                    those are the page's own). Message capped at 1000 characters, stack at 4000, 10 reports a
                    second per app; <code>source</code> / <code>line</code> / <code>column</code> only when the
@@ -4820,7 +4823,7 @@ mount(context) {
                    the browser hands over just <code>"Script error."</code> and no rejections. A pinned entry always
                    loads with CORS.</p>
                 ${code(`document.addEventListener("sac:app-error", (e) => {
-    const { appId, kind, message, source, line, column, stack } = e.detail;
+    const { appId, kind, message, code, source, line, column, stack } = e.detail;
 });`)}
                 <h3>Hosting view apps</h3>
                 <p>A shell that wants full-stage apps hands <code>init()</code> two elements — the
