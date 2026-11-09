@@ -251,19 +251,19 @@
     <sac-split class="pl-split" position="22%" min-start="220px" min-end="320px"
                aria-label="Resize the side panel">
         <div class="sidebar fill pl-panel" slot="start">
-            <sac-section title="Tools">
+            <sac-section heading="Tools">
                 <sac-toolbox class="pl-tools" columns="auto" value="pencil"></sac-toolbox>
                 <div class="pl-row"><label>Brush</label>
                     <sac-stepper class="pl-brush" value="1" min="1" max="4" unit="px" label="Brush size"></sac-stepper></div>
             </sac-section>
-            <sac-section title="Color">
+            <sac-section heading="Color">
                 <sac-color-field class="pl-color" label="Current color" value="#ff004d"></sac-color-field>
                 <sac-swatch-grid class="pl-palette" columns="8" selectable></sac-swatch-grid>
             </sac-section>
-            <sac-section title="Layers">
+            <sac-section heading="Layers">
                 <sac-layer-list class="pl-layers" actions pixelated></sac-layer-list>
             </sac-section>
-            <sac-section title="Preview">
+            <sac-section heading="Preview">
                 <div class="pl-preview"><sac-pixel-canvas class="pl-pv" static zoom="4"></sac-pixel-canvas></div>
                 <div class="pl-row"><label>Speed</label>
                     <sac-stepper class="pl-fps" value="4" min="1" max="24" unit="fps" label="Playback speed"></sac-stepper></div>

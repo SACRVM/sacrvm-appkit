@@ -106,13 +106,13 @@
                aria-label="Resize the control panel">
 
         <div class="sidebar fill ol-panel" slot="start">
-            <sac-section title="Simulation">
+            <sac-section heading="Simulation">
                 <sac-slider class="ol-count" label="Orbs" min="10" max="300" step="10" value="80"></sac-slider>
                 <sac-slider class="ol-speed" label="Speed" min="0" max="3" step="0.1" value="1" suffix="×"></sac-slider>
                 <sac-slider class="ol-size" label="Size" min="2" max="20" step="1" value="8" suffix="px"></sac-slider>
             </sac-section>
 
-            <sac-section title="Look">
+            <sac-section heading="Look">
                 <sac-toggle class="ol-trails" label="Trails" checked></sac-toggle>
                 <sac-toggle class="ol-links" label="Connect lines"></sac-toggle>
                 <div>
@@ -132,7 +132,7 @@
                                  value="#f472b6" disabled></sac-color-field>
             </sac-section>
 
-            <sac-section title="Log">
+            <sac-section heading="Log">
                 <sac-log class="ol-log"></sac-log>
             </sac-section>
         </div>

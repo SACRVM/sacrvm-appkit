@@ -367,6 +367,14 @@
                     ["setOverflowGroup(owner, entries)", "Contribute a group to the “…” menu from anywhere: <code>entries</code> = <code>[{ label, icon?, disabled?, danger?, run(e) }]</code>, <code>null</code>/<code>[]</code> withdraws it. <code>owner</code> is the key (normally the contributing element; dropped when it leaves the DOM). Groups follow the folded toolbar controls behind a separator and keep the “…” visible at every width. <a href=\"#/styleguide/components/sac-shortcut-bar\"><code>&lt;sac-shortcut-bar&gt;</code></a> folds into the nav with it."],
                     ["sac:nav-open / sac:nav-close", "<code>detail { drawer }</code> — the panel and/or the rail drawer came out / went away. Bubbles, composed."],
                 ])}
+                <p><b>Focus (2.36).</b> The burger's panel is modal at every width, as the rail drawer is:
+                   opening it moves focus onto the panel itself (named “Menu”; no field, so no phone keyboard),
+                   everything outside the nav turns <code>inert</code> — layers above the open menu (dialogs,
+                   tooltips, toasts) stay live, and what was inert already is left alone — and closing it
+                   (Escape, the scrim, an entry, the burger, a swipe) hands focus back to the burger when it was
+                   in the panel or nowhere. The entry for where you are carries <code>aria-current="page"</code>;
+                   a suite entry whose own section is the current one gets <code>"true"</code> (it contains the
+                   page).</p>
                 ${compact(`the ribbon is the burger, the app's <b>name as text</b> (<code>compact-title</code>) and the app's
                    own controls right-aligned — <code>brand</code>, <code>brand-icon</code> and the host jump leave it
                    (three bare glyphs read as cryptic); the name truncates only once the toolbar has overflowed into
@@ -397,7 +405,9 @@
                    of its own on the theme the kit's flag picked (the page's own metas stay untouched).
                    <b>Own</b> (<code>display-mode: borderless</code>, <code>titlebar="own"</code>): no browser buttons, so
                    the nav draws <code>&lt;sac-window&gt;</code>'s three traffic lights at the right end, in the
-                   theme's <code>--accent-warm</code> / <code>--ok</code> / <code>--danger</code> — each only where the
+                   theme's <code>--accent-warm</code> / <code>--ok</code> / <code>--danger</code>, with its glyphs
+                   (− / maximise-restore / ×, shown on hover and keyboard focus, always on touch and under more
+                   contrast) — each only where the
                    browser lets a page do it: minimise and maximise need <code>window.minimize()</code> /
                    <code>maximize()</code> (Additional Windowing Controls, window-management permission), close is
                    <code>window.close()</code>. Chrome grants borderless to isolated web apps only.</p>
@@ -463,7 +473,7 @@
                     ["persist", "<code>local</code> (default) = the <code>storage</code> key. <code>none</code> = the host owns persistence: localStorage is never read or written, the host feeds <code>layout</code> and saves what <code>sac:layout</code> reports. Edit mode, drag, hide, add/remove and menus keep working, with or without <code>storage</code>."],
                     ["no-add", "Presence = no <b>Add app</b> tile and no Add dialog — for a host that installs apps through its own flow (an isolated install, an owner-only policy). The empty hint then shows in edit mode too."],
                     ["readonly", "Presence = view only: the arrangement renders (hidden tiles stay hidden, sizes and colors apply), but no Edit button, no drag, no move/hide/remove controls. Tile menus and launching still work — a shared space's member sees the owner's layout."],
-                    ["edit", "Presence = edit mode (needs <code>storage</code> or <code>persist=\"none\"</code>, and no <code>readonly</code>): move/hide controls on every tile, hidden tiles grayed with a show control, remove only on user-added apps. The dashed tile adds an app by tag + script URL — cross-origin included (classic scripts need no CORS); added apps are plain medium tiles."],
+                    ["edit", "Presence = edit mode (needs <code>storage</code> or <code>persist=\"none\"</code>, and no <code>readonly</code>): move/hide controls on every tile (each icon's label is also its tooltip), hidden tiles grayed with a show control, remove only on user-added apps. <b>Remove acts at once</b> and offers <b>Undo</b> in a toast (“Notes” removed · Undo) that puts the app back with its position, size, colour and hidden state. The dashed tile adds an app by its address and element name — cross-origin included (classic scripts need no CORS) — in a plain-language form with a trust note under the address (“This runs code from that address inside this app, with your data. Only add apps you trust.”); added apps are plain medium tiles."],
                     ["drag", "Drag reorder (needs an editable launcher, see <code>edit</code>, and <code>sac.sortable</code>): absent = in edit mode only, <code>always</code> = also outside edit mode, <code>none</code> = move buttons only. Mouse lifts after 4px, touch after a 250ms long-press, Escape puts the tile back; a dashed outline marks where it lands. A drop persists exactly like the move buttons and fires <code>sac:layout</code>. The buttons stay the keyboard path."],
                 ])}
                 ${table("Property", [
@@ -555,6 +565,10 @@
                    44px hit halo; under <code>hover: none</code> the Add tile's hover tint is off. The windows it opens
                    maximize themselves on compact. A finger drags only in edit mode (Arrange) — then at once, while the
                    tiles wiggle; outside it a swipe over the grid scrolls and a long-press opens the tile's menu.`)}
+                <p><b>Opening.</b> A window or view tile carries <code>aria-busy="true"</code> while its app loads, and a
+                   small <code>&lt;sac-spinner&gt;</code> shows in its corner once the wait passes 200ms — a quick open
+                   never flashes it; under reduced motion the ring stands still. Cleared on success and on failure; a
+                   failed load is the runtime's error toast with <b>Try again</b> (<code>sac.apps</code>, in Helpers).</p>
 
                 <h2 id="sac-window">&lt;sac-window&gt;</h2>
                 <p>Draggable, resizable, glassmorphic floating window. Content = light-DOM children.
@@ -563,8 +577,12 @@
                    sits on a near-opaque ground (<code>--window-ground</code>, <code>--surface</code> at 94%), so
                    muted text, chips and icon buttons keep their contrast whatever desktop shines through
                    behind the window. On a phone the whole window is opaque.</p>
-                <p>The title bar carries three traffic-light dots — plain colored circles, no glyphs:
-                   <b>minimize</b>, <b>maximize</b>, <b>close</b>. Color carries the meaning; tooltip
+                <p>The title bar carries three traffic-light dots: <b>minimize</b> (−), <b>maximize</b>
+                   (two triangles pointing out; pointing in while it would <i>restore</i>) and <b>close</b> (×).
+                   The glyphs show while the dot group is hovered or holds keyboard focus, and always on touch
+                   (<code>hover: none</code>) and under <code>prefers-contrast: more</code> — colour never carries
+                   the meaning alone. Their ink is the dot's own colour sunk dark (the <code>--on-warm</code> /
+                   <code>--on-ok</code> recipe), so every theme follows. Tooltip
                    and accessible name flip to <i>Restore</i> whenever the window isn't in its normal
                    rect, and double-clicking the title bar restores too. After every drag and on every
                    viewport resize the position is clamped — at least 40px stays horizontally in view,
@@ -600,7 +618,7 @@
                 ])}
                 ${table("Method", [
                     ["open() / close() / toggle()", "Show, hide, flip. open() also brings to front."],
-                    ["bringToFront()", "Raises the window over the other sac-windows. Windows stack in their own band, <code>10000–18999</code>: above the page, below the open burger panel / rail drawer (<code>19000+</code>) and dialogs (<code>20000</code>) — reaching the top re-packs the band, so no window ever covers the menu."],
+                    ["bringToFront()", "Raises the window over the other sac-windows. Windows stack in their own band, <code>10000–18999</code>: above the page, below the open burger panel / rail drawer (<code>19000+</code>) and dialogs (<code>20000</code>) — reaching the top re-packs the band, so no window ever covers the menu. A window also comes forward by itself the moment it is pressed anywhere (<code>pointerdown</code>, before a drag starts) or focus moves into it (<code>focusin</code>: Tab, a dialog handing focus back) — a covered window is never typed into unseen."],
                     ["minimize() / maximize()", "Enter either state. Each clears the other; leaving <code>maximized</code> puts the saved rect back first."],
                     ["restore()", "Back to the saved rect from either state, clamped in case the viewport shrank meanwhile."],
                 ])}
@@ -662,7 +680,7 @@
                     ["dragging", "Set by the component while a drag is in progress, not by hand — a styling hook."],
                     ["aria-label", "Names the divider for screen readers (it is a focusable <code>role=\"separator\"</code> with aria-valuenow/min/max in percent). Defaults to “Resize panels”."],
                     ["collapse", "List/detail on a phone: when the split's <b>own</b> width drops to this or below, it shows one panel at a time. <code>compact</code> (768px — also a bare <code>collapse</code>), <code>narrow</code> (480px) or a px length. It measures itself, so it also collapses inside a narrow sac-window on a wide screen. Absent = never collapses."],
-                    ["show", "<code>start</code> (default) | <code>end</code> — the panel a collapsed split shows. Set <code>end</code> when the user opens an item; the back bar sets <code>start</code>. Nothing re-renders: the hidden panel keeps its scroll, form state, canvas. Collapsed, the change <b>slides</b>: the item comes in from the right over the list (which drifts back a little), and goes out to the right on the way back — never on load or on a resize. A finger or a pen can also pull the item off to the right (the <b>back swipe</b>, anywhere on it after 10px that are clearly sideways — never from a field, a slider, <code>[data-no-swipe]</code>, a surface that takes the finger itself (<code>touch-action: none</code> — a canvas, a pan-zoom viewport) or something that scrolls sideways): past half its width or flicked, it goes back (asking <code>sac:split-back</code> first, like the bar); else it springs back. Needs <a href=\"#/styleguide/helpers/sac-motion\"><code>sac.motion</code></a>; without it, or under reduced motion, the panels swap at once."],
+                    ["show", "<code>start</code> (default) | <code>end</code> — the panel a collapsed split shows. Set <code>end</code> when the user opens an item; the back bar sets <code>start</code>. Nothing re-renders: the hidden panel keeps its scroll, form state, canvas. Collapsed, the change <b>slides</b>: the item comes in from the right over the list (which drifts back a little), and goes out to the right on the way back — never on load or on a resize. A finger or a pen can also pull the item off to the right (the <b>back swipe</b>, anywhere on it after 10px that are clearly sideways — never from a field, a slider, <code>[data-no-swipe]</code>, a surface that takes the finger itself (<code>touch-action: none</code> — a canvas, a pan-zoom viewport) or something that scrolls sideways): past half its width or flicked, it goes back (asking <code>sac:split-back</code> first, like the bar); else it springs back. Needs <a href=\"#/styleguide/helpers/sac-motion\"><code>sac.motion</code></a>; without it, or under reduced motion, the panels swap at once. <b>Focus follows</b> (2.36): when it was in the panel that goes (the row that opened the item, the Back button) or nowhere, <code>end</code> moves it onto the end panel itself (no field, so no phone keyboard) and <code>start</code> returns it to the element that had it — else the selected row (<code>[aria-current]</code> / <code>[aria-selected=\"true\"]</code>), else the start panel. Focus put elsewhere — by the user, or by the app right after setting <code>show</code> — stays."],
                     ["collapsed", "Set by the component while collapsed — a styling hook; the divider is hidden."],
                     ["rail-start", "Set by the component when the start slot holds a rail that <code>&lt;sac-nav&gt;</code> turned into a drawer (the resizable-sidebar recipe below): collapsed, the split then leaves the drawer alone and shows the end panel, with no back bar."],
                     ["no-back", "Hide the built-in back bar (draw your own and set <code>show</code>)."],
@@ -728,8 +746,17 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
                     ["← / → · ↑ / ↓ · Home / End", "Move focus through the action buttons while focus is on one of them: wrapping, disabled ones skipped; ↑ / ↓ follow the bottom sheet's stacked buttons. Inside the body's fields the arrows stay theirs."],
                     ["Enter / Space", "Press the focused button. A focus ring marks it — also when script set the focus, where <code>:focus-visible</code> stays dark — never after a click."],
                     ["Tab / Shift+Tab", "Focus trap over everything focusable in the body, then the buttons, in document order — kit fields included (their inputs sit in shadow roots), and from inside another component's shadow root too."],
-                    ["Esc", "Closes with <code>null</code> — unless something inside handles it first: an open field popover (a <code>sac-select</code> list, a <code>sac-date-field</code> calendar), a menu, a field reverting its typing. That Escape stays there; the next one closes the dialog. Only the topmost open dialog handles keys."],
+                    ["Esc", "Closes with <code>null</code> (after asking <code>beforeAction(null, { via: \"escape\" })</code>) — unless something inside handles it first: an open field popover (a <code>sac-select</code> list, a <code>sac-date-field</code> calendar), a menu, a field reverting its typing. That Escape stays there; the next one closes the dialog. Only the topmost open dialog handles keys. Escape closes even after an edit — the edit guard holds only the backdrop and the swipe."],
                 ])}
+                <p><b>Dismissal and the edit guard (2.36).</b> Escape, a backdrop tap and pulling the
+                   bottom sheet down are <em>dismissals</em>: each asks <code>beforeAction(null, { via })</code>
+                   first (<code>via</code> = <code>"escape"</code> | <code>"backdrop"</code> | <code>"swipe"</code>),
+                   so an app can confirm (“Discard changes?”) or refuse. And once a field in the body has been
+                   edited since <code>open()</code> (an <code>input</code>, <code>change</code> or
+                   <code>sac:change</code> from the body), the backdrop and the swipe no longer dismiss at all:
+                   a backdrop tap only nudges the panel, a pulled sheet resists and springs back. Escape and an
+                   explicit Cancel still close — typed text is never lost to a stray tap. Try it: type in
+                   <b>Rename…</b>, then tap beside the dialog.</p>
                 <div class="sg-demo sg-row">
                     <button class="btn danger" style="width:auto" id="demo-dialog">Delete something…</button>
                     <button class="btn" style="width:auto" id="demo-dialog-info">About…</button>
@@ -752,7 +779,7 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
         { action: "cancel", label: "Cancel" },
         { action: "delete", label: "Delete", kind: "destructive", armAfterMs: 2000 },
     ],
-});   // → "delete" | "cancel" | null (Escape/backdrop = null)
+});   // → "delete" | "cancel" | null (Escape/backdrop/swipe = null)
 
 await sac.dialog.info({
     title:   "About",
@@ -761,7 +788,8 @@ await sac.dialog.info({
 });   // announce, not ask — the resolution carries no information`)}
                 <h3 id="sac-dialog-prompt"><code>sac.dialog.prompt(opts)</code></h3>
                 <p><code>confirm()</code> with one text field: it resolves with the entered string, or
-                   <code>null</code> on Cancel, Escape or the backdrop. It pre-selects the name's stem —
+                   <code>null</code> on Cancel, Escape or the backdrop — the backdrop (and the sheet's swipe)
+                   only while nothing has been typed: after that they leave the prompt open. It pre-selects the name's stem —
                    “lease” of “lease.pdf” — because a rename is what it is for.</p>
                 ${table("Option", [
                     ["title", "Dialog title (also the field's accessible name when there is no <code>label</code>)."],
@@ -789,7 +817,9 @@ if (name != null) await sac.fs.ops.rename(store, path, name.trim());`)}
                     [".buttons", "Property — array of button specs (same shape as above)."],
                     ["open()", "Show it: renders, traps focus, remembers the trigger."],
                     ["close(action)", "Fire <code>sac:action</code> with that action at once, restore focus to the trigger, then leave the way it came — the bottom sheet slides back down, the centred dialog shrinks and fades (the entry mirrored). Meanwhile it keeps <code>[open]</code>, gets <code>[closing]</code> and takes no pointer events; then <code>[open]</code> goes and <code>sac:closed</code> fires."],
-                    [".beforeAction", "Property — <code>(action) =&gt; boolean | Promise&lt;boolean&gt;</code>, asked on every button click; <code>false</code> keeps the dialog open (an empty required field, an “overwrite?” question). Escape and the backdrop always cancel without asking."],
+                    [".beforeAction", "Property — <code>(action, info) =&gt; boolean | Promise&lt;boolean&gt;</code>, asked on every button click; <code>false</code> keeps the dialog open (an empty required field, an “overwrite?” question). Since 2.36 also asked on every dismissal with <code>action = null</code> and <code>info = { via: \"escape\" | \"backdrop\" | \"swipe\" }</code> — a guard written for buttons must let <code>null</code> through. While an answer is pending, further buttons and dismissals wait. One that throws on a dismissal lets it close; on a button it keeps the dialog open. <code>close()</code> from code never asks."],
+                    ["light-dismiss", "Attribute — absent: the edit guard (backdrop and swipe dismiss only until a field in the body has been edited). <code>\"always\"</code>: they always dismiss (the pre-2.36 behaviour). <code>\"never\"</code>: only Escape and the buttons close."],
+                    [".edited", "Property, boolean — <code>true</code> once the edit guard has seen an edit since <code>open()</code>. Set it yourself for content changed by other means (a canvas, a drop); clear it after saving a draft."],
                     ["trigger(action)", "Run a button's action from code, through <code>beforeAction</code> — Enter in a field of the body."],
                     ["setDisabled(action, flag)", "Enable / disable one button."],
                     ["--dialog-width", "CSS custom property on the element — the panel width, default <code>420px</code>. A dialog holding a file list wants more."],
@@ -803,7 +833,8 @@ if (name != null) await sac.fs.ops.rename(store, path, name.trim());`)}
                    trap and Escape unchanged. A grabber bar sits on its top edge; the grabber and the title row
                    (together at least 44px) pull the sheet: it follows the finger 1:1, resists upwards, and the
                    scrim lightens as it goes. Let go past its middle — or flick it down — and it leaves
-                   (<code>null</code>, like Escape); else it springs back. Caught mid-flight, it carries on from
+                   (<code>null</code>, like Escape, asked first); else it springs back. Once a field has been edited it
+                   resists downwards too and always springs back (the edit guard). Caught mid-flight, it carries on from
                    there. The body keeps scrolling as before. Needs <code>sac.motion</code>. Arming cancels on a finger touching another button, not just a
                    pointer entering it. A <code>prompt()</code> field gets 16px type (no iOS zoom) and
                    <code>enterkeyhint="done"</code>; focusing it on open brings up the keyboard.`)}
@@ -815,7 +846,8 @@ if (name != null) await sac.fs.ops.rename(store, path, name.trim());`)}
                    construction — the reason it ships in the kit rather than each app reinventing it. A hosted app
                    passes <code>context.manifest</code>; standalone, pass a literal. Notice text is set via
                    <code>textContent</code> (third-party, untrusted as markup). Re-opening the same subject (by name)
-                   resurfaces the window instead of stacking a duplicate.</p>
+                   resurfaces the window instead of stacking a duplicate. Escape closes it while focus is in it
+                   (<code>escape-closes</code>).</p>
                 ${code(`sac.about.open(context.manifest);         // hosted: zero duplication
 
 sac.about.open({                          // or an explicit object (standalone)
@@ -856,10 +888,16 @@ sac.about.open({                          // or an explicit object (standalone)
                     </div>
                 </div>
                 ${table("API", [
-                    ["show(message, kind)", "kind: \"error\" (default) | \"info\" | \"warn\" | \"success\" — mapped to --danger / --accent / --accent-warm / --ok."],
+                    ["show(message, kind)", "kind: \"error\" (default) | \"info\" | \"warn\" | \"success\" — mapped to --danger / --accent / --accent-warm / --ok. Showing the same message again is announced again."],
                     ["hide()", "Clears the strip."],
                     ["kind / message / open", "Declarative attribute equivalents."],
                 ])}
+                <p>The kind is never the tint alone: a leading icon names it by shape (the
+                   <a href="#/styleguide/components/sac-toast"><code>sac.toast</code></a> set), and the icon's colour carries the kind.
+                   <b>Announced:</b> <code>error</code> and <code>warn</code> are <code>role="alert"</code> (assertive), <code>info</code> and
+                   <code>success</code> <code>role="status"</code> (polite). The live text is cleared and set a frame later, so the same
+                   words twice are read twice; the visible text is a twin that never blinks.
+                   <b>CSS part:</b> <code>banner</code>.</p>
                 ${compact(`in flow and full width; long unbroken strings (paths, URLs, error codes) wrap instead of pushing
                    the page sideways. No controls.`)}
 
@@ -867,21 +905,22 @@ sac.about.open({                          // or an explicit object (standalone)
                 <p>Sidebar group separator: uppercase title + thin border. With <code>collapsible</code> the title
                    folds the group away — for rarely touched settings.</p>
                 <div class="sg-demo" style="max-width:280px;background:var(--panel);">
-                    <sac-section title="Filters">
+                    <sac-section heading="Filters">
                         <sac-toggle label="Show hidden" checked></sac-toggle>
                         <sac-toggle label="Snap to grid"></sac-toggle>
                     </sac-section>
-                    <sac-section title="Export">
+                    <sac-section heading="Export">
                         <button class="btn">Export</button>
                     </sac-section>
-                    <sac-section title="View settings" collapsible collapsed>
+                    <sac-section heading="View settings" collapsible collapsed>
                         <sac-toggle label="Wireframe"></sac-toggle>
                         <sac-toggle label="Flat shading" checked></sac-toggle>
                         <sac-slider label="Light angle" min="0" max="360" value="45"></sac-slider>
                     </sac-section>
                 </div>
                 ${table("Attribute", [
-                    ["title", "Uppercase heading text — rendered at <code>--text</code> so a group heading stands out from the labels it heads (AA with room to spare; never the tertiary <code>--text-dim</code>, which failed AA at this size)."],
+                    ["heading", "Uppercase heading text — rendered at <code>--text</code> so a group heading stands out from the labels it heads (AA with room to spare; never the tertiary <code>--text-dim</code>, which failed AA at this size)."],
+                    ["title", "<b>Deprecated</b> alias of <code>heading</code> (2.36), still honoured when <code>heading</code> is absent. <code>title</code> is the global HTML attribute: the browser shows it as a native tooltip over <em>every</em> control inside the section, naming the section on top of the control's own hint. Use <code>heading</code>; it wins when both are set."],
                     ["collapsible", "The title becomes a toggle: chevron, button semantics, Enter/Space, <code>aria-expanded</code>; 44px hit target on touch. Height transition, none under <code>prefers-reduced-motion</code>. A folded body leaves the tab order."],
                     ["collapsed", "The folded state, reflected. Property <code>collapsed</code>, method <code>toggle(force?)</code>."],
                     ["remember", "A key — the folded state survives a reload, per viewer (<code>localStorage</code> <code>sac-section:&lt;key&gt;</code>); a stored state wins over the markup. Leave it out when the app persists the state itself (listen to <code>sac:toggle</code>, set <code>collapsed</code>)."],
@@ -925,7 +964,11 @@ sac.about.open({                          // or an explicit object (standalone)
                     ["ends", "<code>\"Crisp,Smooth\"</code> — two captions under the track's ends, for a continuous range whose extremes need words. The readout keeps the number. Translate it like <code>label</code>: set the attribute again on a language switch."],
                     ["disabled", "Inert and dimmed; fires nothing."],
                 ])}
-                <p><b>CSS parts:</b> <code>ends</code> (the caption row).</p>
+                <p><b>CSS parts:</b> <code>ends</code> (the caption row).
+                   <b>Accessibility:</b> the range input is named by the <code>label</code> (<code>aria-labelledby</code>; without a
+                   label, the host's own <code>aria-label</code> is passed on) and its <code>aria-valuetext</code> is what the readout
+                   shows — “40px”, “Medium” — kept in step on every change. Keyboard focus draws the kit's focus ring (2px
+                   <code>--accent</code>, offset 2px) round the thumb in Blink/WebKit and Firefox alike; a pointer drag shows none.</p>
                 ${table("Event", [["sac:input", "On drag; detail { value } (string)."], ["sac:change", "On release; detail { value } (string). Both bubble, not composed."]])}
                 ${compact(`a native range input, so dragging is the browser's own. Under <code>pointer: coarse</code> it is a
                    44px-tall hit strip with a 20px thumb, and <code>touch-action: pan-y</code> lets a vertical swipe
@@ -951,7 +994,7 @@ sac.about.open({                          // or an explicit object (standalone)
                     ["min / max", "Bounds. Default <code>0</code> / <code>100</code>."],
                     ["step", "Increment, default <code>1</code>. Fractional steps (<code>0.1</code>) are supported; the displayed and reflected value keeps that many decimals."],
                     ["decimals", "Minimum decimal places shown — <code>decimals=\"2\"</code> on a <code>0.5</code> step shows <code>1.50</code>. Never fewer than the step needs."],
-                    ["unit", "Optional dim word next to the number (<code>parts</code>, <code>px</code>). Also feeds <code>aria-valuetext</code> (“3 parts”)."],
+                    ["unit", "Optional dim word next to the number (<code>parts</code>, <code>px</code>). Also feeds <code>aria-valuetext</code> (“3 parts”; without a unit, <code>aria-valuetext</code> is the shown text when it differs from the number — “2,5”)."],
                     ["label", "Accessible name for the value field."],
                     ["disabled", "Disables both buttons and the value field."],
                 ])}
@@ -970,6 +1013,7 @@ sac.about.open({                          // or an explicit object (standalone)
                 ${table("Interaction", [
                     ["± buttons", "Click steps once. Press and hold repeats after 400ms, every 60ms, until release or the bound — the button disables itself there and the repeat stops on its own."],
                     ["Value field", "<kbd>↑</kbd>/<kbd>↓</kbd> step (<kbd>Shift</kbd> ×10) · <kbd>Enter</kbd> or blur commits · <kbd>Esc</kbd> reverts the text without committing."],
+                    ["Number format", "The field shows the page's <a href=\"#/styleguide/helpers/sac-regional\"><code>sac.regional</code></a> decimal separator (<code>2,5</code> under <code>\"1.234,5\"</code>), followed live — without group separators, so the pill keeps its width. Typing takes digits, a leading <code>-</code>, <code>.</code> and <code>,</code>: <code>2,5</code> and <code>2.5</code> both commit 2.5 (<code>sac.regional.parseNumber</code>; before 2.36 the comma was dropped and <code>2,5</code> became 25). The <code>value</code> attribute stays a plain JS number (<code>2.5</code>)."],
                 ])}
                 ${code(`<sac-stepper value="3" min="1" max="99" unit="parts" label="Parts"></sac-stepper>
 <sac-stepper value="0.5" min="0" max="1" step="0.1" label="Mix ratio"></sac-stepper>`)}
@@ -1103,15 +1147,16 @@ if (rgba) {
                     ["value", "get/set, normalized lowercase hex. Setting updates the well, the input and an open popover in place and fires <em>nothing</em> — events mean “the user did this”."],
                 ])}
                 ${table("Event", [
-                    ["sac:change", "detail { value } — the normalized hex. Fired on USER changes only: a committed hex entry, or any picker interaction. The inner picker's identically named event is stopped at the boundary, so apps see exactly one."],
+                    ["sac:change", "detail { value } — the normalized hex. Fired on USER changes only: a committed hex entry, or any picker interaction (live while dragging) — and once more when <kbd>Esc</kbd> takes the popover's changes back. The inner picker's identically named event is stopped at the boundary, so apps see exactly one."],
                 ])}
                 ${table("CSS custom property", [
                     ["--picker-width", "Set on the field, forwarded to the popover's <code>&lt;sac-color-picker&gt;</code>. Default <code>240px</code>."],
                 ])}
                 ${table("Interaction", [
-                    ["Color well", "Click drops the picker below the field (built on first open); an outside click, a re-click or <kbd>Esc</kbd> closes it, focus returning to the well. The popover is <code>position: fixed</code> on the dropdown layer and flips above the field when there is no room below."],
-                    ["Hex input", "A tolerant hex (<code>f00</code>, <code>ff0000cc</code>) + <kbd>Enter</kbd> commits; unparseable text is marked in <code>--danger</code> and reverts on blur."],
+                    ["Color well", "Click drops the picker below the field (built on first open). An outside click or a re-click closes it and <b>keeps</b> the new colour; <kbd>Esc</kbd> closes it and <b>restores</b> the colour the field had when it opened — one <code>sac:change</code> if that differs (since 2.36; before, Escape kept every drag). Focus returns to the well. Under <code>size=\"cell\"</code> <kbd>Esc</kbd> only closes — the cell's own <kbd>Esc</kbd> (<code>sac:cancel</code>) restores the edit. The popover is <code>position: fixed</code> on the dropdown layer and flips above the field when there is no room below."],
+                    ["Hex input", "A tolerant hex (<code>f00</code>, <code>ff0000cc</code>) + <kbd>Enter</kbd> commits. Unparseable (or emptied) text follows the <a href=\"#/styleguide/patterns/field-errors\">Field errors</a> pattern: red with <code>aria-invalid</code> while typing; <kbd>Enter</kbd> or blur shows “Not a color – e.g. #3b82f6” under the field and the text <b>stays</b> (before 2.36 it reverted on blur). <code>value</code> keeps the last valid colour, no <code>sac:change</code>; correcting the text, a picker change or <kbd>Esc</kbd> clears it, and a programmatic <code>value</code> set while the input is not focused replaces it. Read-only <code>validationMessage</code> holds the message (<code>\"\"</code> while valid) so a form can hold its Save."],
                 ])}
+                <p><b>CSS parts:</b> <code>error</code> (the message line).</p>
                 ${code(`<sac-color-field label="Accent" value="#3b82f6"></sac-color-field>
 <sac-color-field label="Glow" value="#f9731688" alpha></sac-color-field>
 
@@ -1233,7 +1278,7 @@ grid.colors = [{ value: "#ef4444", label: "Red" }];   // bulk rebuild, no event`
                     ["--calendar-width", "Width of the whole calendar. Default <code>280px</code> (<code>320px</code> under <code>pointer: coarse</code>, for 44px day cells). Never wider than its container — the day cells shrink instead."],
                 ])}
                 ${table("Interaction", [
-                    ["Header", "Three chevron pairs page the view: ‹ › ±1 month, ‹‹ ›› ±1 year, ‹‹‹ ››› ±10 years — the selection never moves; the month label announces each page (aria-live polite)."],
+                    ["Header", "Three chevron pairs page the view: ‹ › ±1 month, ‹‹ ›› ±1 year, ‹‹‹ ››› ±10 years — the selection never moves; the month label announces each page (aria-live polite). Every chevron carries its name as <code>aria-label</code> (the tooltip says the same): “Previous month”, “Previous year”, “Back 10 years” and the forward ones — localised, relabelled in place on a language switch."],
                     ["Day cells", "Today wears a small accent dot; the selected day the 2px accent ring — an outline, not a border. Neighbor-month days are dimmed but live: selecting one, by click or keyboard, navigates and selects."],
                 ])}
                 ${table("Keyboard", [
@@ -1272,15 +1317,18 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                 </div>
                 ${table("Attribute", [
                     ["value", "ISO date, tolerant in (whitespace, single-digit month/day: <code>2026-8-5</code>), reflected normalized <code>yyyy-mm-dd</code>. Empty or absent = no selection. An unparseable or impossible date (<code>2026-02-31</code>) is rejected — the last valid value is put back."],
-                    ["min, max", "ISO bounds, inclusive, forwarded to the popover calendar (days outside render disabled there). A typed date outside the bounds counts as invalid and never commits."],
+                    ["min, max", "ISO bounds, inclusive, forwarded to the popover calendar (days outside render disabled there). A typed date outside the bounds counts as invalid and never commits — the message names the bound."],
                     ["week-start", "<code>\"1\"</code> Monday (the calendar's default) or <code>\"0\"</code> Sunday, forwarded to the popover calendar."],
-                    ["format", "How the date is <b>shown and typed</b>: <code>iso</code> (<code>2026-09-25</code>), <code>dmy.</code> (<code>25.09.2026</code>), <code>dmy/</code> (<code>25/09/2026</code>), <code>mdy/</code> (<code>09/25/2026</code>). Absent = the page-wide <a href=\"#/styleguide/helpers/sac-regional\"><code>sac.regional</code></a> format, followed live. <code>value</code>, <code>min</code>/<code>max</code> and <code>sac:change</code> stay ISO whatever the format. Typing is tolerant — single-digit day/month, two-digit year (00–68 → 20xx), any of <code>. / -</code> between — and an ISO date is always accepted."],
+                    ["format", "How the date is <b>shown and typed</b>: <code>iso</code> (<code>2026-09-25</code>), <code>dmy.</code> (<code>25.09.2026</code>), <code>dmy/</code> (<code>25/09/2026</code>), <code>mdy/</code> (<code>09/25/2026</code>). Absent = the page-wide <a href=\"#/styleguide/helpers/sac-regional\"><code>sac.regional</code></a> format, followed live (until an app sets one: <code>dmy.</code> in German, else <code>iso</code> — and ISO also reads a dotted <code>25.09.2026</code>). <code>value</code>, <code>min</code>/<code>max</code> and <code>sac:change</code> stay ISO whatever the format. Typing is tolerant — single-digit day/month, two-digit year (00–68 → 20xx), any of <code>. / -</code> between — and an ISO date is always accepted."],
                     ["label", "Label line above the row (kit form-label styling). Absent or empty renders no label line at all. Also becomes the input's accessible name."],
                     ["placeholder", "The input's placeholder. Default follows the format (<code>yyyy-mm-dd</code>, <code>dd.mm.yyyy</code>, …), translated."],
                     ["disabled", "Greys the row out, blocks the input and the button, and closes an open popover."],
                     ["size", "<code>compact</code> (default — the small row for sidebars and settings panels) or <code>regular</code> — the metrics of a plain kit <code>&lt;input&gt;</code> (0.6rem padding, the UI font with tabular digits) for a normal form; the calendar button matches the field height. Give a date + time pair the same size and they stay one family. Touch sizing (44px, 16px type) is the same for both. <code>cell</code> = a cell editor — see <a href=\"#/styleguide/components/cell-editors\">Cell editors</a>."],
                 ])}
-                <p><b>CSS parts:</b> <code>label</code>, <code>input</code> (the text box), <code>well</code> (the calendar button).</p>
+                <p><b>CSS parts:</b> <code>label</code>, <code>input</code> (the text box), <code>well</code> (the calendar button), <code>error</code> (the message line).
+                   <b>ARIA:</b> the input's description names the expected format — “Format: dd.mm.yyyy, e.g. 25.09.2026”, in the
+                   current format and language — so a screen reader hears it before typing; there is deliberately no visible
+                   helper line (it would change every layout).</p>
                 ${table("Property", [
                     ["value", "get/set, normalized ISO or <code>\"\"</code>. Setting updates the input and an open popover in place and fires <em>nothing</em> — events mean “the user did this”. Never overwrites text mid-typing."],
                 ])}
@@ -1292,7 +1340,7 @@ cal.value = "2026-12-24";        // selects + shows December, fires nothing`)}
                 ])}
                 ${table("Interaction", [
                     ["Calendar button", "Click drops the calendar below the field (built on first open); an outside click, a re-click, <kbd>Esc</kbd> or picking a day closes it, focus returning to the button. The popover is <code>position: fixed</code> on the dropdown layer and flips above the field when there is no room below."],
-                    ["Date input", "A tolerant date in the format, or ISO (<code>2026-8-5</code>) + <kbd>Enter</kbd> commits and normalizes; invalid or out-of-range text is marked in <code>--danger</code> and reverts on blur or <kbd>Esc</kbd>."],
+                    ["Date input", "A tolerant date in the format, or ISO (<code>2026-8-5</code>) + <kbd>Enter</kbd> commits and normalizes. Invalid or out-of-range text follows the <a href=\"#/styleguide/patterns/field-errors\">Field errors</a> pattern: red with <code>aria-invalid</code> while typing; <kbd>Enter</kbd> or blur shows what is expected under the field — “Not a valid date – e.g. 25.09.2026” (the example in the field's current format, inside <code>min</code>/<code>max</code>), “No earlier than …”, “No later than …” — and the text <b>stays</b> (before 2.36 it reverted on blur). <code>value</code> keeps the last valid date, no <code>sac:change</code>; correcting the text, picking a day or <kbd>Esc</kbd> clears it, and a programmatic <code>value</code> set while the input is not focused replaces it. Read-only <code>validationMessage</code> holds the message (<code>\"\"</code> while valid) so a form can hold its Save."],
                 ])}
                 ${code(`<sac-date-field label="Due" value="2026-08-15"></sac-date-field>
 <sac-date-field label="This year" value="2026-08-15" min="2026-01-01" max="2026-12-31"></sac-date-field>
@@ -1332,7 +1380,7 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["value", "<code>HH:MM</code>, 24-hour whatever the display. Tolerant in (<code>9:5</code> → <code>09:05</code>), reflected normalized. Empty or absent = no time; garbage is rejected and the last valid value put back."],
                     ["hour-cycle", "<code>h23</code> (00–23) or <code>h12</code> (01–12 plus an AM/PM segment). Absent = the page-wide <a href=\"#/styleguide/helpers/sac-regional\"><code>sac.regional</code></a> hour cycle, followed live."],
                     ["step", "Minutes the arrows and the wheel step the minute segment by (default <code>1</code>; <code>5</code>, <code>15</code> …) — snapped to that grid. Typed minutes are not snapped."],
-                    ["min, max", "<code>HH:MM</code> bounds, inclusive. A time outside shows <code>--danger</code> and never commits; focus leaving reverts it."],
+                    ["min, max", "<code>HH:MM</code> bounds, inclusive. A time outside shows <code>--danger</code> and never commits; committing it shows “No earlier than 08:00” / “No later than 18:00” (in the field's hour cycle) under the field — see Interaction."],
                     ["label", "Label line above the field; also the group's accessible name."],
                     ["placeholder", "<code>\"hh:mm\"</code>-style — each half shows dim in its empty segment. Default <code>--:--</code>."],
                     ["disabled", "Greys the field out and takes it out of the tab order."],
@@ -1342,7 +1390,7 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["value", "get/set, <code>HH:MM</code> or <code>\"\"</code>. Setting updates the segments in place and fires nothing."],
                 ])}
                 ${table("Event", [
-                    ["sac:change", "detail { value } — <code>HH:MM</code>, or <code>\"\"</code> when the user cleared it. Fired when the user <b>commits</b>: focus leaving the field, or <kbd>Enter</kbd>. Stepping and typing update the segments live but fire once — the <code>&lt;sac-date-field&gt;</code> contract. A half-filled time reverts instead."],
+                    ["sac:change", "detail { value } — <code>HH:MM</code>, or <code>\"\"</code> when the user cleared it. Fired when the user <b>commits</b>: focus leaving the field, or <kbd>Enter</kbd>. Stepping and typing update the segments live but fire once — the <code>&lt;sac-date-field&gt;</code> contract. A half-filled or out-of-range time never fires — see Interaction → Invalid."],
                 ])}
                 ${table("Interaction", [
                     ["↑ / ↓", "Step the focused segment (wraps; minutes by <code>step</code>). On an empty segment ↑ starts at the bottom of its range, ↓ at the top."],
@@ -1352,8 +1400,9 @@ field.value = "2026-09-01";   // programmatic — updates the UI, fires nothing`
                     ["<kbd>Backspace</kbd> / <kbd>Del</kbd>", "Clear the segment — the value becomes <code>\"\"</code>."],
                     ["<kbd>Enter</kbd> / <kbd>Esc</kbd>", "Commit / revert to the last committed value."],
                     ["Wheel", "Steps the segment under the pointer while the field has focus — a field you merely scroll past never changes."],
+                    ["Invalid", "The <a href=\"#/styleguide/patterns/field-errors\">Field errors</a> pattern: a time outside <code>min</code>/<code>max</code> is red with <code>aria-invalid</code> on the segments while typing. Committing it — or half a time — shows what is expected under the field (“No later than 06:00 PM”, “Enter hours and minutes”) and the segments <b>stay</b> (before 2.36 they reverted). <code>value</code> keeps the last valid time, no <code>sac:change</code>; correcting the segments or <kbd>Esc</kbd> clears it, a programmatic <code>value</code> set replaces it. Read-only <code>validationMessage</code> holds the message (<code>\"\"</code> while valid) so a form can hold its Save."],
                 ])}
-                <p><b>CSS parts:</b> <code>label</code>, <code>field</code> (the bordered box), <code>segment</code> (each segment), <code>separator</code>.</p>
+                <p><b>CSS parts:</b> <code>label</code>, <code>field</code> (the bordered box), <code>segment</code> (each segment), <code>separator</code>, <code>error</code> (the message line).</p>
                 ${code(`<sac-date-field label="Start" value="2026-09-25"></sac-date-field>
 <sac-time-field label="Time" value="14:30" step="15"></sac-time-field>
 
@@ -1379,7 +1428,7 @@ sac.regional.set({ date: "dmy.", hourCycle: "h23" });`)}
                 </div>
                 ${table("Attribute", [
                     ["value", "A plain JS number string (<code>1234.5</code>, <code>-0.25</code>), reflected so — never the formatted text. Empty or absent = no value (<code>null</code>); garbage is rejected and the last valid value put back."],
-                    ["min, max", "Inclusive bounds. A typed number outside them shows <code>--danger</code> and never commits; stepping clamps into them."],
+                    ["min, max", "Inclusive bounds. A typed number outside them shows <code>--danger</code> and never commits — the message says “At least 0” / “At most 100”; stepping clamps into them."],
                     ["step", "What <kbd>↑</kbd> / <kbd>↓</kbd> add (default <code>1</code>); <kbd>Shift</kbd> steps 10×."],
                     ["decimals", "Fraction digits: the committed value is rounded to them and the text always shows exactly that many (<code>1,234.50</code>). Absent = as many as the number has."],
                     ["label", "Label line above the input; also its accessible name."],
@@ -1396,10 +1445,11 @@ sac.regional.set({ date: "dmy.", hourCycle: "h23" });`)}
                     ["sac:commit, sac:cancel", "<code>size=\"cell\"</code> only — see <a href=\"#/styleguide/components/cell-editors\">Cell editors</a>."],
                 ])}
                 ${table("Interaction", [
-                    ["Typing", "Tolerant: both separators are understood (<code>sac.regional.parseNumber</code>) — <code>2.000,25</code> and <code>2,000.25</code> both commit 2000.25. Invalid or out-of-range text shows <code>--danger</code> and reverts on blur or <kbd>Esc</kbd>."],
+                    ["Typing", "Tolerant: both separators are understood (<code>sac.regional.parseNumber</code>) — <code>2.000,25</code> and <code>2,000.25</code> both commit 2000.25."],
+                    ["Invalid", "The <a href=\"#/styleguide/patterns/field-errors\">Field errors</a> pattern: invalid or out-of-range text is red with <code>aria-invalid</code> while typing; <kbd>Enter</kbd> or blur shows what is expected under the field — “Not a number – e.g. 1,234.5”, “At least 0”, “At most 100” (in the <code>sac.regional</code> format) — and the text <b>stays</b> (before 2.36 it reverted on blur: 150 in a max-100 field silently went back to 42). <code>value</code> keeps the last valid number, no <code>sac:change</code>; correcting the text, a step or <kbd>Esc</kbd> clears it, and a programmatic <code>value</code> set while the input is not focused replaces it. <code>size=\"cell\"</code>: <code>aria-invalid</code> only, blur / Tab still revert. Read-only <code>validationMessage</code> holds the message (<code>\"\"</code> while valid) so a form can hold its Save."],
                     ["↑ / ↓", "Step by <code>step</code> (<kbd>Shift</kbd> ×10) from the typed text, clamped to min/max; an empty field starts at 0 (or <code>min</code>)."],
                 ])}
-                <p><b>CSS parts:</b> <code>label</code>, <code>input</code>. ARIA: the input is a <code>spinbutton</code> with <code>aria-valuenow/-min/-max/-text</code>.</p>
+                <p><b>CSS parts:</b> <code>label</code>, <code>input</code>, <code>error</code> (the message line). ARIA: the input is a <code>spinbutton</code> with <code>aria-valuenow/-min/-max/-text</code>; its description names the number format (“Number format: 1.234,5”), so a screen reader hears it before typing.</p>
                 ${code(`<sac-number-field label="Price" value="1234.5" decimals="2" min="0" step="0.5"></sac-number-field>
 
 field.addEventListener("sac:change", (e) => save(e.detail.value));   // 1234.5 | null
@@ -1429,7 +1479,7 @@ sac.regional.set({ number: "1.234,5" });                            // every fie
                     ["value", "The chosen option's value, reflected. Empty or absent = none. A value no option carries is kept and shown as-is — options may arrive later."],
                     ["label", "Label line above the field; also the accessible name of the input and the list."],
                     ["placeholder", "Shown while nothing is chosen. Default <code>Select…</code>, translated."],
-                    ["clearable", "A × button clears the choice (<code>value</code> becomes <code>\"\"</code>, <code>sac:change</code> fires)."],
+                    ["clearable", "A × button clears the choice (<code>value</code> becomes <code>\"\"</code>, <code>sac:change</code> fires); from the keyboard, <kbd>Delete</kbd> / <kbd>Backspace</kbd> with the text empty or wholly selected."],
                     ["disabled", "Greys the field out and blocks it; an open list closes."],
                     ["size", "<code>compact</code> (default — the date field's compact row), <code>regular</code> (a plain kit <code>&lt;input&gt;</code>'s metrics) or <code>cell</code> — the <a href=\"#/styleguide/components/cell-editors\">Cell editors</a> contract."],
                 ])}
@@ -1451,6 +1501,7 @@ sac.regional.set({ number: "1.234,5" });                            // every fie
                     ["Enter", "Pick the highlighted option — the list closes."],
                     ["Esc", "Close the list; closed, revert typed text."],
                     ["Tab", "Close the list — picking the highlighted option when you typed or arrowed — and move on. Never swallowed."],
+                    ["Delete / Backspace", "With <code>clearable</code>, a chosen value and the text empty or wholly selected: clear the choice — the × button's path (the list closes, <code>value</code> becomes <code>\"\"</code>, <code>sac:change</code> fires). The × stays out of the tab order; these keys are its keyboard twin. Otherwise they edit the text."],
                 ])}
                 <p><b>ARIA:</b> the input is <code>role="combobox"</code> (<code>aria-expanded</code>, <code>aria-controls</code>,
                    <code>aria-activedescendant</code>, <code>aria-autocomplete="list"</code>); the list is a <code>listbox</code> of
@@ -1467,7 +1518,10 @@ sel.addEventListener("sac:change", (e) => save(e.detail.value));`)}
                 ${compact(`rows are 44px under <code>pointer: coarse</code>, the field 44px with 16px type. The list is at most
                    <code>100vw - 16px</code> wide, clamped 8px inside the viewport, flips above the field when there is more room
                    there, and is never taller than the room it has — measured against the visual viewport, so the on-screen
-                   keyboard shrinks it instead of covering it.`)}
+                   keyboard shrinks it instead of covering it. <b>A pick is not typing:</b> under <code>pointer: coarse</code> a tap
+                   opens the list <em>without</em> the on-screen keyboard (the input rests with <code>inputmode="none"</code>), so a
+                   four-option pick keeps the whole screen. Tapping the text again — or typing on a hardware keyboard — brings
+                   typing back: the keyboard rises and the list filters as usual. Leaving the field restores the rest state.`)}
 
                 <h2 id="cell-editors">Cell editors — size="cell"</h2>
                 <p>One contract for editing inside a table cell. <code>size="cell"</code> on
@@ -1496,7 +1550,7 @@ sel.addEventListener("sac:change", (e) => save(e.detail.value));`)}
                     ["focus({ select })", "Focuses the field's text; <code>select: true</code> selects all of it, so a typed key replaces the value (the time field focuses its hour segment)."],
                 ])}
                 ${table("Event", [
-                    ["sac:commit", "detail { value, shiftKey } — <kbd>Enter</kbd> committed the edit (<code>shiftKey</code>: move up instead of down). Bubbles + composed. Not fired while the text is invalid — the editor stays open, marked <code>--danger</code>."],
+                    ["sac:commit", "detail { value, shiftKey } — <kbd>Enter</kbd> committed the edit (<code>shiftKey</code>: move up instead of down). Bubbles + composed. Not fired while the text is invalid — the editor stays open, marked <code>--danger</code> and <code>aria-invalid=\"true\"</code> (no message line in a cell: the host reports the error)."],
                     ["sac:cancel", "detail { value } — <kbd>Esc</kbd> restored the value the field had <b>when focus entered it</b> (silently: no <code>sac:change</code> for the restore). Bubbles + composed."],
                     ["sac:change", "As today — on every committed change, including picks inside a popover and a Tab commit."],
                 ])}
@@ -1556,6 +1610,13 @@ function edit(cell, column, row) {
                 ])}
                 ${table("Event", [["sac:toggle", "detail { expanded }."]])}
                 ${table("Method", [["measure()", "Re-run overflow detection (escape hatch)."]])}
+                <p><b>Keyboard and assistive tech (2.36).</b> The tab is a button with <code>aria-expanded</code> and
+                   <code>aria-controls</code>. What the clamp hides cannot be reached either: while collapsed, everything
+                   in the content that is not wholly above the clip line is <code>inert</code> — no Tab stop, no
+                   screen-reader cursor, no click in the faded edge. A box cut by the line is opened up and its children
+                   judged one by one, so the chips you can see in a wrapper that runs on stay live;
+                   plain text is never touched. Expanding gives it all back — only what the component set, elements
+                   inert already are left alone. Collapsing with focus in a part that goes inert moves focus to the tab.</p>
                 ${compact(`the tab gets a 44 × 44 hit halo under <code>pointer: coarse</code>; no hover tint sticks after a tap.
                    The clamp re-measures when a phone rotates or a panel narrows.`)}
 
@@ -1572,7 +1633,10 @@ function edit(cell, column, row) {
                 ${table("Attribute", [
                     ["label", "Display text."],
                     ["color", "Palette slot (blue, orange, red, green, purple, pink, yellow, teal, gray, indigo). Unknown → gray."],
-                    ["removable / selected / clickable", "× button / active ring / hover affordance."],
+                    ["removable", "An × button; its accessible name says which chip (“Remove work”)."],
+                    ["selected", "Active ring, stronger wash — and a small check before the label, so the state is not colour alone."],
+                    ["clickable", "Hover affordance, and the host becomes a toggle button for keyboards and screen readers: <code>role=\"button\"</code>, a Tab stop (not while disabled), <code>aria-pressed</code> mirroring <code>selected</code>, <kbd>Enter</kbd> / <kbd>Space</kbd> click it (your click listener runs, as for a pointer) and a focus ring on <code>:focus-visible</code>. The chip never flips <code>selected</code> itself — the app does. A <code>role</code> / <code>tabindex</code> you wrote is left alone."],
+                    ["disabled", "Inert and dimmed; the × emits nothing; <code>aria-disabled</code> on a clickable chip."],
                 ])}
                 ${table("Event", [["sac:remove", "detail { label } (only with [removable])."]])}
                 ${compact(`under <code>pointer: coarse</code> the × grows to 24px with a 44 × 44 halo and a
@@ -1590,7 +1654,7 @@ function edit(cell, column, row) {
                     <span id="demo-chips-state" style="color:var(--text-muted);font-size:0.85rem;">value: []</span>
                 </div>
                 ${table("Attribute", [
-                    ["add-label", "Ghost-button text when empty (default \"Add\")."],
+                    ["add-label", "Ghost-button text when empty (default \"Add\"). Also the text entry's accessible name and — outside <code>size=\"cell\"</code> — its placeholder while it holds no text."],
                     ["allow-create", "Enables “Create '…'” with the 10-swatch palette picker."],
                     ["size", "Absent = the inline row; <code>cell</code> = a cell editor (one line, list on typing only) — see <a href=\"#/styleguide/components/cell-editors\">Cell editors</a>."],
                 ])}
@@ -1603,8 +1667,14 @@ function edit(cell, column, row) {
                     ["sac:create", "detail { name, color } — persist it, then refresh .suggestions."],
                 ])}
                 ${table("Keyboard", [
-                    ["Input", "<kbd>Tab</kbd> / <kbd>Enter</kbd> / comma commit the highlighted (or top) entry · <kbd>Esc</kbd> closes the dropdown without committing · <kbd>↓</kbd>/<kbd>↑</kbd> move the highlight · <kbd>Backspace</kbd> on an empty input removes the last chip."],
+                    ["Input", "<kbd>Tab</kbd> / <kbd>Enter</kbd> / comma commit the highlighted (or top) entry · <kbd>Esc</kbd> closes the dropdown without committing · <kbd>↓</kbd>/<kbd>↑</kbd> move the highlight."],
+                    ["Backspace", "On an empty entry the first press <em>marks</em> the last chip (the focus ring, and announced “Press Backspace again to remove …”); the second removes it (“… removed”). Any other key, a click or leaving the field drops the mark. A held key (repeat) never removes chips."],
                 ])}
+                <p><b>ARIA:</b> the entry is <code>role=\"combobox\"</code> (<code>aria-expanded</code>, <code>aria-controls</code>,
+                   <code>aria-activedescendant</code>, <code>aria-autocomplete=\"list\"</code>) named by <code>add-label</code>; the dropdown is a
+                   <code>listbox</code> of <code>option</code>s, the highlighted one <code>aria-selected</code> — the
+                   <a href=\"#/styleguide/components/sac-select\"><code>&lt;sac-select&gt;</code></a> pattern. The colour step after
+                   “Create” is a named group of swatch buttons. Announcements go through a polite live region.</p>
                 ${compact(`a tap commits a suggestion (a swipe that scrolls the list picks nothing). Under
                    <code>pointer: coarse</code> suggestion rows are 44px, the add button and colour swatches get 44px
                    halos, chips sit 10px apart and the field uses 16px type. The row is 44px there; the chips and
@@ -1640,17 +1710,24 @@ function edit(cell, column, row) {
                     ["disabled", "Dims the surface and blocks click, keyboard <em>and</em> drop — the drag is not accepted, so the browser shows the “no drop” cursor rather than a lie."],
                     ["over", "Set by the component while a file drag hovers — an accent wash + accent icon and label, never a thicker border or a scale that would move the target while the user aims at it. Drags carrying no files never set it. Read it, don't write it."],
                     ["overlay", "The zone is invisible at rest and its <em>parent</em> is the drop surface: a file drag entering the parent shows the zone covering exactly that parent (<code>position: absolute; inset: 0</code>), gone again on drop or leave. For a Files view whose target is “wherever the list is”. A <code>position: static</code> parent gets <code>relative</code> (undone on removal). The default hint is dropped (nothing to click); <code>browse()</code> stays the picker path."],
+                    ["quiet", "No “not added” message of the zone's own (below) — for an app that shows its own from <code>sac:rejected</code>."],
                 ])}
+                <p><b>Nothing vanishes silently.</b> Files a drop or pick brings that the zone does not take — outside
+                   <code>accept</code>, or past the first one without <code>multiple</code> — are reported in <code>sac:rejected</code>, and the
+                   zone says so in a line under the hint, the warn icon carrying the kind: “photo.jpg was not added – only .svg files”,
+                   “Only one file – 4 were not added”. A screen reader hears it (a polite announcement), and it joins the zone's
+                   accessible name. It clears on the next drag, drop or browse. An <code>overlay</code> zone is gone by then, so its message
+                   becomes a <code>sac.toast</code> (kind <code>warn</code>). <code>quiet</code> switches all of this off; the event stays.</p>
                 ${table("Property", [
                     ["accept / label / hint", "String, reflect the attributes."],
-                    ["multiple / disabled / overlay", "Boolean, reflect the attributes."],
+                    ["multiple / disabled / overlay / quiet", "Boolean, reflect the attributes."],
                 ])}
                 ${table("Method", [
                     ["browse()", "Opens the picker. Browsers only honor this inside a user gesture."],
                 ])}
                 ${table("Event", [
                     ["sac:files", "detail { files } — accepted files as a plain Array, from drop <em>and</em> picker alike. Every file carries <code>relativePath</code>: its path from the dropped root (<code>Photos/2026/IMG_0412.jpg</code>), or its name for a loose file. A drop containing a folder is walked (<code>webkitGetAsEntry</code>, <code>readEntries</code> until empty; <code>accept</code> and <code>multiple</code> apply as usual) and adds <code>detail.folders</code> — every folder walked, empty ones included. A drop without folders is unchanged. The hidden shadow <code>&lt;input type=\"file\"&gt;</code> is reset after every pick, so picking the same file twice in a row really fires twice."],
-                    ["sac:rejected", "detail { files } — fired <em>instead</em> of sac:files when <code>accept</code> filtered out every dropped file. Whether that deserves a toast is the app's call."],
+                    ["sac:rejected", "detail { files, rejected, partial } — every file of a drop or pick that was <em>not</em> delivered. <code>files</code> is the plain Array of those Files (as before); <code>rejected</code> pairs each with its reason — <code>[{ file, reason }]</code>, <code>\"type\"</code> (outside <code>accept</code>) or <code>\"count\"</code> (past the first file without <code>multiple</code>). <code>partial</code> is <code>true</code> when sac:files already fired for the rest of the same drop, <code>false</code> when nothing was taken (the only case that fired before 2.36, then <em>instead</em> of sac:files)."],
                 ])}
                 ${table("CSS custom property", [
                     ["--drop-zone-min-height", "Height of the surface. Default <code>140px</code>."],
@@ -1658,6 +1735,7 @@ function edit(cell, column, row) {
                 ])}
                 ${table("CSS shadow part", [
                     ["zone", "The dashed surface itself, for the rare app that needs to reshape it."],
+                    ["message", "The “not added” line (icon + text)."],
                 ])}
                 ${code(`<sac-drop-zone accept=".svg,image/*" multiple
                label="Drop your SVG here" hint="or click to browse"
@@ -1665,8 +1743,10 @@ function edit(cell, column, row) {
                 ${code(`zone.addEventListener("sac:files", (e) => {
     for (const file of e.detail.files) console.log(file.name, file.size);
 });
+// The zone already says what it did not take; listen when the app wants
+// more (or set quiet and say it itself).
 zone.addEventListener("sac:rejected", (e) => {
-    sac.toast(\`\${e.detail.files.length} file(s) of the wrong type.\`, { kind: "warn" });
+    for (const { file, reason } of e.detail.rejected) console.log(file.name, reason);   // "type" | "count"
 });`)}
                 ${code(`<div class="file-list">
     …rows…
@@ -1715,6 +1795,14 @@ zone.addEventListener("sac:files", async (e) => {
                     ["show-hidden", "Presence lists dot entries (<code>.config</code>, <code>.apps/</code>) — hidden by default, like a desktop file manager. Bind it to your own toggle (a menu item, a key chord); the <code>showHidden</code> property mirrors it. The <code>.folder</code> marker is never listed."],
                     ["parent-row", "Presence: a <code>..</code> row first in every folder below the root, so going up is a row like any other — cursor onto it, <kbd>Enter</kbd> (the commander convention). Always first, whatever the sort. Not an entry: never marked, deleted, renamed or dragged, never in <code>sac:choose</code> / <code>sac:select</code> / <code>sac:mark</code> or <code>items</code>; on it <code>cursor</code> is <code>null</code> and <code>sac:cursor</code> says <code>kind: \"parent\"</code>. A drop on it lands in the parent folder. One way up, not two: the bar's Up button goes, and the current folder's icon stands exactly over the rows' icons instead."],
                     ["delete-button", "The per-row trash button (<code>part=\"delete\"</code>): <code>cursor</code> (default) — the hovered row and the cursor row, always on touch; <code>hover</code> — only the row under a hovering pointer, never on touch, and only while that row is the whole job (nothing marked, or just it); <code>none</code> — no button, the Delete key stays."],
+                    ["tap", "What a touch or pen tap on a <em>file</em> does: <code>open</code> — opens it (<code>sac:choose</code>) in one tap, no double-tap to find; <code>select</code> — selects it only. Absent = <code>open</code>, unless the browser sits inside a <code>&lt;sac-dialog&gt;</code>, whose OK button confirms the pick (the <code>sac.files</code> dialogs set <code>select</code>). A mouse click always selects and a double-click opens; a tap on a folder always opens it."],
+                ])}
+                ${table("States", [
+                    ["Loading", "A listing slower than 300ms shows a small ring and “Loading…”, and the list carries <code>aria-busy</code> — a quick load never flashes it. While the folder in view is only re-read, its rows stay."],
+                    ["Failed", "Never shown as empty: “Couldn't open this folder.” (<code>role=\"alert\"</code>, warning icon) with a <b>Try again</b> button (<code>part=\"retry\"</code>) that reloads."],
+                    ["Empty", "“This folder is empty.” (“Nothing here yet.” at the root)."],
+                    ["Name fields", "Rename and New folder close only once the change landed. A taken name, one starting with a dot (New folder too) or a write the store refuses keeps the field open, the typed name in it, with a note under it — <code>aria-invalid</code>, <code>aria-describedby</code>, <code>role=\"alert\"</code>."],
+                    ["Delete stops partway", "When the store refuses one item, an error toast says what is left: “2 of 5 items were not deleted.” / “Couldn't delete “x”.”."],
                 ])}
                 ${table("CSS custom property", [
                     ["--file-browser-bar-height", "The height of the bar (Up, breadcrumb, New folder), so it can line up with a host footer. A minimum: unset = its buttons' height (28px, 44px on touch), so touch targets never clip. The gap below the bar is not included."],
@@ -1734,7 +1822,7 @@ zone.addEventListener("sac:files", async (e) => {
                     ["refresh()", "Re-read the current folder — after writing into the store from outside. The cursor stays on its row."],
                     ["up()", "One folder up; the cursor lands on the folder just left."],
                     ["newFolder()", "An inline name field; Enter creates the folder and goes into it. An empty folder keeps itself alive with a hidden <code>&lt;folder&gt;/.folder</code> marker entry — never listed, removed with the folder."],
-                    ["rename(path?)", "An inline name field on the row (default: the cursor row) — bind it to your own chord; F2 is built in. Enter commits, Esc cancels, leaving the field commits a changed name; a taken name or one starting with a dot keeps the field open. The browser performs the rename, like delete and New folder, unless a <code>sac:request-rename</code> listener cancels."],
+                    ["rename(path?)", "An inline name field on the row (default: the cursor row) — bind it to your own chord; F2 is built in. Enter commits, Esc cancels, leaving the field commits a changed name; a taken name, one starting with a dot, or a rename the store refuses keeps the field open with a note under it (see States). The browser performs the rename, like delete and New folder, unless a <code>sac:request-rename</code> listener cancels."],
                     ["select(path)", "Select one file by path; clears the marks."],
                 ])}
                 ${table("Event", [
@@ -1742,7 +1830,7 @@ zone.addEventListener("sac:files", async (e) => {
                     ["sac:mark", "detail { paths } — the marks changed (user action, or cleared by a folder change)."],
                     ["sac:cursor", "detail { path, kind } — the row under the cursor changed: a move, or the folder loading under it. A preview pane follows this."],
                     ["sac:selecting", "detail { selecting } — mark mode turned on or off: a long-press, Done, Esc, the last unmark, a folder change (not the property setter). Show or hide a “Delete (3)” action bar with it."],
-                    ["sac:choose", "detail { paths } — a file was double-clicked or Enter'd. Folders open on a single click and never choose."],
+                    ["sac:choose", "detail { paths } — a file was double-clicked or Enter'd, or tapped on touch (see <code>tap</code>). Folders open on a single click and never choose."],
                     ["sac:navigate", "detail { path } — the folder changed."],
                     ["sac:sort", "detail { key, dir } — a header label changed the sort."],
                     ["sac:request-remove", "<strong>Cancelable</strong>, before anything is deleted: detail { path, folder, permanent, paths } — <code>permanent</code> = Shift was held, <code>paths</code> = every target (the marked rows when Delete acts on marks). <code>preventDefault()</code> skips the built-in confirm and delete, so a host can move to a trash instead."],
@@ -1810,20 +1898,25 @@ pane.addEventListener("sac:drop", async (e) => {
                    dialog around. Plain arrows keep the marks; a plain click clears them. Rows are virtualised: a folder of
                    thousands renders only what is in view. Rows expose <code>part="row file|folder [selected] [marked] [cursor]"</code>,
                    so <code>::part(marked)</code> restyles marks; also <code>part="delete"</code> (the trash button), <code>"check"</code> (the
-                   mark-mode box), <code>"count"</code> and <code>"done"</code> (the mark-mode bar).</p>
+                   mark-mode box), <code>"count"</code> and <code>"done"</code> (the mark-mode bar), <code>"select"</code> (the touch
+                   Select button) and <code>"retry"</code> (Try again).</p>
                 <p><b>Dates follow <a href="#/styleguide/helpers/sac-regional"><code>sac.regional</code></a>.</b> The Modified column uses its date
                    order (<code>2026-09-25</code> · <code>25.09.2026</code> · <code>25/09/2026</code> · <code>09/25/2026</code>) and,
                    for today's files, its hour cycle, and repaints in place on <code>sac.regional.set()</code>; the cell's tooltip
                    shows day and time. <b>Changed default in 2.17:</b> with <code>globals.js</code> loaded the column shows ISO
                    (<code>2026-09-25</code>, <code>14:05</code>) until the app calls <code>sac.regional.set()</code> — before, it was
-                   formatted in the UI language (“Sep 25, 2026”). Without <code>sac.regional</code> it still formats in
+                   formatted in the UI language (“Sep 25, 2026”). Since 2.36 that default follows the language: German
+                   shows <code>25.09.2026</code>. Without <code>sac.regional</code> it still formats in
                    <code>sac.lang.locale()</code>; sizes always do.</p>
                 <h3>Mark mode on touch</h3>
                 <p>With <code>multiple</code>, a long-press (touch or pen, 450ms held still) marks the row and turns on mark mode:
                    check boxes appear, a tap toggles a mark (folders too — nothing opens), Space toggles without a modifier, and
                    the bar trades Up / breadcrumb / New folder for “{n} selected” and Done. It ends on Done, Esc, unmarking the
                    last row, a folder change, or <code>selecting = false</code> — always clearing the marks. A swipe still
-                   scrolls; mouse and keyboard gestures are unchanged, but a long-press marks instead of starting a touch drag.</p>
+                   scrolls; mouse and keyboard gestures are unchanged, but a long-press marks instead of starting a touch drag.
+                   The long-press is not the only way in: under <code>(pointer: coarse)</code> the bar shows a visible
+                   <b>Select</b> button (<code>part="select"</code>) that turns mark mode on with nothing marked yet. Outside
+                   mark mode a tap on a file opens it (see <code>tap</code>); Rename stays in the row's context menu.</p>
                 ${code(`<sac-file-browser id="files" multiple delete-button="hover"></sac-file-browser>
 <div id="actions" hidden><button id="del">Delete</button></div>
 <script>
@@ -1969,6 +2062,11 @@ ql.source = url ? { url, type: stat.type, name: stat.name, size: stat.size }
                 ${table("Event", [
                     ["sac:copy", "detail { text } — only on a successful clipboard write. A failure logs via <code>console.warn</code> and fires nothing."],
                 ])}
+                <p><b>Heard as well as seen.</b> A copy is announced “Copied” (a polite live region beside the button, said again on
+                   every copy). A failure tells people what to do instead — “Couldn't copy – select the text and press Ctrl+C” (the
+                   platform's keys: <kbd>⌘C</kbd> on a Mac, <kbd>Strg+C</kbd> in German) — as a <code>sac.toast</code> of kind
+                   <code>error</code> when the kit has one (seen and heard), else through the live region plus the button's tooltip
+                   while the error icon shows.</p>
                 ${code(`<sac-copy-button value="npx serve ."></sac-copy-button>
 <sac-copy-button for="#install-cmd" label="Copy command"></sac-copy-button>`)}
                 ${compact(`under <code>pointer: coarse</code> it keeps its 26px look with a 44 × 44 hit halo — the
@@ -1979,7 +2077,7 @@ ql.source = url ? { url, type: stat.type, name: stat.name, size: stat.size }
                 <p>Generic tree list with visibility eyes, color wells, delete buttons and expand chevrons.
                    The element's <code>id</code> is the data id in every event detail — give items meaningful ids.</p>
                 <div class="sg-demo" style="max-width:320px;background:var(--panel);">
-                    <sac-scene-graph id="demo-scene">
+                    <sac-scene-graph id="demo-scene" aria-label="Scene">
                         <sac-scene-item id="grp-1" label="Group A" visible expanded>
                             <sac-scene-item id="obj-1" label="Mesh 1" visible color="#3b82f6" can-delete></sac-scene-item>
                             <sac-scene-item id="obj-2" label="Mesh 2" color="#10b981" can-delete></sac-scene-item>
@@ -1997,6 +2095,18 @@ ql.source = url ? { url, type: stat.type, name: stat.name, size: stat.size }
                     ["sac:visibility", "detail.visible = requested new state (host applies it)."],
                     ["sac:expand / sac:delete / sac:recolor", "detail.expanded / — / detail.color."],
                 ])}
+                ${table("Keyboard — the whole tree is one Tab stop", [
+                    ["Tab", "Reaches the tree's one row — the focused one; with focus elsewhere the selected (<code>active</code>) row, else the row the keyboard last stood on, else the first — and then <em>that</em> row's eye, colour well and trash (the <a href=\"#/styleguide/components/sac-layer-list\"><code>&lt;sac-layer-list&gt;</code></a> way). Every other row's controls are out of the tab order; the chevron always is (← / → do its job)."],
+                    ["↑ / ↓ · Home / End", "Previous / next visible row · first / last. Moves focus; does not select."],
+                    ["→", "Collapsed: expand · expanded: to the first child."],
+                    ["←", "Expanded: collapse · otherwise: to the parent row."],
+                    ["Enter / Space", "Select (<code>sac:select</code>; <kbd>Ctrl</kbd>/<kbd>⌘</kbd> = additive, <kbd>Shift</kbd> = range)."],
+                ])}
+                <p><b>ARIA:</b> <code>&lt;sac-scene-graph&gt;</code> is <code>role="tree"</code> — give it an <code>aria-label</code>. Rows are
+                   <code>treeitem</code>s with <code>aria-level</code>, <code>aria-selected</code> and, when nested, <code>aria-expanded</code>;
+                   children sit in a <code>role="group"</code>. Every control says which item it acts on — “Hide Mesh 1” / “Show Mesh 1”
+                   (the name is the action, so the eye carries no <code>aria-pressed</code>), “Delete Mesh 1”, “Color of Mesh 1” — and a
+                   hidden row is named “Mesh 2, hidden”.</p>
                 ${compact(`under <code>pointer: coarse</code> every row is 44px tall and each control (chevron, eye, colour
                    well, trash) a real 44 × 44 box — side by side, so boxes, not overlapping halos. Every action is
                    always visible; under <code>hover: none</code> no row stays lit after a tap.`)}
@@ -2011,9 +2121,13 @@ ql.source = url ? { url, type: stat.type, name: stat.name, size: stat.size }
                     </div>
                 </div>
                 ${table("Method", [
-                    ["add(text, level)", "level: \"info\" | \"warn\" | \"error\" → --ok-text / --accent-warm-text / --danger-text. Timestamped."],
-                    ["clear() / copy()", "Empty the log / copy all entries to the clipboard."],
+                    ["add(text, level)", "level: \"info\" | \"warn\" | \"error\" → --ok-text / --accent-warm-text / --danger-text, and never colour alone: each entry leads with its level icon (info, warn, error — three shapes) and carries the level as words for screen readers (“Warning: …”). Timestamped. Scrolls to the new entry only when the body was already at (or within ~24px of) the bottom."],
+                    ["clear()", "Empty the log for good, silently — for app code."],
+                    ["copy()", "Copy all entries to the clipboard; resolves <code>true</code> / <code>false</code>. A failure is reported, never swallowed: <code>sac.toast</code> (kind <code>error</code>) “Couldn't copy – select the text and press Ctrl+C”, in the platform's keys."],
                 ])}
+                <p>The header's <b>Clear</b> forgives: the entries go and a toast offers <b>Undo</b>, which puts them back in front of
+                   anything logged since (without <code>sac.toast</code> it clears for good, like <code>clear()</code>). The body is
+                   <code>role="log"</code>, named by the header, so each new entry is read as it arrives.</p>
                 <p>There is also a plain CSS <code>.log</code> box for div-based logs — see CSS Patterns.</p>
                 ${compact(`entry text is always selectable, even inside a <code>user-select: none</code> shell. Under
                    <code>pointer: coarse</code> the Copy / Clear buttons are 44px (the header grows). The body is its own
@@ -2034,7 +2148,16 @@ ql.source = url ? { url, type: stat.type, name: stat.name, size: stat.size }
                     <button class="btn" style="width:auto" id="demo-loader">Show for 2 seconds</button>
                     <sac-loader id="demo-loader-el"></sac-loader>
                 </div>
-                ${table("Method", [["show(title, subtitle)", "Displays the overlay."], ["hide()", "Fades out over 300ms."]])}
+                ${table("Method", [["show(title, subtitle)", "Displays the overlay; called again while shown, only the text changes."], ["hide()", "Fades out over 300ms."]])}
+                <p><b>Blocks every input, not only the mouse (2.36).</b> While shown, whatever the overlay covers turns
+                   <code>inert</code> — the page around the loader, up to the box the fixed overlay fills (the viewport,
+                   or an ancestor with a transform, filter or containment) — so Tab, a screen reader or a stray Enter
+                   cannot reach the app behind it. Layers above the overlay stay live (a dialog, a toast, a window
+                   brought forward — what the mouse can still reach too); elements that were inert already are left
+                   alone, and <code>hide()</code> gives back exactly what <code>show()</code> took. The element that
+                   had focus gets it back on <code>hide()</code>, unless focus has been put elsewhere meanwhile. It is a
+                   <code>role="status"</code> region: the title (and subtitle) is announced on show and on every text
+                   change; the rings are decoration and stand still under <code>prefers-reduced-motion</code>.</p>
                 ${compact(`the overlay covers the whole screen, its content kept clear of notch and home bar by safe-area
                    padding; a long title wraps centred. No controls.`)}
 
@@ -2364,11 +2487,11 @@ canvas.addEventListener("contextmenu", (e) => {
                 ${table("sac-toast-stack", [
                     ["position", "<code>bottom-right</code> (default) | <code>bottom-left</code> | <code>top-right</code> | <code>top-left</code> — top corners clear the nav ribbon."],
                     ["Stacking", "The newest toast always appears nearest the anchored corner; hovering a toast pauses its timer, so a message you reached for never vanishes mid-read."],
-                    ["Keyboard", "An action toast pauses while focus is inside it; Escape dismisses it and focus returns where it came from. The action's label is announced with the message (same live region)."],
+                    ["Keyboard", "Every toast pauses while focus is inside it (its action or its ×); Escape dismisses it and focus returns where it came from. The action's label is announced with the message (same live region)."],
                 ])}
                 ${table("sac.toast(message, opts)", [
                     ["opts.kind", "\"info\" (default) | \"success\" | \"warn\" | \"error\" — icon in the kind's -text variant, soft background tint from the raw kind color."],
-                    ["opts.duration", "Milliseconds until auto-dismiss (default <code>4000</code>, <code>8000</code> with an action). <code>0</code> = sticky: stays until the × or <code>.dismiss()</code>."],
+                    ["opts.duration", "Milliseconds until auto-dismiss. The default grows with what the toast asks of the reader: <code>10000</code> for <code>error</code>, <code>8000</code> for <code>warn</code> and for any toast with an action, <code>4000</code> otherwise. An explicit value always wins; <code>0</code> = sticky: stays until the × or <code>.dismiss()</code>."],
                     ["opts.title", "Optional bold line above the message. Title and message are set as text — never HTML."],
                     ["opts.action", "<code>{ label, labelKey, onClick, dismissOnClick }</code> — a text button between message and ×. <code>labelKey</code> is a <code>sac.t</code> key (relabelled on a language switch, <code>label</code> is its fallback); no label, no button. <code>onClick(card)</code> runs, then the toast dismisses — unless it returns <code>false</code> or <code>dismissOnClick: false</code> (the timer restarts once pointer and focus leave)."],
                     ["→ returns", "The toast element, with <code>.dismiss()</code> and <code>.closed</code> — a promise resolving to how it ended: <code>\"action\"</code> (the action ran — wins over the later exit), <code>\"close\"</code> (× or Escape), <code>\"swipe\"</code>, <code>\"timeout\"</code>, <code>\"dismiss\"</code>."],
@@ -2399,7 +2522,7 @@ if (await t.closed !== "action") purge();   // no Undo → make it final`)}
                 </div>
                 ${table("Attribute", [
                     ["value / max", "Current progress / upper bound (default 0 / 100). Property <code>.value</code> mirrors the attribute."],
-                    ["label", "Optional header text — presence shows the label-left / percentage-right row above the track; omit it and the row doesn't render at all."],
+                    ["label", "Optional header text — presence shows the label-left / percentage-right row above the track; omit it and the row doesn't render at all. It is also the progressbar's <b>accessible name</b> (2.36, <code>aria-label</code> on the host, kept in step) — unless you set your own <code>aria-label</code> / <code>aria-labelledby</code>, which win. Without a label, name the bar that way."],
                     ["indeterminate", "Presence switches to an endless slide animation; value/max stop driving the bar width and the percentage hides."],
                 ])}
 
@@ -2562,6 +2685,7 @@ canvas.render();`)}
                 ${table("Interaction", [
                     ["Arrows", "<kbd>←</kbd>/<kbd>→</kbd> step in order (wrapping); <kbd>↑</kbd>/<kbd>↓</kbd> move to the tool visually above/below (measured from the layout, so gaps never trap the cursor). Moving selects. Roving tabindex: only the active tool is a tab stop."],
                     ["Tooltip", "Kit bubble, \"Label (K)\" — right of a grid, below a row."],
+                    ["Caption", "Under <code>hover: none</code> (where no tooltip is ever hovered) the <em>active</em> tool's name shows as a small caption — under the grid, at the end of a <code>columns=\"row\"</code> ribbon while the whole name fits there (else on its own line under the ribbon, never cut down to “R…”); never wider than the grid. <code>aria-hidden</code> (the radio already carries the name). CSS part <code>caption</code>: <code>sac-toolbox::part(caption) { display: none }</code> where the app names the tool elsewhere. With a mouse nothing changes."],
                 ])}
                 ${code(`<sac-toolbox value="pencil" columns="2" hotkeys></sac-toolbox>
 <script>
@@ -2578,7 +2702,9 @@ canvas.render();`)}
                    (32 / 18px) — the same one <code>.icon-btn.tool</code> reads, so an action row under the box
                    matches it. <code>--tool-size</code> on the element still overrides one box.</p>
                 ${compact(`under <code>pointer: coarse</code> every button grows to 44 × 44 (the glyph keeps its size — a tool
-                   grid is tapped all day, a halo would steal a neighbour's taps); no hover wash sticks to a tapped tool.`)}
+                   grid is tapped all day, a halo would steal a neighbour's taps); no hover wash sticks to a tapped tool.
+                   Under <code>hover: none</code> the active tool's name is a visible caption (above), since a glyph's name
+                   would otherwise only come from a long-press.`)}
 
                 <h2 id="sac-filmstrip">&lt;sac-filmstrip&gt;</h2>
                 <p>The frame row of any animation or image sequence — a sprite timeline, a slideshow,
@@ -3182,6 +3308,12 @@ bar.items = [
             if (e.key === "Enter" || e.key === "Escape") logInto(cellsOut, `${e.key} · input → ${JSON.stringify(e.target.value)} (host-handled)`);
         });
 
+        // Clickable chips — demo-only: the app flips `selected` (the chip
+        // never does), so a click, Enter or Space shows the toggle.
+        root.querySelectorAll('#sac-chip + p + .sg-demo sac-chip[clickable]').forEach((chip) => {
+            chip.addEventListener("click", () => chip.toggleAttribute("selected"));
+        });
+
         // Chip input
         const chips = root.querySelector("#demo-chips");
         const chipsState = root.querySelector("#demo-chips-state");
@@ -3223,9 +3355,10 @@ bar.items = [
         demoDrop.addEventListener("sac:files", listFiles);
         root.querySelector("#demo-drop-overlay sac-drop-zone").addEventListener("sac:files", listFiles);
         demoDrop.addEventListener("sac:rejected", (e) => {
-            dropList.innerHTML = "";
+            // partial: sac:files already listed the rest of this drop.
+            if (!e.detail.partial) dropList.innerHTML = "";
             const li = document.createElement("li");
-            li.textContent = `Rejected ${e.detail.files.length} file(s) — accept is ".svg,.png,image/*".`;
+            li.textContent = `sac:rejected — ${e.detail.rejected.map((r) => `${r.file.name} (${r.reason})`).join(", ")}`;
             dropList.appendChild(li);
         });
 
@@ -3306,10 +3439,17 @@ bar.items = [
         ["sac:select", "sac:visibility", "sac:expand", "sac:delete", "sac:recolor"].forEach(type => {
             scene.addEventListener(type, (e) => {
                 sceneLog.textContent = `${type}: ${JSON.stringify(e.detail)}`;
-                // Demo-only: actually apply visibility so the eye toggles.
+                // Demo-only: actually apply visibility so the eye toggles,
+                // and the selection (Ctrl/⌘ adds) so Enter / a click shows.
                 if (type === "sac:visibility") {
                     const item = scene.querySelector(`#${e.detail.id}`);
                     if (item) item.visible = e.detail.visible;
+                }
+                if (type === "sac:select") {
+                    scene.querySelectorAll("sac-scene-item").forEach((it) => {
+                        if (it.id === e.detail.id) it.active = e.detail.additive ? !it.active : true;
+                        else if (!e.detail.additive) it.active = false;
+                    });
                 }
             });
         });
@@ -3598,7 +3738,7 @@ bar.items = [
     <div class="workspace">
         <div class="main-layout">          <!-- padding-top: 50px for the nav -->
             <div class="sidebar">
-                <sac-section title="Settings">…sliders, toggles…</sac-section>
+                <sac-section heading="Settings">…sliders, toggles…</sac-section>
             </div>
             <div class="viewport" id="viewport">
                 <div class="pz-layer" id="layer"><canvas></canvas></div>
@@ -3842,6 +3982,49 @@ sac.router.register("/vectorizer/",   null, { label: "Vectorizer",   icon: "vect
                    is the combobox with type-to-search; <code>.cell-input</code> is the plain input as a cell editor —
                    see <a href="#/styleguide/components/cell-editors">Cell editors</a>.</p>
 
+                <h2 id="field-errors">Field errors — aria-invalid + .field-error</h2>
+                <p>A field whose text cannot be taken says so <b>at the field</b>, in words that name what it
+                   expects — never a silent revert, never a toast. The look: the text in <code>--danger-text</code>,
+                   a 1px <code>--danger</code> hairline under the field (never a thick coloured border), and a line
+                   under it — <code>.field-error</code> — that says what IS accepted: “At most 100”, “Not a valid
+                   date – e.g. 25.09.2026”. Red is the second channel; the words carry it.</p>
+                <div class="sg-demo sg-row" style="align-items:flex-start;gap:2rem;flex-wrap:wrap;">
+                    <div style="width:220px;">
+                        <label for="demo-field-error-input">Quantity</label>
+                        <input id="demo-field-error-input" type="text" value="150" aria-invalid="true"
+                               aria-describedby="demo-field-error-msg">
+                        <div class="field-error" id="demo-field-error-msg" aria-live="polite">At most 100</div>
+                    </div>
+                    <sac-number-field label="Kit field — type 150, then Tab" value="42" min="0" max="100"></sac-number-field>
+                    <sac-date-field label="This year" value="2026-08-15" min="2026-01-01" max="2026-12-31"></sac-date-field>
+                </div>
+                ${code(`<label for="qty">Quantity</label>
+<input id="qty" aria-describedby="qty-error">
+<div class="field-error" id="qty-error" aria-live="polite"></div>
+
+// on Enter / blur: judge, and say what is expected
+const bad = Number(qty.value) > 100;
+if (bad) qty.setAttribute("aria-invalid", "true");
+else qty.removeAttribute("aria-invalid");
+qtyError.textContent = bad ? "At most 100" : "";   // empty = valid, the line collapses`)}
+                ${table("Rule", [
+                    ["aria-invalid=\"true\"", "On the input (or textarea / select) while its text is invalid — the red look hangs on it, so state and look never drift. <code>ui.css</code> styles it on plain fields."],
+                    [".field-error", "The message line under the field: 0.8rem, <code>--danger-text</code>. Keep it in the page and <b>empty</b> while valid (it collapses to nothing), with <code>aria-live=\"polite\"</code> and the input's <code>aria-describedby</code> pointing at it: a live region that is already there announces new text reliably, one that appears together with its text does not."],
+                    ["When", "Mark the text red live while typing, but show a <b>new</b> message only on <kbd>Enter</kbd> or blur — mid-typing, every date is invalid. A message already showing follows the text and goes the moment it is valid."],
+                    ["After a click", "The blur of a click elsewhere fires on pointer-<em>down</em>. A line that appears right then grows the field and can pull the click's target (the Save button below) out from under the pointer — the click is lost. While a pointer is down, show the line after that click has landed (on <code>pointerup</code>, then a <code>setTimeout(…, 0)</code>). The kit fields do."],
+                    ["Keep the text", "Never revert the user's text on blur: it stays, with the message, until they fix it. The field's <em>value</em> stays the last valid one and no change event fires for invalid text. <kbd>Esc</kbd> is the explicit way back to the last valid value."],
+                    ["Hold the Save", "Because the text stays while <code>value</code> is the last valid one, a form must not save past an invalid field. The kit fields (<code>&lt;sac-number-field&gt;</code>, <code>&lt;sac-date-field&gt;</code>, <code>&lt;sac-time-field&gt;</code>, <code>&lt;sac-color-field&gt;</code>) expose a read-only <code>validationMessage</code>, as native inputs do: <code>\"\"</code> while the text can commit, else the words under the field. Check it on Save, focus the first field that has one, and save nothing."],
+                    ["Name the format", "Where a format is the problem, the message shows an example in the format the field expects right now (the page's <a href=\"#/styleguide/helpers/sac-regional\"><code>sac.regional</code></a> format) — and, for screen readers, the input's description names it before anyone types."],
+                ])}
+                <p class="sg-note"><b>The kit fields do all of this themselves</b> (since 2.36):
+                   <a href="#/styleguide/components/sac-number-field"><code>&lt;sac-number-field&gt;</code></a>,
+                   <a href="#/styleguide/components/sac-date-field"><code>&lt;sac-date-field&gt;</code></a>,
+                   <a href="#/styleguide/components/sac-time-field"><code>&lt;sac-time-field&gt;</code></a> and
+                   <a href="#/styleguide/components/sac-color-field"><code>&lt;sac-color-field&gt;</code></a> — the line
+                   lives in their shadow root (<code>::part(error)</code>). Under <code>size="cell"</code> there is no room for
+                   a line: the editor sets <code>aria-invalid</code> and the host grid reports the error.
+                   <code>sac.dialog.prompt</code>'s <code>validate</code> is the same pattern inside a dialog.</p>
+
                 <h2>Surfaces painted from data — the onColor rule</h2>
                 <p>Sometimes a surface's background IS the app's output: the colour a picker just
                    mixed, a user's brand value, a result only known at runtime. No token can promise
@@ -3971,7 +4154,9 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
 
                 <h2>Tables &amp; kbd</h2>
                 <p>Plain <code>&lt;table&gt;</code> is fully styled by the element baseline — no class
-                   required. Uppercase micro-header, hairline row dividers, a subtle row hover wash.
+                   required. Uppercase micro-header in <code>--text-muted</code> (a column heading names what
+                   the column holds, so not the tertiary <code>--text-dim</code> — changed in 2.36), hairline
+                   row dividers, a subtle row hover wash.
                    <code>&lt;kbd&gt;</code> renders a keycap for documenting shortcuts.</p>
                 <div class="sg-demo">
                     <table>
@@ -4049,7 +4234,7 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                     <tr><th style="width:220px">Selector</th><th>Description</th></tr>
                     <tr><td><code>.empty-state sac-icon</code></td><td>36px, <code>--text-dim</code>.</td></tr>
                     <tr><td><code>b</code> / <code>strong</code> / <code>h3</code></td><td>Title line — <code>--text-muted</code>, 0.95rem, weight 600.</td></tr>
-                    <tr><td><code>p</code></td><td>Hint line — <code>--text-dim</code>, 0.85rem.</td></tr>
+                    <tr><td><code>p</code></td><td>Hint line — <code>--text-muted</code>, 0.85rem. It explains the empty panel (and usually how to fill it), so it carries information: not the tertiary <code>--text-dim</code> (was, before 2.36).</td></tr>
                 </table>
 
                 <h2>Badges — .badge-dot, .badge-count</h2>
@@ -4570,6 +4755,7 @@ knob.addEventListener("pointerup", (e) => {
                     ["onReorder(from, to, tile)", "Called once on drop, only if the tile's index in the flat order changed — save one tile's position (e.g. the midpoint of its new neighbours)."],
                     ["disabled", "Boolean or function — e.g. <code>() =&gt; !isOwner</code>."],
                     ["ignore", "Presses starting here never drag. Default: the <code>sac.sortable</code> list plus <code>button, sac-menu</code> — a tile's “⋯” and its own buttons stay clickable."],
+                    ["label(tile)", "Optional: a tile's name for the arrange-mode announcements (“Moved Notes to position 3 of 12”). Default: its <code>aria-label</code>, <code>title</code>, heading, then text."],
                 ])}
                 ${table("Returns", [
                     ["destroy()", "Removes every listener (and puts back a tile mid-drag)."],
@@ -4591,6 +4777,8 @@ knob.addEventListener("pointerup", (e) => {
                     ["arrange(on) · arranging", "Enter / leave the mode; read it. <code>sac:arrange { arranging }</code> fires on the grid either way."],
                     ["arrangeItem()", "<code>{ id: \"arrange\", label: \"Arrange\", icon: \"move\", onClick }</code> — put it in the tile's <code>sac.contextMenu</code> items."],
                     ["Look", "The grid carries <code>data-arranging</code>; the movable tiles get <code>data-arrangeable</code> (a cover does not) and wiggle on the <code>rotate</code> property, staggered; small tiles a little more. Reduced motion: a dashed hairline instead."],
+                    ["Keyboard", "Shift+F10 / the Menu key on a focused tile → <b>Arrange</b>. While arranging, <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>↑</kbd> moves the focused tile one place earlier, <kbd>Alt</kbd>+<kbd>→</kbd>/<kbd>↓</kbd> one place later (the <code>sac-layer-list</code> convention; on a tile Alt+←/→ no longer goes Back / Forward). A key move commits as a drop does — packs re-form, neighbours slide, <code>onReorder(from, to, tile)</code> fires once per step — and focus stays on the tile. <kbd>Esc</kbd> or Done ends. Outside arrange mode no key moves a tile."],
+                    ["Announcements", "A visually hidden live region in the pill says how the mode works on entry (“Arrange mode. Alt+arrow keys move the focused tile. Escape or Done ends.”) and announces every move (“Moved Notes to position 3 of 12”); at either end it says where the tile is. The pill's visible text stays <b>Arrange · Done</b>."],
                 ])}
                 <p>Input is <code>sac.sortable</code>'s (4px to lift, a 250ms long-press on touch, the eaten click,
                    auto-scroll); a tile link's native drag is off while a press is live. Live content inside a tile
@@ -4777,7 +4965,7 @@ sac.apps.open("color-bucket");     // or open programmatically`)}
                     <tr><td><code>register(manifest, opts?)</code></td><td>Upsert by <code>id</code> — re-register replaces, first registration fixes list order. Emits <code>sac:apps-changed</code> on <code>document</code>. <code>opts { isolated, grant }</code> is the <b>host's</b> decision (see <a href="#/styleguide/helpers/sac-apps-isolated">Isolated apps</a>); omitted on a re-register, the previous choice stays, so recoloring a tile never turns a sandboxed app trusted. A malformed capability field is dropped with a warning.</td></tr>
                     <tr><td><code>list()</code></td><td>Array of manifest copies, registration order.</td></tr>
                     <tr><td><code>get(id)</code></td><td>Manifest copy or <code>null</code>.</td></tr>
-                    <tr><td><code>open(id, params?, opts?)</code></td><td><code>Promise&lt;HTMLElement&gt;</code> (the app element). <code>opts { route, accent }</code> is what a launcher tile carries: <code>route</code> opens a view at <code>#/&lt;id&gt;/&lt;route&gt;</code>, <code>accent</code> seeds the app's <code>--accent</code> (tile color = app highlight). <code>kind:"page"</code> navigates to <code>href</code> (params appended, promise never resolves). <code>kind:"window"</code> injects <code>src</code> once (keyed by src), awaits <code>customElements.whenDefined(tag)</code>, shows the app in a centered, cascaded <code>&lt;sac-window&gt;</code> that stays in the DOM and is re-opened later (minimized → restored). Rejects on script-load failure (console.error + error toast).</td></tr>
+                    <tr><td><code>open(id, params?, opts?)</code></td><td><code>Promise&lt;HTMLElement&gt;</code> (the app element). <code>opts { route, accent }</code> is what a launcher tile carries: <code>route</code> opens a view at <code>#/&lt;id&gt;/&lt;route&gt;</code>, <code>accent</code> seeds the app's <code>--accent</code> (tile color = app highlight). <code>kind:"page"</code> navigates to <code>href</code> (params appended, promise never resolves). <code>kind:"window"</code> injects <code>src</code> once (keyed by src), awaits <code>customElements.whenDefined(tag)</code>, shows the app in a centered, cascaded <code>&lt;sac-window&gt;</code> that stays in the DOM and is re-opened later (minimized → restored). Rejects on script-load failure (console.error + an error toast with a <b>Try again</b> action that repeats the open — not for an <code>integrity</code> failure, which retrying cannot fix).</td></tr>
                     <tr><td><code>close(id)</code></td><td>Closes the window — element and window stay in the DOM. A view leaves the stage, back to the home section; the address goes back to <code>#/</code> only while it still names the view (once the user has moved on to another page, it is left alone).</td></tr>
                     <tr><td><code>remove(id)</code></td><td>Unregister; calls the app's <code>unmount()</code> if present and removes its window. Emits <code>sac:apps-changed</code>.</td></tr>
                     <tr><td><code>isOpen(id)</code></td><td><code>true</code> if the app's window exists and is open.</td></tr>
@@ -4910,6 +5098,10 @@ sac.apps.init({
                    <code>sac.apps.remove()</code>. Both hooks are opt-in — and
                    <code>sac.app.Element</code> below turns them into <code>onMount</code> /
                    <code>onUnmount</code> that also work with no host at all.</p>
+                <p><b>A mount that throws</b> (in-realm, or reported by an isolated app's frame) never leaves an empty
+                   window or view: the app's place shows an <code>.empty-state</code> — “Notes” couldn't start. — with a
+                   <b>Close</b> button that discards the broken instance, so the next open creates and mounts a fresh element.
+                   <code>sac:app-error</code> (kind <code>mount</code>) still fires and <code>open()</code> still resolves.</p>
                 <table class="sg">
                     <tr><th style="width:260px">Context slot</th><th>Description</th></tr>
                     <tr><td><code>appId</code></td><td>The manifest id.</td></tr>
@@ -5258,7 +5450,7 @@ if (doc) doc = await context.files.save(blob, { handle: doc.handle });   // Save
                 <table class="sg">
                     <tr><th style="width:260px">Provider</th><th>What the user gets</th></tr>
                     <tr><td><code>sac.files.browser</code> <b>(default)</b></td><td>The device's own files. The File System Access API where it exists — a real Save that writes back through the handle; elsewhere <code>&lt;input type="file"&gt;</code> to open and a download to save.</td></tr>
-                    <tr><td><code>sac.files.virtual(options)</code></td><td>The desktop's own file space: the kit's open/save dialog (<code>&lt;sac-file-browser&gt;</code> in a <code>&lt;sac-dialog&gt;</code>) over a <code>sac.fs</code> handle — by default <code>sac.fs.shared("files")</code>, one space every app on the desktop shares. Folders, thumbnails, overwrite confirmation, and a link to the device both ways. Options: <code>{ store, label, pixelated, root, readonly, device }</code> — the last three scope it (<a href="#/styleguide/helpers/sac-files-scoped">below</a>). When the store reports upload progress, the save dialog stays open with a progress bar until the write lands (buttons disabled, body dimmed, Escape held back); a store that reports nothing gets the dialog closing at once, as before.</td></tr>
+                    <tr><td><code>sac.files.virtual(options)</code></td><td>The desktop's own file space: the kit's open/save dialog (<code>&lt;sac-file-browser&gt;</code> in a <code>&lt;sac-dialog&gt;</code>) over a <code>sac.fs</code> handle — by default <code>sac.fs.shared("files")</code>, one space every app on the desktop shares. Folders, thumbnails, overwrite confirmation, and a link to the device both ways. Options: <code>{ store, label, pixelated, root, readonly, device }</code> — the last three scope it (<a href="#/styleguide/helpers/sac-files-scoped">below</a>). The save dialog stays open until the write <b>lands</b> (buttons disabled, body dimmed, Escape held back): a store that reports upload progress shows it as a bar, a quiet one gets an indeterminate bar after 250ms. A write that <b>fails</b> keeps the dialog open — unfrozen, the typed name still there, the reason under it (“Couldn't save “hero.png”. Try again, or pick another folder or name.” plus the store's own message); Save tries again, Cancel answers <code>null</code>. <b>Changed in 2.36:</b> the dialog used to close at once for a quiet store, and a failure was only thrown to the app. In the dialog's list a tap selects (<code>tap="select"</code>) — Open / Save confirms.</td></tr>
                     <tr><td>your own</td><td><code>{ kind, open(opts), save(blob, opts) }</code> — a server, a cloud drive. <code>save</code> always receives a Blob; return FileRefs whose <code>handle.owner</code> is your provider and re-saves come back to you.</td></tr>
                 </table>
                 ${code(`// a desktop, once at boot — every app's Open/Save now shows the desktop's files
@@ -5466,8 +5658,15 @@ sac.lang.set("de");        // or "auto"`)}
                    German dates is a normal wish. Every <code>&lt;sac-date-field&gt;</code> and
                    <code>&lt;sac-time-field&gt;</code> without its own <code>format</code> /
                    <code>hour-cycle</code> follows it, live — and so do every
-                   <a href="#/styleguide/components/sac-number-field"><code>&lt;sac-number-field&gt;</code></a> and the Modified column of
+                   <a href="#/styleguide/components/sac-number-field"><code>&lt;sac-number-field&gt;</code></a>,
+                   <a href="#/styleguide/components/sac-stepper"><code>&lt;sac-stepper&gt;</code></a> and the Modified column of
                    <a href="#/styleguide/components/sac-file-browser"><code>&lt;sac-file-browser&gt;</code></a>.</p>
+                <p><b>Until an app sets it, it follows the language</b> (since 2.36): in German the date reads
+                   <code>dmy.</code> (<code>25.09.2026</code>) and numbers <code>1.234,5</code>; every other language keeps
+                   <code>iso</code> and <code>1,234.5</code>; the hour cycle stays <code>h23</code>. It follows a language switch
+                   live, per key, until <code>set()</code> pins that key — so a standalone app that never calls
+                   <code>set()</code> no longer rejects <code>25.09.2026</code> or stores a German <code>1.234</code> as 1.234.
+                   <code>set({ date: "auto" })</code> un-pins a key again.</p>
                 ${code(`// on load, from the app's (or the host's) user setting
 sac.regional.set({ date: "dmy.", hourCycle: "h23", number: "1.234,5" });
 sac.regional.onChange(({ date, hourCycle, number }) => rerender());
@@ -5485,14 +5684,14 @@ sac.regional.formatTime("14:30", { hourCycle: "h12" });  // "02:30 PM"
 sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                 <table class="sg">
                     <tr><th style="width:260px">Member</th><th>Description</th></tr>
-                    <tr><td><code>sac.regional.get()</code></td><td><code>{ date, hourCycle, number }</code>. Default <code>{ date: "iso", hourCycle: "h23", number: "1,234.5" }</code>.</td></tr>
-                    <tr><td><code>sac.regional.set(partial)</code></td><td>Merge — <code>date</code>: <code>"iso"</code> | <code>"dmy."</code> | <code>"dmy/"</code> | <code>"mdy/"</code>; <code>hourCycle</code>: <code>"h23"</code> | <code>"h12"</code>; <code>number</code>: <code>"1,234.5"</code> | <code>"1.234,5"</code> | <code>"1 234,5"</code> | <code>"1'234.5"</code> — the identifier <em>is</em> the pattern (group, then decimal separator; the space is a no-break space). Unknown values are ignored. <b>Not persisted</b>: the app or host owns the user setting and calls this on load.</td></tr>
-                    <tr><td><code>sac.regional.onChange(cb)</code></td><td><code>cb({ date, hourCycle, number })</code>; returns an unsubscribe. Also <code>sac:regional</code> on <code>document</code>.</td></tr>
+                    <tr><td><code>sac.regional.get()</code></td><td><code>{ date, hourCycle, number }</code> — the <b>effective</b> format. Default by language: German <code>{ date: "dmy.", hourCycle: "h23", number: "1.234,5" }</code>, every other language <code>{ date: "iso", hourCycle: "h23", number: "1,234.5" }</code>.</td></tr>
+                    <tr><td><code>sac.regional.set(partial)</code></td><td>Merge and pin — <code>date</code>: <code>"iso"</code> | <code>"dmy."</code> | <code>"dmy/"</code> | <code>"mdy/"</code>; <code>hourCycle</code>: <code>"h23"</code> | <code>"h12"</code>; <code>number</code>: <code>"1,234.5"</code> | <code>"1.234,5"</code> | <code>"1 234,5"</code> | <code>"1'234.5"</code> — the identifier <em>is</em> the pattern (group, then decimal separator; the space is a no-break space). A key that is set stops following the language; <code>"auto"</code> for a key makes it follow again. Unknown values are ignored. <b>Not persisted</b>: the app or host owns the user setting and calls this on load.</td></tr>
+                    <tr><td><code>sac.regional.onChange(cb)</code></td><td><code>cb({ date, hourCycle, number })</code> whenever the effective format moves — a <code>set()</code>, or a language switch for keys that follow it; returns an unsubscribe. Also <code>sac:regional</code> on <code>document</code>.</td></tr>
                     <tr><td><code>sac.regional.separators()</code></td><td><code>{ decimal, group }</code> of the current number format.</td></tr>
                     <tr><td><code>sac.regional.formatNumber(n, opts)</code></td><td>A number in the current format. <code>opts</code>: <code>decimals</code> (exact fraction digits), <code>minFractionDigits</code> / <code>maxFractionDigits</code> (default 0 / 20 — as many as the number needs), <code>group</code> (default <code>true</code>). Not finite → <code>""</code>.</td></tr>
                     <tr><td><code>sac.regional.parseNumber(text)</code></td><td>Text → number; <code>NaN</code> for empty text or garbage. Tolerant: spaces and apostrophes are grouping; with both <code>.</code> and <code>,</code> the last one is the decimal separator; one repeated is grouping; a single one is decimal — except the format's own group separator in a thousands position (<code>1,234</code> under <code>"1,234.5"</code>). Grouping must sit in thousands positions (<code>12,34.5</code> → <code>NaN</code>).</td></tr>
                     <tr><td><code>sac.regional.formatDate(iso, opts)</code></td><td>An ISO date in the current date format — <code>"25.09.2026"</code> under <code>"dmy."</code>. <code>""</code> for empty or not a real date. <code>opts.format</code> overrides the page format.</td></tr>
-                    <tr><td><code>sac.regional.parseDate(text, opts)</code></td><td>Text → <code>"yyyy-mm-dd"</code>; <code>""</code> for empty text, <code>null</code> for garbage or an impossible date. The rules <code>&lt;sac-date-field&gt;</code> types with: ISO always works; otherwise day / month / year in the format's order, any of <code>.</code> <code>/</code> <code>-</code> between, single digits, a two-digit year (00–68 → 20xx, 69–99 → 19xx). A trailing time — <code>2026-09-25 14:30</code>, <code>…T14:30:00.000Z</code>, <code>25.09.2026 2:30 PM</code>, as spreadsheets and JSON hand dates over — must be a real time and is dropped, as Excel does in a date-only column. <code>opts.format</code>.</td></tr>
+                    <tr><td><code>sac.regional.parseDate(text, opts)</code></td><td>Text → <code>"yyyy-mm-dd"</code>; <code>""</code> for empty text, <code>null</code> for garbage or an impossible date. The rules <code>&lt;sac-date-field&gt;</code> types with: ISO always works; otherwise day / month / year in the format's order, any of <code>.</code> <code>/</code> <code>-</code> between, single digits, a two-digit year (00–68 → 20xx, 69–99 → 19xx). Under <code>"iso"</code> a dotted day.month.year (<code>25.09.2026</code>, <code>25.9.26</code>) is read too — dots mean that order everywhere (since 2.36). A trailing time — <code>2026-09-25 14:30</code>, <code>…T14:30:00.000Z</code>, <code>25.09.2026 2:30 PM</code>, as spreadsheets and JSON hand dates over — must be a real time and is dropped, as Excel does in a date-only column. <code>opts.format</code>.</td></tr>
                     <tr><td><code>sac.regional.formatTime(hhmm, opts)</code></td><td><code>"HH:MM"</code> in the current hour cycle — <code>"14:30"</code>, or <code>"02:30 PM"</code> under <code>h12</code> (two-digit hour like <code>&lt;sac-time-field&gt;</code>, AM / PM translated). <code>""</code> for empty or garbage. <code>opts.hourCycle</code> overrides the page setting.</td></tr>
                     <tr><td><code>sac.regional.parseTime(text)</code></td><td>Text → <code>"HH:MM"</code> (24-hour); <code>""</code> for empty, <code>null</code> for garbage. Reads both cycles whatever the setting — <code>9:5</code>, <code>14.30</code>, <code>14:30:00</code> (seconds dropped, as spreadsheets paste them), <code>2:30 pm</code>, <code>2 PM</code>, <code>12 AM</code> → <code>00:00</code>, and the translated AM / PM.</td></tr>
                 </table>
@@ -5506,7 +5705,11 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>about.this-app</code></td><td><code>This app</code></td><td><code>Diese App</code></td><td>sac.about</td></tr>
                     <tr><td><code>about.title</code></td><td><code>About {name}</code></td><td><code>Über {name}</code></td><td>sac.about</td></tr>
                     <tr><td><code>apps.changed</code></td><td><code>has changed since it was installed — update or remove it.</code></td><td><code>wurde seit der Installation verändert — aktualisieren oder entfernen.</code></td><td>sac.apps</td></tr>
+                    <tr><td><code>apps.close</code></td><td><code>Close</code></td><td><code>Schließen</code></td><td>sac.apps (start failure)</td></tr>
                     <tr><td><code>apps.load-failed</code></td><td><code>could not be loaded.</code></td><td><code>konnte nicht geladen werden.</code></td><td>sac.apps</td></tr>
+                    <tr><td><code>apps.retry</code></td><td><code>Try again</code></td><td><code>Erneut versuchen</code></td><td>sac.apps (load-failure toast)</td></tr>
+                    <tr><td><code>apps.start-failed</code></td><td><code>“{name}” couldn't start.</code></td><td><code>„{name}“ konnte nicht starten.</code></td><td>sac.apps (start failure)</td></tr>
+                    <tr><td><code>apps.start-failed-hint</code></td><td><code>Something went wrong inside the app as it started. Close it and open it again to try once more.</code></td><td><code>Beim Starten ist in der App ein Fehler aufgetreten. Schließen und erneut öffnen versucht es noch einmal.</code></td><td>sac.apps (start failure)</td></tr>
                     <tr><td><code>calendar.next-decade</code></td><td><code>Forward 10 years</code></td><td><code>10 Jahre vor</code></td><td>sac-calendar</td></tr>
                     <tr><td><code>calendar.next-month</code></td><td><code>Next month</code></td><td><code>Nächster Monat</code></td><td>sac-calendar</td></tr>
                     <tr><td><code>calendar.next-year</code></td><td><code>Next year</code></td><td><code>Nächstes Jahr</code></td><td>sac-calendar</td></tr>
@@ -5514,6 +5717,7 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>calendar.prev-month</code></td><td><code>Previous month</code></td><td><code>Voriger Monat</code></td><td>sac-calendar</td></tr>
                     <tr><td><code>calendar.prev-year</code></td><td><code>Previous year</code></td><td><code>Voriges Jahr</code></td><td>sac-calendar</td></tr>
                     <tr><td><code>chip-input.add</code></td><td><code>Add</code></td><td><code>Hinzufügen</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.backspace-again</code></td><td><code>Press Backspace again to remove {name}</code></td><td><code>Noch einmal Rücktaste drücken, um {name} zu entfernen</code></td><td>sac-chip-input</td></tr>
                     <tr><td><code>chip-input.color-blue</code></td><td><code>Blue</code></td><td><code>Blau</code></td><td>sac-chip-input</td></tr>
                     <tr><td><code>chip-input.color-gray</code></td><td><code>Gray</code></td><td><code>Grau</code></td><td>sac-chip-input</td></tr>
                     <tr><td><code>chip-input.color-green</code></td><td><code>Green</code></td><td><code>Grün</code></td><td>sac-chip-input</td></tr>
@@ -5527,11 +5731,14 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>chip-input.create</code></td><td><code>Create "{name}"</code></td><td><code>„{name}“ anlegen</code></td><td>sac-chip-input</td></tr>
                     <tr><td><code>chip-input.no-matches</code></td><td><code>no matches</code></td><td><code>keine Treffer</code></td><td>sac-chip-input</td></tr>
                     <tr><td><code>chip-input.pick-color</code></td><td><code>Pick color for "{name}"</code></td><td><code>Farbe für „{name}“ wählen</code></td><td>sac-chip-input</td></tr>
+                    <tr><td><code>chip-input.removed</code></td><td><code>{name} removed</code></td><td><code>{name} entfernt</code></td><td>sac-chip-input</td></tr>
                     <tr><td><code>chip.remove</code></td><td><code>Remove</code></td><td><code>Entfernen</code></td><td>sac-chip</td></tr>
+                    <tr><td><code>chip.remove-named</code></td><td><code>Remove {name}</code></td><td><code>{name} entfernen</code></td><td>sac-chip</td></tr>
                     <tr><td><code>collapsible.less</code></td><td><code>less</code></td><td><code>weniger</code></td><td>sac-collapsible</td></tr>
                     <tr><td><code>collapsible.more</code></td><td><code>more</code></td><td><code>mehr</code></td><td>sac-collapsible</td></tr>
                     <tr><td><code>color-field.choose-color</code></td><td><code>Choose color</code></td><td><code>Farbe wählen</code></td><td>sac-color-field</td></tr>
                     <tr><td><code>color-field.color-picker</code></td><td><code>Color picker</code></td><td><code>Farbwähler</code></td><td>sac-color-field</td></tr>
+                    <tr><td><code>color-field.error-invalid</code></td><td><code>Not a color – e.g. {example}</code></td><td><code>Keine Farbe – z. B. {example}</code></td><td>sac-color-field</td></tr>
                     <tr><td><code>color-field.hex-color</code></td><td><code>Hex color</code></td><td><code>Hex-Farbe</code></td><td>sac-color-field</td></tr>
                     <tr><td><code>color-picker.blue</code></td><td><code>Blue</code></td><td><code>Blau</code></td><td>sac-color-picker</td></tr>
                     <tr><td><code>color-picker.green</code></td><td><code>Green</code></td><td><code>Grün</code></td><td>sac-color-picker</td></tr>
@@ -5542,10 +5749,16 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>color-picker.saturation-value</code></td><td><code>Saturation and value</code></td><td><code>Sättigung und Helligkeit</code></td><td>sac-color-picker</td></tr>
                     <tr><td><code>color-picker.saturation-value-text</code></td><td><code>saturation {s}%, value {v}%</code></td><td><code>Sättigung {s} %, Helligkeit {v} %</code></td><td>sac-color-picker</td></tr>
                     <tr><td><code>color-picker.title</code></td><td><code>Color picker</code></td><td><code>Farbwähler</code></td><td>sac-color-picker</td></tr>
+                    <tr><td><code>copy-button.copied</code></td><td><code>Copied</code></td><td><code>Kopiert</code></td><td>sac-copy-button</td></tr>
                     <tr><td><code>copy-button.copy</code></td><td><code>Copy</code></td><td><code>Kopieren</code></td><td>sac-copy-button</td></tr>
+                    <tr><td><code>copy-button.failed</code></td><td><code>Couldn't copy – select the text and press {keys}</code></td><td><code>Kopieren nicht möglich – Text markieren und {keys} drücken</code></td><td>sac-copy-button</td></tr>
                     <tr><td><code>date-field.calendar</code></td><td><code>Calendar</code></td><td><code>Kalender</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>date-field.choose-date</code></td><td><code>Choose date</code></td><td><code>Datum wählen</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>date-field.date</code></td><td><code>Date</code></td><td><code>Datum</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.error-invalid</code></td><td><code>Not a valid date – e.g. {example}</code></td><td><code>Kein gültiges Datum – z. B. {example}</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.error-max</code></td><td><code>No later than {max}</code></td><td><code>Spätestens {max}</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.error-min</code></td><td><code>No earlier than {min}</code></td><td><code>Frühestens {min}</code></td><td>sac-date-field</td></tr>
+                    <tr><td><code>date-field.format-hint</code></td><td><code>Format: {pattern}, e.g. {example}</code></td><td><code>Format: {pattern}, z. B. {example}</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>date-field.placeholder</code></td><td><code>yyyy-mm-dd</code></td><td><code>jjjj-mm-tt</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>date-field.placeholder-dmy-dot</code></td><td><code>dd.mm.yyyy</code></td><td><code>tt.mm.jjjj</code></td><td>sac-date-field</td></tr>
                     <tr><td><code>date-field.placeholder-dmy-slash</code></td><td><code>dd/mm/yyyy</code></td><td><code>tt/mm/jjjj</code></td><td>sac-date-field</td></tr>
@@ -5556,6 +5769,10 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>drop-zone.hint-touch</code></td><td><code>Tap to browse</code></td><td><code>Tippen zum Auswählen</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>drop-zone.label</code></td><td><code>Drop files here</code></td><td><code>Dateien hier ablegen</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>drop-zone.label-touch</code></td><td><code>Choose files</code></td><td><code>Dateien auswählen</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>drop-zone.rejected-count</code></td><td><code>Only one file – {n} were not added</code></td><td><code>Nur eine Datei – {n} wurden nicht hinzugefügt</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>drop-zone.rejected-count-one</code></td><td><code>Only one file – {name} was not added</code></td><td><code>Nur eine Datei – {name} wurde nicht hinzugefügt</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>drop-zone.rejected-type</code></td><td><code>{name} was not added – only {types} files</code></td><td><code>{name} wurde nicht hinzugefügt – nur Dateien vom Typ {types}</code></td><td>sac-drop-zone</td></tr>
+                    <tr><td><code>drop-zone.rejected-types</code></td><td><code>{n} files were not added – only {types} files</code></td><td><code>{n} Dateien wurden nicht hinzugefügt – nur Dateien vom Typ {types}</code></td><td>sac-drop-zone</td></tr>
                     <tr><td><code>files.accept-description</code></td><td><code>Files</code></td><td><code>Dateien</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.cancel</code></td><td><code>Cancel</code></td><td><code>Abbrechen</code></td><td>sac.files, sac-file-browser</td></tr>
                     <tr><td><code>files.col-modified</code></td><td><code>Modified</code></td><td><code>Geändert</code></td><td>sac-file-browser</td></tr>
@@ -5563,6 +5780,8 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>files.col-size</code></td><td><code>Size</code></td><td><code>Größe</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.col-type</code></td><td><code>Type</code></td><td><code>Typ</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete</code></td><td><code>Delete</code></td><td><code>Löschen</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-failed-many</code></td><td><code>{n} of {total} items were not deleted.</code></td><td><code>{n} von {total} Einträgen wurden nicht gelöscht.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.delete-failed-one</code></td><td><code>Couldn't delete “{name}”.</code></td><td><code>„{name}“ konnte nicht gelöscht werden.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete-folder-empty</code></td><td><code>is empty and will be removed.</code></td><td><code>ist leer und wird entfernt.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete-folder-message</code></td><td><code>and the {n} file(s) in it will be permanently deleted.</code></td><td><code>und die {n} Datei(en) darin werden dauerhaft gelöscht.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.delete-folder-title</code></td><td><code>Delete this folder?</code></td><td><code>Diesen Ordner löschen?</code></td><td>sac-file-browser</td></tr>
@@ -5574,22 +5793,29 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>files.empty-folder</code></td><td><code>This folder is empty.</code></td><td><code>Dieser Ordner ist leer.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.from-device</code></td><td><code>Open from this device…</code></td><td><code>Von diesem Gerät öffnen…</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.list</code></td><td><code>Files</code></td><td><code>Dateien</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.load-failed</code></td><td><code>Couldn't open this folder.</code></td><td><code>Dieser Ordner konnte nicht geöffnet werden.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.loading</code></td><td><code>Loading…</code></td><td><code>Wird geladen …</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.location</code></td><td><code>Location</code></td><td><code>Speicherort</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.name</code></td><td><code>Name</code></td><td><code>Name</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.new-folder</code></td><td><code>New folder</code></td><td><code>Neuer Ordner</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.new-folder-failed</code></td><td><code>Couldn't create this folder. Try again, or pick another name.</code></td><td><code>Ordner konnte nicht angelegt werden. Erneut versuchen oder einen anderen Namen wählen.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.new-folder-name</code></td><td><code>Folder name</code></td><td><code>Ordnername</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.open</code></td><td><code>Open</code></td><td><code>Öffnen</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.open-title</code></td><td><code>Open</code></td><td><code>Öffnen</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.rename-dot</code></td><td><code>A name cannot start with a dot.</code></td><td><code>Ein Name darf nicht mit einem Punkt beginnen.</code></td><td>sac-file-browser</td></tr>
+                    <tr><td><code>files.rename-failed</code></td><td><code>Couldn't rename this. Try again, or pick another name.</code></td><td><code>Umbenennen fehlgeschlagen. Erneut versuchen oder einen anderen Namen wählen.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.rename-label</code></td><td><code>New name</code></td><td><code>Neuer Name</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.rename-taken</code></td><td><code>That name is already taken here.</code></td><td><code>Dieser Name ist hier schon vergeben.</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.replace</code></td><td><code>Replace</code></td><td><code>Ersetzen</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.replace-message</code></td><td><code>already exists. Saving replaces it.</code></td><td><code>ist bereits vorhanden. Speichern ersetzt sie.</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.replace-title</code></td><td><code>Replace this file?</code></td><td><code>Diese Datei ersetzen?</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.retry</code></td><td><code>Try again</code></td><td><code>Erneut versuchen</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.root</code></td><td><code>Files</code></td><td><code>Dateien</code></td><td>sac-file-browser</td></tr>
                     <tr><td><code>files.save</code></td><td><code>Save</code></td><td><code>Speichern</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.save-failed</code></td><td><code>Couldn't save “{name}”. Try again, or pick another folder or name.</code></td><td><code>„{name}“ konnte nicht gespeichert werden. Erneut versuchen oder einen anderen Ordner oder Namen wählen.</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.save-title</code></td><td><code>Save as</code></td><td><code>Speichern unter</code></td><td>sac.files</td></tr>
                     <tr><td><code>files.saving</code></td><td><code>Saving…</code></td><td><code>Speichern…</code></td><td>sac.files</td></tr>
+                    <tr><td><code>files.select</code></td><td><code>Select</code></td><td><code>Auswählen</code></td><td>sac-file-browser (touch Select button)</td></tr>
                     <tr><td><code>files.select-done</code></td><td><code>Done</code></td><td><code>Fertig</code></td><td>sac-file-browser (mark mode)</td></tr>
                     <tr><td><code>files.selected-count</code></td><td><code>{n} selected</code></td><td><code>{n} ausgewählt</code></td><td>sac-file-browser (mark mode)</td></tr>
                     <tr><td><code>files.sort-by</code></td><td><code>Sort by {column}</code></td><td><code>Nach {column} sortieren</code></td><td>sac-file-browser</td></tr>
@@ -5624,33 +5850,36 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>lang-toggle.label</code></td><td><code>Language</code></td><td><code>Sprache</code></td><td>sac-lang-toggle</td></tr>
                     <tr><td><code>launcher.add</code></td><td><code>Add</code></td><td><code>Hinzufügen</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.add-app</code></td><td><code>Add app</code></td><td><code>App hinzufügen</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.add-hint</code></td><td><code>The script is loaded on first open and must define the tag. Any URL works — including other sites.</code></td><td><code>Das Skript wird beim ersten Öffnen geladen und muss das Tag definieren. Jede URL funktioniert – auch andere Websites.</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.add-hint</code></td><td><code>Add an app made for this launcher. Its maker gives you its address and its element name.</code></td><td><code>Für Apps, die für diesen Launcher gemacht sind. Adresse und Elementname nennt der Hersteller der App.</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.cancel</code></td><td><code>Cancel</code></td><td><code>Abbrechen</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.done</code></td><td><code>Done</code></td><td><code>Fertig</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.edit</code></td><td><code>Edit</code></td><td><code>Bearbeiten</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.error-name</code></td><td><code>a name</code></td><td><code>einen Namen</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.error-needs</code></td><td><code>An app needs {problems}.</code></td><td><code>Eine App braucht {problems}.</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.error-src</code></td><td><code>a script URL</code></td><td><code>eine Skript-URL</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.error-tag</code></td><td><code>a tag containing a dash</code></td><td><code>ein Tag mit Bindestrich</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-height</code></td><td><code>Height</code></td><td><code>Höhe</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-icon</code></td><td><code>Icon</code></td><td><code>Icon</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.error-src</code></td><td><code>an address</code></td><td><code>eine Adresse</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.error-tag</code></td><td><code>an element name with a dash and no spaces (like app-notes)</code></td><td><code>einen Elementnamen mit Bindestrich und ohne Leerzeichen (z. B. app-notizen)</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-height</code></td><td><code>Window height (optional)</code></td><td><code>Fensterhöhe (optional)</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-icon</code></td><td><code>Icon (optional)</code></td><td><code>Icon (optional)</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.field-name</code></td><td><code>Name</code></td><td><code>Name</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-src</code></td><td><code>Script URL</code></td><td><code>Skript-URL</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-tag</code></td><td><code>Tag</code></td><td><code>Tag</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.field-width</code></td><td><code>Width</code></td><td><code>Breite</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-src</code></td><td><code>Address</code></td><td><code>Adresse</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-tag</code></td><td><code>Element name</code></td><td><code>Elementname</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.field-width</code></td><td><code>Window width (optional)</code></td><td><code>Fensterbreite (optional)</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.hide</code></td><td><code>Hide {name}</code></td><td><code>{name} ausblenden</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.move-left</code></td><td><code>Move {name} left</code></td><td><code>{name} nach links verschieben</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.move-right</code></td><td><code>Move {name} right</code></td><td><code>{name} nach rechts verschieben</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.no-apps</code></td><td><code>No apps registered.</code></td><td><code>Keine Apps registriert.</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.placeholder-height</code></td><td><code>600px</code></td><td><code>600px</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.placeholder-icon</code></td><td><code>shapes (a sac-icon name)</code></td><td><code>shapes (ein sac-icon-Name)</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.placeholder-icon</code></td><td><code>e.g. star or note</code></td><td><code>z. B. star oder note</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.placeholder-name</code></td><td><code>My App</code></td><td><code>Meine App</code></td><td>sac-launcher</td></tr>
-                    <tr><td><code>launcher.placeholder-src</code></td><td><code>apps/my-app.js or https://…</code></td><td><code>apps/meine-app.js oder https://…</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.placeholder-src</code></td><td><code>https://… or apps/my-app.js</code></td><td><code>https://… oder apps/meine-app.js</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.placeholder-tag</code></td><td><code>app-my-app</code></td><td><code>app-meine-app</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.placeholder-width</code></td><td><code>500px</code></td><td><code>500px</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.remove</code></td><td><code>Remove {name}</code></td><td><code>{name} entfernen</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.removed</code></td><td><code>“{name}” removed</code></td><td><code>„{name}“ entfernt</code></td><td>sac-launcher (Undo toast)</td></tr>
                     <tr><td><code>launcher.show</code></td><td><code>Show {name}</code></td><td><code>{name} einblenden</code></td><td>sac-launcher</td></tr>
                     <tr><td><code>launcher.tile-menu</code></td><td><code>Actions for {name}</code></td><td><code>Aktionen für {name}</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.trust-note</code></td><td><code>This runs code from that address inside this app, with your data. Only add apps you trust.</code></td><td><code>Code von dieser Adresse läuft dann in dieser App, mit Zugriff auf die Daten darin. Nur vertrauenswürdige Apps hinzufügen.</code></td><td>sac-launcher</td></tr>
+                    <tr><td><code>launcher.undo</code></td><td><code>Undo</code></td><td><code>Rückgängig</code></td><td>sac-launcher (Undo toast)</td></tr>
                     <tr><td><code>layer-list.add</code></td><td><code>Add layer</code></td><td><code>Ebene hinzufügen</code></td><td>sac-layer-list</td></tr>
                     <tr><td><code>layer-list.delete</code></td><td><code>Delete layer</code></td><td><code>Ebene löschen</code></td><td>sac-layer-list</td></tr>
                     <tr><td><code>layer-list.duplicate</code></td><td><code>Duplicate layer</code></td><td><code>Ebene duplizieren</code></td><td>sac-layer-list</td></tr>
@@ -5668,14 +5897,24 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>layer-list.unlock-named</code></td><td><code>Unlock {name}</code></td><td><code>{name} entsperren</code></td><td>sac-layer-list</td></tr>
                     <tr><td><code>loader.loading</code></td><td><code>Loading...</code></td><td><code>Wird geladen …</code></td><td>sac-loader</td></tr>
                     <tr><td><code>log.clear</code></td><td><code>Clear</code></td><td><code>Leeren</code></td><td>sac-log</td></tr>
+                    <tr><td><code>log.cleared</code></td><td><code>Log cleared</code></td><td><code>Protokoll geleert</code></td><td>sac-log</td></tr>
                     <tr><td><code>log.copied</code></td><td><code>Copied!</code></td><td><code>Kopiert!</code></td><td>sac-log</td></tr>
                     <tr><td><code>log.copy</code></td><td><code>Copy</code></td><td><code>Kopieren</code></td><td>sac-log</td></tr>
+                    <tr><td><code>log.copy-failed</code></td><td><code>Couldn't copy – select the text and press {keys}</code></td><td><code>Kopieren nicht möglich – Text markieren und {keys} drücken</code></td><td>sac-log</td></tr>
                     <tr><td><code>log.header</code></td><td><code>LOG</code></td><td><code>PROTOKOLL</code></td><td>sac-log</td></tr>
+                    <tr><td><code>log.level-error</code></td><td><code>Error</code></td><td><code>Fehler</code></td><td>sac-log</td></tr>
+                    <tr><td><code>log.level-info</code></td><td><code>Info</code></td><td><code>Info</code></td><td>sac-log</td></tr>
+                    <tr><td><code>log.level-warn</code></td><td><code>Warning</code></td><td><code>Warnung</code></td><td>sac-log</td></tr>
+                    <tr><td><code>log.undo</code></td><td><code>Undo</code></td><td><code>Rückgängig</code></td><td>sac-log</td></tr>
                     <tr><td><code>nav.home</code></td><td><code>Home</code></td><td><code>Start</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.host</code></td><td><code>Host</code></td><td><code>Host</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.menu</code></td><td><code>Menu</code></td><td><code>Menü</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.more</code></td><td><code>More</code></td><td><code>Mehr</code></td><td>sac-nav</td></tr>
                     <tr><td><code>nav.no-sections</code></td><td><code>No sections yet.</code></td><td><code>Noch keine Bereiche.</code></td><td>sac-nav</td></tr>
+                    <tr><td><code>number-field.error-max</code></td><td><code>At most {max}</code></td><td><code>Höchstens {max}</code></td><td>sac-number-field</td></tr>
+                    <tr><td><code>number-field.error-min</code></td><td><code>At least {min}</code></td><td><code>Mindestens {min}</code></td><td>sac-number-field</td></tr>
+                    <tr><td><code>number-field.error-nan</code></td><td><code>Not a number – e.g. {example}</code></td><td><code>Keine Zahl – z. B. {example}</code></td><td>sac-number-field</td></tr>
+                    <tr><td><code>number-field.format-hint</code></td><td><code>Number format: {example}</code></td><td><code>Zahlenformat: {example}</code></td><td>sac-number-field</td></tr>
                     <tr><td><code>number-field.number</code></td><td><code>Number</code></td><td><code>Zahl</code></td><td>sac-number-field</td></tr>
                     <tr><td><code>palette.commands</code></td><td><code>Commands</code></td><td><code>Befehle</code></td><td>sac-command-palette</td></tr>
                     <tr><td><code>palette.empty</code></td><td><code>No matching commands</code></td><td><code>Keine passenden Befehle</code></td><td>sac-command-palette</td></tr>
@@ -5702,11 +5941,13 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>quick-look.unknown-type</code></td><td><code>Unknown type</code></td><td><code>Unbekannter Typ</code></td><td>sac-quick-look</td></tr>
                     <tr><td><code>quick-look.unsupported</code></td><td><code>No preview available</code></td><td><code>Keine Vorschau verfügbar</code></td><td>sac-quick-look</td></tr>
                     <tr><td><code>quick-look.view</code></td><td><code>View</code></td><td><code>Ansicht</code></td><td>sac-quick-look</td></tr>
-                    <tr><td><code>scene.color</code></td><td><code>Color</code></td><td><code>Farbe</code></td><td>sac-scene-item</td></tr>
-                    <tr><td><code>scene.delete</code></td><td><code>Delete</code></td><td><code>Löschen</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.color-named</code></td><td><code>Color of {name}</code></td><td><code>Farbe von {name}</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.delete-named</code></td><td><code>Delete {name}</code></td><td><code>{name} löschen</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>scene.expand</code></td><td><code>Expand / collapse</code></td><td><code>Auf- / zuklappen</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.hidden</code></td><td><code>hidden</code></td><td><code>ausgeblendet</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.hide-named</code></td><td><code>Hide {name}</code></td><td><code>{name} ausblenden</code></td><td>sac-scene-item</td></tr>
+                    <tr><td><code>scene.show-named</code></td><td><code>Show {name}</code></td><td><code>{name} einblenden</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>scene.unnamed</code></td><td><code>Unnamed</code></td><td><code>Unbenannt</code></td><td>sac-scene-item</td></tr>
-                    <tr><td><code>scene.visibility</code></td><td><code>Toggle visibility</code></td><td><code>Sichtbarkeit umschalten</code></td><td>sac-scene-item</td></tr>
                     <tr><td><code>select.clear</code></td><td><code>Clear</code></td><td><code>Leeren</code></td><td>sac-select</td></tr>
                     <tr><td><code>select.no-matches</code></td><td><code>No matches</code></td><td><code>Keine Treffer</code></td><td>sac-select</td></tr>
                     <tr><td><code>select.options</code></td><td><code>Options</code></td><td><code>Optionen</code></td><td>sac-select</td></tr>
@@ -5727,8 +5968,14 @@ sac.regional.parseTime("2:30 pm");                    // "14:30"`)}
                     <tr><td><code>theme-toggle.dark</code></td><td><code>Dark</code></td><td><code>Dunkel</code></td><td>sac-theme-toggle</td></tr>
                     <tr><td><code>theme-toggle.label</code></td><td><code>Theme</code></td><td><code>Design</code></td><td>sac-theme-toggle</td></tr>
                     <tr><td><code>theme-toggle.light</code></td><td><code>Light</code></td><td><code>Hell</code></td><td>sac-theme-toggle</td></tr>
+                    <tr><td><code>tiles.arrange-help</code></td><td><code>Arrange mode. Alt+arrow keys move the focused tile. Escape or Done ends.</code></td><td><code>Anordnen. Alt+Pfeiltasten verschieben die fokussierte Kachel. Esc oder Fertig beendet.</code></td><td>sac.tiles.sortable (announced)</td></tr>
+                    <tr><td><code>tiles.at-position</code></td><td><code>{name} is at position {pos} of {count}</code></td><td><code>{name} ist an Position {pos} von {count}</code></td><td>sac.tiles.sortable (announced)</td></tr>
+                    <tr><td><code>tiles.moved</code></td><td><code>Moved {name} to position {pos} of {count}</code></td><td><code>{name} an Position {pos} von {count} verschoben</code></td><td>sac.tiles.sortable (announced)</td></tr>
                     <tr><td><code>time-field.am</code></td><td><code>AM</code></td><td><code>AM</code></td><td>sac-time-field</td></tr>
                     <tr><td><code>time-field.empty</code></td><td><code>empty</code></td><td><code>leer</code></td><td>sac-time-field</td></tr>
+                    <tr><td><code>time-field.error-incomplete</code></td><td><code>Enter hours and minutes</code></td><td><code>Stunden und Minuten eingeben</code></td><td>sac-time-field</td></tr>
+                    <tr><td><code>time-field.error-max</code></td><td><code>No later than {max}</code></td><td><code>Spätestens {max}</code></td><td>sac-time-field</td></tr>
+                    <tr><td><code>time-field.error-min</code></td><td><code>No earlier than {min}</code></td><td><code>Frühestens {min}</code></td><td>sac-time-field</td></tr>
                     <tr><td><code>time-field.hours</code></td><td><code>Hours</code></td><td><code>Stunden</code></td><td>sac-time-field</td></tr>
                     <tr><td><code>time-field.minutes</code></td><td><code>Minutes</code></td><td><code>Minuten</code></td><td>sac-time-field</td></tr>
                     <tr><td><code>time-field.period</code></td><td><code>AM/PM</code></td><td><code>AM/PM</code></td><td>sac-time-field</td></tr>
@@ -6204,6 +6451,13 @@ sac.showcase.watchCode(page);`)}
                 sac.hotkeys.register("mod+shift+x",
                     () => sac.toast("Ran from the keyboard.", { kind: "success" }),
                     { description: "Toast a success message" }),
+                // The palette finds the guide itself: "dialog" → <sac-dialog>,
+                // "field" → every field page and pattern. The rail stays the
+                // way to browse; this is the faster path beside it.
+                sac.commands.registerSource({
+                    id: "sg-search", group: "Style guide", minLength: 2,
+                    search: (query) => this._searchGuide(query),
+                }),
             ];
             // The shortcut sheet's "?" and its gesture entries, and the demo
             // toolbox's tool keys — global too, so on stage only.
@@ -6218,6 +6472,39 @@ sac.showcase.watchCode(page);`)}
         _demoCmdsOff() {
             if (this._demoOff) { this._demoOff(); this._demoOff = null; }
             this._syncDemoKeys();
+        }
+
+        /** Palette search over every addressable heading (h2/h3 with an id) of
+         *  every section. The index is read once out of the sections' own
+         *  markup, so a new page is findable with no list to keep. Ranked:
+         *  exact name, then prefix, then anywhere; pages before sub-headings. */
+        _searchGuide(query) {
+            if (!this._index) {
+                const tpl = document.createElement("template");
+                this._index = SECTIONS.flatMap((s) => {
+                    tpl.innerHTML = s.html();
+                    return Array.from(tpl.content.querySelectorAll("h2[id], h3[id]"), (h) => {
+                        const label = h.textContent.trim();
+                        return {
+                            section: s, id: h.id, label, top: h.tagName === "H2",
+                            bare: label.toLowerCase().replace(/[<>]/g, "").replace(/^sac-/, ""),
+                            key: `${label} ${h.id}`.toLowerCase(),
+                        };
+                    });
+                });
+                tpl.innerHTML = "";
+            }
+            const q = query.toLowerCase();
+            const rank = (t) => (t.bare === q ? 0 : t.bare.startsWith(q) || t.key.startsWith(q) ? 1 : 2) * 2 + (t.top ? 0 : 1);
+            return this._index
+                .filter((t) => t.key.includes(q))
+                .sort((a, b) => rank(a) - rank(b))
+                .slice(0, 12)
+                .map((t) => ({
+                    id: `sg-goto-${t.section.id}-${t.id}`, label: t.label, icon: t.section.icon,
+                    hint: t.section.label,
+                    run: () => { location.hash = this._ctx.href(`${t.section.id}/${t.id}`); },
+                }));
         }
 
         /** The demo toolbox registers its keys only while the guide is on stage. */
