@@ -752,8 +752,12 @@ split.position = localStorage.getItem("sidebar") || "20%";   // programmatic mov
                    bottom sheet down are <em>dismissals</em>: each asks <code>beforeAction(null, { via })</code>
                    first (<code>via</code> = <code>"escape"</code> | <code>"backdrop"</code> | <code>"swipe"</code>),
                    so an app can confirm (“Discard changes?”) or refuse. And once a field in the body has been
-                   edited since <code>open()</code> (an <code>input</code>, <code>change</code> or
-                   <code>sac:change</code> from the body), the backdrop and the swipe no longer dismiss at all:
+                   edited since <code>open()</code> (a <code>beforeinput</code>, <code>input</code>, <code>change</code> or
+                   <code>sac:change</code> from the body — <code>beforeinput</code> is what catches typing inside the kit's
+                   own fields, which stop their native <code>input</code>/<code>change</code> and send no
+                   <code>sac:change</code> for invalid text; and a backdrop tap or a pull first lets the focused field
+                   commit what it holds, so an arrow-stepped number counts too, then hands focus back if the
+                   dialog stays), the backdrop and the swipe no longer dismiss at all:
                    a backdrop tap only nudges the panel, a pulled sheet resists and springs back. Escape and an
                    explicit Cancel still close — typed text is never lost to a stray tap. Try it: type in
                    <b>Rename…</b>, then tap beside the dialog.</p>
