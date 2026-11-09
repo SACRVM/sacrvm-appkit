@@ -4803,7 +4803,10 @@ sac.contextMenu(grid, {
                    (text fields keep theirs). Kit-wide, a <b>long-press on touch is a right-click</b>: after 500ms
                    without moving the kit fires <code>contextmenu</code> at the finger, so every right-click handler —
                    the kit's, <code>menu.openAt(e)</code>, an app's own — answers it too (where the browser fires its own,
-                   nothing fires twice; <code>[data-no-long-press]</code> opts a subtree out). Shift+F10 or the Menu key
+                   nothing fires twice). <code>[data-no-long-press]</code> opts a subtree out — a canvas you paint on
+                   with a still finger: no long-press menu there at all, neither the kit's nor the browser's own
+                   (Chrome on Android and Windows sends one; it is dropped), while a mouse right-click and Shift+F10
+                   still open it. Shift+F10 or the Menu key
                    opens the focused target's menu. A long-press is <em>always</em> the menu: where a list marks several
                    rows, pass <code>selection</code> and the menu's first entry <b>Select</b> starts marking.</p>
                 <div class="sg-demo sg-col" style="max-width:none;">
