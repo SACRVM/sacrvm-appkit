@@ -69,6 +69,8 @@ Follow these steps exactly:
    - `sac-data-grid` — the data grid component; vendors the kit and drives cell-editor /
      regional / dialog work.
    - `sac-md-editor` — the markdown editor add-on (kept out of the core kit); vendors the kit.
+   - `markdown-pad` — the desktop's Markdown file editor; vendors the kit and sac-md-editor
+     (added 2026-11-09: it had been missing from this list and sat on 2.12.0).
    Each message carries: the version + release URL, the one-line re-vendor step (delete
    `kit/`, unzip the new ZIP), the headline changes that touch that repo, and the
    version-skew caveat (a new-version feature is unusable on a host still on an older
