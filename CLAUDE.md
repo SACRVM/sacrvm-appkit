@@ -95,7 +95,8 @@ The kit must be **easily themable** — light, dark, AND custom themes:
 ## Development
 
 ```bash
-python3 -m http.server 3000   # http://localhost:3000 — or the Firepit button "Run site" (Node is not installed on this machine)
+python3 -m http.server 3000   # http://localhost:3000 — or the Firepit button "Run site"
+node --check kit/js/components/sac-dialog.js   # syntax check after editing JS (Node v26 is installed; the kit itself never needs it)
 ```
 
 No build step. No tests — verify manually in the browser, in both the style guide and the demo app.
