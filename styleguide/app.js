@@ -705,6 +705,7 @@
                 ])}
                 ${table("CSS custom property", [
                     ["--split-divider", "Thickness of the divider's grab zone (default 9px). The divider takes 1px of layout — the hairline — and the grab zone is laid invisibly over the panels beside it, so no empty strip stands between a panel (or its scrollbar) and the line."],
+                    ["--split-back-height", "<b>Read it, don't set it.</b> The back bar's height while it shows (collapsed, <code>show=\"end\"</code>, no <code>no-back</code>), otherwise <code>0px</code>. Everything in both panels inherits it, so a sticky header or toolbar in the detail sits right below the bar instead of under it: <code>position: sticky; top: var(--split-back-height, 0px)</code>. It follows the bar's button (44px on touch, 36px otherwise)."],
                 ])}
                 ${table("Keyboard", [
                     ["Divider", "<kbd>←</kbd>/<kbd>→</kbd> (vertical split: <kbd>↑</kbd>/<kbd>↓</kbd>) move 1%, <kbd>Shift</kbd> 5%, <kbd>Home</kbd>/<kbd>End</kbd> jump to the clamped extremes. Double-click resets to the starting position."],
@@ -4427,6 +4428,7 @@ plane.style.color = sac.color.onColor(sac.color.parse(value));   // "#000000" | 
                     <tr><td><code>back()</code></td><td>What the back bar does: show <code>start</code>, after <code>sac:split-back</code>.</td></tr>
                     <tr><td><code>sac:split-back</code></td><td>Cancelable — <code>preventDefault()</code> keeps the detail (unsaved changes).</td></tr>
                     <tr><td><code>sac:collapse</code></td><td><code>detail { collapsed }</code> — entered or left one-panel mode.</td></tr>
+                    <tr><td><code>--split-back-height</code></td><td>The back bar's height while it shows, else <code>0px</code>. A sticky toolbar in the detail sits below the bar with <code>top: var(--split-back-height, 0px)</code>.</td></tr>
                 </table>
                 ${code(`<sac-split collapse position="30%">
     <ul slot="start">…</ul>
